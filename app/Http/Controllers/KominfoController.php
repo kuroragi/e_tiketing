@@ -137,12 +137,13 @@ class KominfoController extends Controller
     public function index(Request $request)
     {
         $filters = [
-            'status' => $request->get('status'),
-            'prioritas' => $request->get('prioritas'),
-            'skpd' => $request->get('skpd'),
-            'petugas' => $request->get('petugas'),
-            'periode' => $request->get('periode', 'semua'),
-            'search' => $request->get('search')
+            'status' => '',
+            'prioritas' => '',
+            'skpd' => '',
+            'petugas' => '',
+            'periode' => '',
+            'search' => '',
+            'status' => '',
         ];
 
         $tickets = $this->getFilteredTickets($filters);

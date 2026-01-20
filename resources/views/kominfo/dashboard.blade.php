@@ -69,11 +69,9 @@
                         <i class="bi bi-clock-history text-primary me-2"></i>
                         Tiket Terbaru
                     </h5>
-                    @if (auth()->user()->role === 'kominfo' || auth()->user()->role === 'admin')
-                        <a href="{{ route('tiket.daftar') }}" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-arrow-right me-1"></i>Lihat Semua
-                        </a>
-                    @endif
+                    <a href="#" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-arrow-right me-1"></i>Lihat Semua
+                    </a>
                 </div>
                 <div class="card-body">
                     @if (isset($recentTickets) && count($recentTickets) > 0)
@@ -88,7 +86,7 @@
                                         <small class="text-muted">
                                             <i class="bi bi-building me-1"></i>{{ $ticket['skpd'] }}
                                             <span class="ms-3"><i
-                                                    class="bi bi-calendar me-1"></i>{{ $ticket['tanggal_pengajuan'] }}</span>
+                                                    class="bi bi-calendar me-1"></i>{{ $ticket['tanggal'] }}</span>
                                         </small>
                                     </div>
                                     <div class="col-md-2">
@@ -125,28 +123,24 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    @if (auth()->user()->role === 'skpd')
-                        <a href="{{ route('tiket.pengajuan') }}" class="btn btn-primary w-100 mb-2">
-                            <i class="bi bi-plus-circle me-2"></i>Ajukan Tiket Baru
-                        </a>
-                        <a href="{{ route('tiket.saya') }}" class="btn btn-outline-primary w-100">
-                            <i class="bi bi-ticket me-2"></i>Lihat Tiket Saya
-                        </a>
-                    @elseif(auth()->user()->role === 'kominfo')
-                        <a href="{{ route('tiket.daftar', ['status' => 'baru']) }}" class="btn btn-warning w-100 mb-2">
-                            <i class="bi bi-exclamation-circle me-2"></i>Tiket Menunggu
-                        </a>
-                        <a href="{{ route('tiket.daftar', ['status' => 'diproses']) }}" class="btn btn-info w-100">
-                            <i class="bi bi-arrow-repeat me-2"></i>Tiket Dikerjakan
-                        </a>
-                    @elseif(auth()->user()->role === 'pimpinan')
-                        <a href="{{ route('laporan.index') }}" class="btn btn-success w-100 mb-2">
-                            <i class="bi bi-bar-chart me-2"></i>Lihat Laporan
-                        </a>
-                        <a href="{{ route('tiket.daftar') }}" class="btn btn-outline-success w-100">
-                            <i class="bi bi-eye me-2"></i>Monitor Tiket
-                        </a>
-                    @endif
+                    <a href="/tiket/pengajuan" class="btn btn-primary w-100 mb-2">
+                        <i class="bi bi-plus-circle me-2"></i>Ajukan Tiket Baru
+                    </a>
+                    <a href="/tiket/daftar" class="btn btn-outline-primary w-100 mb-2">
+                        <i class="bi bi-ticket me-2"></i>Lihat Tiket Saya
+                    </a>
+                    <a href="/tiket/daftar?status=baru" class="btn btn-warning w-100 mb-2">
+                        <i class="bi bi-exclamation-circle me-2"></i>Tiket Menunggu
+                    </a>
+                    <a href="/tiket/daftar?status=diproses" class="btn btn-info w-100 mb-2">
+                        <i class="bi bi-arrow-repeat me-2"></i>Tiket Dikerjakan
+                    </a>
+                    <a href="/laporan" class="btn btn-success w-100 mb-2">
+                        <i class="bi bi-bar-chart me-2"></i>Lihat Laporan
+                    </a>
+                    <a href="/tiket/daftar" class="btn btn-outline-success w-100">
+                        <i class="bi bi-eye me-2"></i>Monitor Tiket
+                    </a>
                 </div>
             </div>
 
@@ -183,35 +177,33 @@
     </div>
 
     <!-- Chart Section (if needed) -->
-    @if (auth()->user()->role === 'pimpinan' || auth()->user()->role === 'admin')
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="bi bi-graph-up text-success me-2"></i>
-                            Grafik Perkembangan Tiket (7 Hari Terakhir)
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row text-center">
-                            @foreach (['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'] as $index => $day)
-                                <div class="col">
-                                    <div class="mb-2">
-                                        <div class="bg-primary"
-                                            style="height: {{ rand(20, 80) }}px; width: 30px; margin: 0 auto; border-radius: 4px;">
-                                        </div>
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up text-success me-2"></i>
+                        Grafik Perkembangan Tiket (7 Hari Terakhir)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        @foreach (['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'] as $index => $day)
+                            <div class="col">
+                                <div class="mb-2">
+                                    <div class="bg-primary"
+                                        style="height: {{ rand(20, 80) }}px; width: 30px; margin: 0 auto; border-radius: 4px;">
                                     </div>
-                                    <small class="text-muted">{{ $day }}</small>
-                                    <div><strong>{{ rand(1, 15) }}</strong></div>
                                 </div>
-                            @endforeach
-                        </div>
+                                <small class="text-muted">{{ $day }}</small>
+                                <div><strong>{{ rand(1, 15) }}</strong></div>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
         </div>
-    @endif
+    </div>
 
     <!-- Ticket Detail Modal -->
     <div class="modal fade" id="ticketDetailModal" tabindex="-1" aria-labelledby="ticketDetailModalLabel"

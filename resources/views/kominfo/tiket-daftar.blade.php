@@ -27,7 +27,7 @@
     <!-- Filter & Search -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ route('tiket.daftar') }}" class="row g-3">
+            <form method="GET" action="{{ route('tiket.index') }}" class="row g-3">
                 <div class="col-md-3">
                     <label for="search" class="form-label">Pencarian</label>
                     <div class="input-group">
@@ -72,7 +72,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-funnel me-1"></i>Filter
                         </button>
-                        <a href="{{ route('tiket.daftar') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('tiket.index') }}" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-clockwise me-1"></i>Reset
                         </a>
                     </div>
@@ -181,9 +181,9 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <div>{{ $ticket['tanggal_pengajuan'] }}</div>
-                                            @if ($ticket['target_selesai'])
-                                                <small class="text-muted">Target: {{ $ticket['target_selesai'] }}</small>
+                                            <div>{{ $ticket['tanggal'] }}</div>
+                                            @if ($ticket['target'])
+                                                <small class="text-muted">Target: {{ $ticket['target'] }}</small>
                                             @endif
                                         </td>
                                         <td>
@@ -267,7 +267,7 @@
                                             <span class="priority-{{ strtolower($ticket['prioritas']) }}">
                                                 <i class="bi bi-flag-fill"></i>
                                             </span>
-                                            <small class="text-muted">{{ $ticket['tanggal_pengajuan'] }}</small>
+                                            <small class="text-muted">{{ $ticket['tanggal'] }}</small>
                                         </div>
                                     </div>
                                 </div>
@@ -286,10 +286,10 @@
     </div>
 
     <!-- Modals -->
-    @include('kominfo.partials.ticket-detail-modal')
+    {{-- @include('kominfo.partials.ticket-detail-modal')
     @include('kominfo.partials.assign-modal')
     @include('kominfo.partials.complete-modal')
-    @include('kominfo.partials.reject-modal')
+    @include('kominfo.partials.reject-modal') --}}
 
 @endsection
 
@@ -364,11 +364,11 @@
                     <div class="row mb-3">
                         <div class="col-6">
                             <strong>Tanggal Pengajuan:</strong><br>
-                            <span class="text-muted">${ticket.tanggal_pengajuan}</span>
+                            <span class="text-muted">${ticket.tanggal}</span>
                         </div>
                         <div class="col-6">
                             <strong>Target Selesai:</strong><br>
-                            <span class="text-muted">${ticket.target_selesai || '-'}</span>
+                            <span class="text-muted">${ticket.target || '-'}</span>
                         </div>
                     </div>
                     
@@ -384,11 +384,11 @@
                     </div>
                     
                     ${ticket.catatan_tambahan ? `
-                        <div class="mb-3">
-                            <strong>Catatan Tambahan:</strong><br>
-                            <span class="text-muted">${ticket.catatan_tambahan}</span>
-                        </div>
-                        ` : ''}
+                                            <div class="mb-3">
+                                                <strong>Catatan Tambahan:</strong><br>
+                                                <span class="text-muted">${ticket.catatan_tambahan}</span>
+                                            </div>
+                                            ` : ''}
                 </div>
                 
                 <div class="col-md-4">
@@ -402,11 +402,11 @@
                             </div>
                             
                             ${ticket.petugas ? `
-                                <div class="mt-3">
-                                    <div class="user-avatar mx-auto mb-2">${ticket.petugas.charAt(0)}</div>
-                                    <div><small>Petugas: ${ticket.petugas}</small></div>
-                                </div>
-                                ` : ''}
+                                                    <div class="mt-3">
+                                                        <div class="user-avatar mx-auto mb-2">${ticket.petugas.charAt(0)}</div>
+                                                        <div><small>Petugas: ${ticket.petugas}</small></div>
+                                                    </div>
+                                                    ` : ''}
                         </div>
                     </div>
                 </div>

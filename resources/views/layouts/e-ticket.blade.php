@@ -273,51 +273,51 @@
                     <div class="p-3">
                         <h6 class="text-muted mb-3">MENU UTAMA</h6>
                         <nav class="nav flex-column">
-                            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"
-                                href="{{ route('dashboard') }}">
+                            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="/dashboard">
                                 <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                                <small class="text-muted d-block">Beranda dan ringkasan sistem</small>
                             </a>
 
-                            @if (auth()->user()->role ?? '' === 'skpd')
-                                <a class="nav-link {{ request()->routeIs('tiket.pengajuan') ? 'active' : '' }}"
-                                    href="{{ route('tiket.pengajuan') }}">
-                                    <i class="bi bi-plus-circle me-2"></i>Ajukan Tiket
-                                </a>
-                                <a class="nav-link {{ request()->routeIs('tiket.saya') ? 'active' : '' }}"
-                                    href="{{ route('tiket.saya') }}">
-                                    <i class="bi bi-ticket me-2"></i>Tiket Saya
-                                </a>
-                            @endif
+                            <a class="nav-link {{ request()->routeIs('tiket.pengajuan') ? 'active' : '' }}"
+                                href="/tiket/pengajuan">
+                                <i class="bi bi-plus-circle me-2"></i>Ajukan Tiket
+                                <small class="text-muted d-block">Form pengajuan tiket baru</small>
+                            </a>
 
-                            @if (in_array(auth()->user()->role ?? '', ['kominfo', 'admin']))
-                                <a class="nav-link {{ request()->routeIs('tiket.daftar') ? 'active' : '' }}"
-                                    href="{{ route('tiket.daftar') }}">
-                                    <i class="bi bi-list-check me-2"></i>Daftar Tiket
-                                </a>
-                            @endif
+                            <a class="nav-link {{ request()->routeIs('tiket.saya') ? 'active' : '' }}"
+                                href="/tiket/saya">
+                                <i class="bi bi-ticket me-2"></i>Tiket Saya
+                                <small class="text-muted d-block">Daftar tiket yang Anda ajukan</small>
+                            </a>
 
-                            @if (in_array(auth()->user()->role ?? '', ['pimpinan', 'admin']))
-                                <a class="nav-link {{ request()->routeIs('laporan.index') ? 'active' : '' }}"
-                                    href="{{ route('laporan.index') }}">
-                                    <i class="bi bi-bar-chart me-2"></i>Laporan
-                                </a>
-                            @endif
+                            <a class="nav-link {{ request()->routeIs('tiket.daftar') ? 'active' : '' }}"
+                                href="/tiket/daftar">
+                                <i class="bi bi-list-check me-2"></i>Daftar Tiket
+                                <small class="text-muted d-block">Daftar semua tiket</small>
+                            </a>
 
-                            @if (auth()->user()->role ?? '' === 'admin')
-                                <h6 class="text-muted mb-3 mt-4">ADMINISTRASI</h6>
-                                <a class="nav-link {{ request()->routeIs('admin.users') ? 'active' : '' }}"
-                                    href="{{ route('admin.users') }}">
-                                    <i class="bi bi-people me-2"></i>Pengguna
-                                </a>
-                                <a class="nav-link {{ request()->routeIs('admin.skpd') ? 'active' : '' }}"
-                                    href="{{ route('admin.skpd') }}">
-                                    <i class="bi bi-building me-2"></i>Data SKPD
-                                </a>
-                                <a class="nav-link {{ request()->routeIs('admin.jenis') ? 'active' : '' }}"
-                                    href="{{ route('admin.jenis') }}">
-                                    <i class="bi bi-tags me-2"></i>Jenis Pekerjaan
-                                </a>
-                            @endif
+                            <a class="nav-link {{ request()->routeIs('laporan.index') ? 'active' : '' }}"
+                                href="/laporan">
+                                <i class="bi bi-bar-chart me-2"></i>Laporan
+                                <small class="text-muted d-block">Grafik dan laporan ringkas</small>
+                            </a>
+
+                            <h6 class="text-muted mb-3 mt-4">ADMINISTRASI</h6>
+                            <a class="nav-link {{ request()->routeIs('admin.users') ? 'active' : '' }}"
+                                href="/admin/users">
+                                <i class="bi bi-people me-2"></i>Pengguna
+                                <small class="text-muted d-block">Kelola data pengguna</small>
+                            </a>
+                            <a class="nav-link {{ request()->routeIs('admin.skpd') ? 'active' : '' }}"
+                                href="/admin/skpd">
+                                <i class="bi bi-building me-2"></i>Data SKPD
+                                <small class="text-muted d-block">Kelola data SKPD</small>
+                            </a>
+                            <a class="nav-link {{ request()->routeIs('admin.jenis') ? 'active' : '' }}"
+                                href="/admin/jenis">
+                                <i class="bi bi-tags me-2"></i>Jenis Pekerjaan
+                                <small class="text-muted d-block">Kelola kategori pekerjaan</small>
+                            </a>
                         </nav>
                     </div>
                 </div>

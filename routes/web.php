@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\KominfoController;
+use App\Services\TelegramService;
 
 // Redirect root to dashboard
 Route::redirect('/', '/dashboard');
@@ -30,4 +31,12 @@ Route::group(['prefix' => '/'], function () {
     
     // Laporan untuk pimpinan
     Route::get('laporan', [KominfoController::class, 'laporan'])->name('laporan.index');
+});
+
+
+// Note: Testing send messaege to Telegram
+Route::get('/test-telegram', function () {
+    $message = "Ini adalah pesan percobaan dari sistem E-Ticketing Kominfo Bukittinggi.";
+    $sent = TelegramService::send($message);
+    return $sent ? 'Pesan berhasil dikirim ke Telegram.' : 'Gagal mengirim pesan ke Telegram.\nerror: '.$sent;
 });
