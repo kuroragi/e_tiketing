@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\KominfoController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\AdminPageController;
 use App\Services\TelegramService;
 
 // Redirect root to dashboard
@@ -50,6 +51,30 @@ Route::group(['prefix' => '/'], function () {
     
     // Syarat dan Ketentuan
     Route::get('syarat-ketentuan', [PageController::class, 'syaratKetentuan'])->name('syarat-ketentuan');
+});
+
+// Admin Pages Routes - Halaman Administrasi
+Route::group(['prefix' => 'admin'], function () {
+    // Dashboard Admin
+    Route::get('dashboard', [AdminPageController::class, 'dashboard'])->name('admin.dashboard');
+    
+    // Manajemen Pengguna
+    Route::get('pengguna', [AdminPageController::class, 'pengguna'])->name('admin.pengguna');
+    
+    // Manajemen SKPD
+    Route::get('skpd', [AdminPageController::class, 'skpd'])->name('admin.skpd');
+    
+    // Manajemen Jenis Pekerjaan
+    Route::get('jenis-pekerjaan', [AdminPageController::class, 'jenisPekerjaan'])->name('admin.jenis-pekerjaan');
+    
+    // Pengaturan Sistem
+    Route::get('pengaturan', [AdminPageController::class, 'pengaturan'])->name('admin.pengaturan');
+    
+    // Log Aktivitas
+    Route::get('log-aktivitas', [AdminPageController::class, 'logAktivitas'])->name('admin.log-aktivitas');
+    
+    // Laporan Admin
+    Route::get('laporan', [AdminPageController::class, 'laporan'])->name('admin.laporan');
 });
 
 

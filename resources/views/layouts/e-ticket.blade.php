@@ -303,20 +303,40 @@
                             </a>
 
                             <h6 class="text-muted mb-3 mt-4">ADMINISTRASI</h6>
-                            <a class="nav-link {{ request()->routeIs('admin.users') ? 'active' : '' }}"
-                                href="/admin/users">
+                            <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
+                                href="{{ route('admin.dashboard') }}">
+                                <i class="bi bi-speedometer2 me-2"></i>Dashboard Admin
+                                <small class="text-muted d-block">Overview sistem</small>
+                            </a>
+                            <a class="nav-link {{ request()->routeIs('admin.pengguna') ? 'active' : '' }}"
+                                href="{{ route('admin.pengguna') }}">
                                 <i class="bi bi-people me-2"></i>Pengguna
                                 <small class="text-muted d-block">Kelola data pengguna</small>
                             </a>
                             <a class="nav-link {{ request()->routeIs('admin.skpd') ? 'active' : '' }}"
-                                href="/admin/skpd">
+                                href="{{ route('admin.skpd') }}">
                                 <i class="bi bi-building me-2"></i>Data SKPD
                                 <small class="text-muted d-block">Kelola data SKPD</small>
                             </a>
-                            <a class="nav-link {{ request()->routeIs('admin.jenis') ? 'active' : '' }}"
-                                href="/admin/jenis">
+                            <a class="nav-link {{ request()->routeIs('admin.jenis-pekerjaan') ? 'active' : '' }}"
+                                href="{{ route('admin.jenis-pekerjaan') }}">
                                 <i class="bi bi-tags me-2"></i>Jenis Pekerjaan
                                 <small class="text-muted d-block">Kelola kategori pekerjaan</small>
+                            </a>
+                            <a class="nav-link {{ request()->routeIs('admin.pengaturan') ? 'active' : '' }}"
+                                href="{{ route('admin.pengaturan') }}">
+                                <i class="bi bi-gear me-2"></i>Pengaturan
+                                <small class="text-muted d-block">Konfigurasi sistem</small>
+                            </a>
+                            <a class="nav-link {{ request()->routeIs('admin.log-aktivitas') ? 'active' : '' }}"
+                                href="{{ route('admin.log-aktivitas') }}">
+                                <i class="bi bi-clock-history me-2"></i>Log Aktivitas
+                                <small class="text-muted d-block">Monitor aktivitas sistem</small>
+                            </a>
+                            <a class="nav-link {{ request()->routeIs('admin.laporan') ? 'active' : '' }}"
+                                href="{{ route('admin.laporan') }}">
+                                <i class="bi bi-bar-chart me-2"></i>Laporan Admin
+                                <small class="text-muted d-block">Laporan komprehensif</small>
                             </a>
 
                             <h6 class="text-muted mb-3 mt-4">INFORMASI</h6>
