@@ -318,6 +318,23 @@
                                 <i class="bi bi-tags me-2"></i>Jenis Pekerjaan
                                 <small class="text-muted d-block">Kelola kategori pekerjaan</small>
                             </a>
+
+                            <h6 class="text-muted mb-3 mt-4">INFORMASI</h6>
+                            <a class="nav-link {{ request()->routeIs('panduan') ? 'active' : '' }}"
+                                href="{{ route('panduan') }}">
+                                <i class="bi bi-book me-2"></i>Panduan
+                                <small class="text-muted d-block">Cara menggunakan sistem</small>
+                            </a>
+                            <a class="nav-link {{ request()->routeIs('tentang') ? 'active' : '' }}"
+                                href="{{ route('tentang') }}">
+                                <i class="bi bi-info-circle me-2"></i>Tentang Sistem
+                                <small class="text-muted d-block">Informasi lengkap sistem</small>
+                            </a>
+                            <a class="nav-link {{ request()->routeIs('hubungi') ? 'active' : '' }}"
+                                href="{{ route('hubungi') }}">
+                                <i class="bi bi-headset me-2"></i>Hubungi Kami
+                                <small class="text-muted d-block">Kontak dan dukungan</small>
+                            </a>
                         </nav>
                     </div>
                 </div>
@@ -382,6 +399,37 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container-fluid">
+            <div class="row mb-3">
+                <div class="col-md-4 mb-3">
+                    <h6 class="text-white mb-2">Navigasi Cepat</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ route('dashboard') }}" class="text-muted text-decoration-none"><i
+                                    class="bi bi-house me-1"></i>Dashboard</a></li>
+                        <li><a href="{{ route('panduan') }}" class="text-muted text-decoration-none"><i
+                                    class="bi bi-book me-1"></i>Panduan</a></li>
+                        <li><a href="{{ route('tentang') }}" class="text-muted text-decoration-none"><i
+                                    class="bi bi-info-circle me-1"></i>Tentang</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6 class="text-white mb-2">Dukungan</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ route('hubungi') }}" class="text-muted text-decoration-none"><i
+                                    class="bi bi-headset me-1"></i>Hubungi Kami</a></li>
+                        <li><a href="{{ route('kebijakan') }}" class="text-muted text-decoration-none"><i
+                                    class="bi bi-shield-lock me-1"></i>Kebijakan Privasi</a></li>
+                        <li><a href="{{ route('syarat-ketentuan') }}" class="text-muted text-decoration-none"><i
+                                    class="bi bi-file-text me-1"></i>Syarat & Ketentuan</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6 class="text-white mb-2">Informasi</h6>
+                    <p class="text-muted small mb-1"><i class="bi bi-telephone me-1"></i>(0752) 123-4567</p>
+                    <p class="text-muted small mb-1"><i class="bi bi-envelope me-1"></i>kominfo@bukittinggi.go.id</p>
+                    <p class="text-muted small"><i class="bi bi-clock me-1"></i>Senin - Jumat, 08:00 - 17:00</p>
+                </div>
+            </div>
+            <hr class="border-secondary">
             <div class="row align-items-center">
                 <div class="col-md-6">
                     <p class="mb-0">&copy; {{ date('Y') }} Dinas Komunikasi dan Informatika Kota Bukittinggi</p>

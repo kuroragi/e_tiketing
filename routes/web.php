@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\KominfoController;
+use App\Http\Controllers\PageController;
 use App\Services\TelegramService;
 
 // Redirect root to dashboard
@@ -31,6 +32,24 @@ Route::group(['prefix' => '/'], function () {
     
     // Laporan untuk pimpinan
     Route::get('laporan', [KominfoController::class, 'laporan'])->name('laporan.index');
+});
+
+// Static Pages Routes - Halaman Statis untuk User
+Route::group(['prefix' => '/'], function () {
+    // Panduan Penggunaan
+    Route::get('panduan', [PageController::class, 'panduan'])->name('panduan');
+    
+    // Tentang Sistem
+    Route::get('tentang', [PageController::class, 'tentang'])->name('tentang');
+    
+    // Hubungi Kami
+    Route::get('hubungi', [PageController::class, 'hubungi'])->name('hubungi');
+    
+    // Kebijakan Privasi
+    Route::get('kebijakan', [PageController::class, 'kebijakan'])->name('kebijakan');
+    
+    // Syarat dan Ketentuan
+    Route::get('syarat-ketentuan', [PageController::class, 'syaratKetentuan'])->name('syarat-ketentuan');
 });
 
 
