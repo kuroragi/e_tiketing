@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\KominfoController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\AdminPageController;
+use App\Http\Controllers\TicketManagementController;
 use App\Services\TelegramService;
 
 // Redirect root to dashboard
@@ -75,6 +76,31 @@ Route::group(['prefix' => 'admin'], function () {
     
     // Laporan Admin
     Route::get('laporan', [AdminPageController::class, 'laporan'])->name('admin.laporan');
+});
+
+// Ticket Management Routes - Manajemen Assignment Tiket
+Route::group(['prefix' => 'admin/ticket-management'], function () {
+    // Main Index - Lihat pending tickets
+    Route::get('/', [TicketManagementController::class, 'index'])->name('ticket.management.index');
+    
+    // Auto Assignment - Konfigurasi assignment otomatis
+    Route::get('auto-assignment', [TicketManagementController::class, 'autoAssignment'])->name('ticket.management.auto');
+    Route::post('save-auto-config', [TicketManagementController::class, 'saveAutoAssignment'])->name('ticket.management.save-auto');
+    
+    // Manual Assignment - Assign manual oleh admin
+    Route::get('manual-assignment', [TicketManagementController::class, 'manualAssignment'])->name('ticket.management.manual');
+    
+    // History - Riwayat assignment
+    Route::get('history', [TicketManagementController::class, 'history'])->name('ticket.management.history');
+});
+
+// Ticket Management API Routes
+Route::group(['prefix' => 'api/ticket'], function () {
+    // Auto assign tiket
+    Route::post('auto-assign/{id}', [TicketManagementController::class, 'saveAutoAssignment'])->name('api.ticket.auto-assign');
+    
+    // Manual assign tiket
+    Route::post('manual-assign/{id}', [TicketManagementController::class, 'assignManual'])->name('api.ticket.manual-assign');
 });
 
 

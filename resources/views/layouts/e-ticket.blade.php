@@ -338,6 +338,11 @@
                                 <i class="bi bi-bar-chart me-2"></i>Laporan Admin
                                 <small class="text-muted d-block">Laporan komprehensif</small>
                             </a>
+                            <a class="nav-link {{ request()->routeIs('ticket.management.*') ? 'active' : '' }}"
+                                href="{{ route('ticket.management.index') }}">
+                                <i class="bi bi-shuffle me-2"></i>Manajemen Tiket
+                                <small class="text-muted d-block">Auto & manual assignment</small>
+                            </a>
 
                             <h6 class="text-muted mb-3 mt-4">INFORMASI</h6>
                             <a class="nav-link {{ request()->routeIs('panduan') ? 'active' : '' }}"
