@@ -165,13 +165,28 @@ class KominfoController extends Controller
      */
     public function show($id)
     {
-        $ticket = $this->getTicketById($id);
-        
-        if (!$ticket) {
+        $t = $this->getTicketById($id);
+
+        if (!$t) {
             abort(404, 'Tiket tidak ditemukan');
         }
 
-        return response()->json($ticket);
+        $ticket = [
+            'id' => $t['id'],
+            'judul' => $t['judul'],
+            'deskripsi' => $t['deskripsi'] ?? null,
+            'skpd' => $t['skpd'],
+            'jenis_pekerjaan' => $t['jenis'],
+            'tanggal_pengajuan' => $t['tanggal'] instanceof \Carbon\Carbon ? $t['tanggal']->format('Y-m-d') : $t['tanggal'],
+            'target_selesai' => $t['target'] instanceof \Carbon\Carbon ? $t['target']->format('Y-m-d') : $t['target'],
+            'status' => $t['status'],
+            'prioritas' => $t['prioritas'],
+            'pemohon' => $t['pemohon'] ?? null,
+            'kontak' => $t['kontak'] ?? null,
+            'petugas' => $t['petugas'] ?? null,
+        ];
+
+        return view('kominfo.tiket-detail', compact('ticket'));
     }
 
     /**
@@ -329,10 +344,9 @@ class KominfoController extends Controller
     /**
      * Helper: Get filtered tickets
      */
-    private function getFilteredTickets($filters)
+    private function getAllTickets()
     {
-        // Simulate ticket data
-        $allTickets = [
+        return [
             [
                 'id' => 'TKT-2024-001',
                 'judul' => 'Perbaikan Website Resmi SKPD',
@@ -414,27 +428,40 @@ class KominfoController extends Controller
                 'deskripsi' => 'Jaringan internet kantor mati total. Sangat mengganggu pekerjaan harian.'
             ]
         ];
+    }
 
-        // Apply filters
+    private function getFilteredTickets($filters)
+    {
+        $allTickets = $this->getAllTickets();
+
+        // Normalize filters with defaults
+        $filters = array_merge([
+            'status' => null,
+            'prioritas' => null,
+            'skpd' => null,
+            'petugas' => null,
+            'search' => null,
+        ], $filters ?? []);
+
         $filtered = $allTickets;
 
-        if ($filters['status']) {
+        if (!empty($filters['status'])) {
             $filtered = array_filter($filtered, fn($t) => $t['status'] === $filters['status']);
         }
 
-        if ($filters['prioritas']) {
+        if (!empty($filters['prioritas'])) {
             $filtered = array_filter($filtered, fn($t) => $t['prioritas'] === $filters['prioritas']);
         }
 
-        if ($filters['skpd']) {
+        if (!empty($filters['skpd'])) {
             $filtered = array_filter($filtered, fn($t) => $t['skpd_id'] == $filters['skpd']);
         }
 
-        if ($filters['petugas']) {
+        if (!empty($filters['petugas'])) {
             $filtered = array_filter($filtered, fn($t) => $t['petugas_id'] == $filters['petugas']);
         }
 
-        if ($filters['search']) {
+        if (!empty($filters['search'])) {
             $search = strtolower($filters['search']);
             $filtered = array_filter($filtered, function($t) use ($search) {
                 return strpos(strtolower($t['judul']), $search) !== false ||
@@ -451,7 +478,12 @@ class KominfoController extends Controller
      */
     private function getTicketById($id)
     {
-        $tickets = $this->getFilteredTickets([]);
-        return array_first($tickets, fn($t) => $t['id'] === $id);
+        $tickets = $this->getAllTickets();
+        foreach ($tickets as $t) {
+            if ($t['id'] === $id) {
+                return $t;
+            }
+        }
+        return null;
     }
 }

@@ -204,7 +204,7 @@
                                                     <i class="bi bi-three-dots"></i>
                                                 </button>
                                                 <ul class="dropdown-menu">
-                                                    <li><a class="dropdown-item" href="#"
+                                                    <li><a class="dropdown-item" href="{{ $ticket['id'] }}"
                                                             onclick="showTicketDetail({{ $ticket['id'] }})">
                                                             <i class="bi bi-eye me-2"></i>Lihat Detail
                                                         </a></li>
@@ -286,10 +286,10 @@
     </div>
 
     <!-- Modals -->
-    {{-- @include('kominfo.partials.ticket-detail-modal')
+    @include('kominfo.partials.ticket-detail-modal')
     @include('kominfo.partials.assign-modal')
     @include('kominfo.partials.complete-modal')
-    @include('kominfo.partials.reject-modal') --}}
+    @include('kominfo.partials.reject-modal')
 
 @endsection
 
@@ -384,11 +384,11 @@
                     </div>
                     
                     ${ticket.catatan_tambahan ? `
-                                            <div class="mb-3">
-                                                <strong>Catatan Tambahan:</strong><br>
-                                                <span class="text-muted">${ticket.catatan_tambahan}</span>
-                                            </div>
-                                            ` : ''}
+                                                        <div class="mb-3">
+                                                            <strong>Catatan Tambahan:</strong><br>
+                                                            <span class="text-muted">${ticket.catatan_tambahan}</span>
+                                                        </div>
+                                                        ` : ''}
                 </div>
                 
                 <div class="col-md-4">
@@ -402,11 +402,11 @@
                             </div>
                             
                             ${ticket.petugas ? `
-                                                    <div class="mt-3">
-                                                        <div class="user-avatar mx-auto mb-2">${ticket.petugas.charAt(0)}</div>
-                                                        <div><small>Petugas: ${ticket.petugas}</small></div>
-                                                    </div>
-                                                    ` : ''}
+                                                                <div class="mt-3">
+                                                                    <div class="user-avatar mx-auto mb-2">${ticket.petugas.charAt(0)}</div>
+                                                                    <div><small>Petugas: ${ticket.petugas}</small></div>
+                                                                </div>
+                                                                ` : ''}
                         </div>
                     </div>
                 </div>
