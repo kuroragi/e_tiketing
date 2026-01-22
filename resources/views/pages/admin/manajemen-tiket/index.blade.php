@@ -96,89 +96,15 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#autoAssignModal{{ $ticket['id'] }}">
+                                        <button type="button" class="btn btn-outline-primary" onclick="showAutoAssignModal('{{ $ticket['id'] }}', '{{ $ticket['jenis_pekerjaan'] }}', '{{ $ticket['prioritas'] }}')">
                                             <i class="bi bi-lightning-fill me-1"></i>Auto
                                         </button>
-                                        <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#manualAssignModal{{ $ticket['id'] }}">
+                                        <button type="button" class="btn btn-outline-info" onclick="showManualAssignModal('{{ $ticket['id'] }}')">
                                             <i class="bi bi-hand-index me-1"></i>Manual
                                         </button>
                                     </div>
                                 </td>
                             </tr>
-
-                            <!-- Auto Assign Modal -->
-                            <div class="modal fade" id="autoAssignModal{{ $ticket['id'] }}" tabindex="-1">
-                                <div class="modal-dialog modal-lg">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Auto Assignment - {{ $ticket['id'] }}</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <div class="alert alert-info mb-3" role="alert">
-                                                <i class="bi bi-info-circle me-2"></i>
-                                                Sistem akan secara otomatis memilih petugas berdasarkan konfigurasi assignment dan beban kerja saat ini.
-                                            </div>
-                                            <div class="row mb-3">
-                                                <div class="col-md-6">
-                                                    <small class="text-muted">Jenis Pekerjaan</small>
-                                                    <p><strong>{{ $ticket['jenis_pekerjaan'] }}</strong></p>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <small class="text-muted">Prioritas</small>
-                                                    <p><strong>{{ $ticket['prioritas'] }}</strong></p>
-                                                </div>
-                                            </div>
-                                            <div class="alert alert-warning" role="alert">
-                                                <h6><i class="bi bi-person-check me-2"></i>Petugas yang akan dipilih:</h6>
-                                                <p class="mb-0"><strong>Sistem sedang menghitung...</strong></p>
-                                                <small class="text-muted">Algoritma: Jenis Pekerjaan + Prioritas + Load Petugas</small>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                                            <button type="button" class="btn btn-primary" onclick="confirmAutoAssign('{{ $ticket['id'] }}')">
-                                                <i class="bi bi-check-circle me-2"></i>Assign Otomatis
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Manual Assign Modal -->
-                            <div class="modal fade" id="manualAssignModal{{ $ticket['id'] }}" tabindex="-1">
-                                <div class="modal-dialog modal-lg">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Manual Assignment - {{ $ticket['id'] }}</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <div class="mb-3">
-                                                <label class="form-label">Pilih Petugas</label>
-                                                <select class="form-select" id="petugas_{{ $ticket['id'] }}">
-                                                    <option selected disabled>-- Pilih Petugas --</option>
-                                                    <option>Ahmad Fauzi - Load: 2 tiket</option>
-                                                    <option>Siti Aminah - Load: 3 tiket</option>
-                                                    <option>Rizki Pratama - Load: 1 tiket</option>
-                                                    <option>Desi Marlina - Load: 2 tiket</option>
-                                                    <option>Budi Santoso - Load: 0 tiket</option>
-                                                </select>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Catatan untuk Petugas (Opsional)</label>
-                                                <textarea class="form-control" rows="3" placeholder="Tambahkan catatan khusus jika ada..."></textarea>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                                            <button type="button" class="btn btn-primary" onclick="confirmManualAssign('{{ $ticket['id'] }}')">
-                                                <i class="bi bi-check-circle me-2"></i>Assign Manual
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                             @endforeach
                         </tbody>
                     </table>
@@ -416,11 +342,132 @@
         </div>
     </div>
 </div>
+
+<!-- Unified Auto Assign Modal -->
+<div class="modal fade" id="autoAssignModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Auto Assignment - <span id="autoTicketId"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info mb-3" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Sistem akan secara otomatis memilih petugas berdasarkan konfigurasi assignment dan beban kerja saat ini.
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <small class="text-muted">Jenis Pekerjaan</small>
+                        <p><strong id="autoJenisPekerjaan"></strong></p>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">Prioritas</small>
+                        <p><strong id="autoPrioritas"></strong></p>
+                    </div>
+                </div>
+                <div class="alert alert-warning" role="alert">
+                    <h6><i class="bi bi-person-check me-2"></i>Petugas yang akan dipilih:</h6>
+                    <p class="mb-0"><strong>Sistem sedang menghitung...</strong></p>
+                    <small class="text-muted">Algoritma: Jenis Pekerjaan + Prioritas + Load Petugas</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="autoAssignBtn" onclick="confirmAutoAssign(currentTicketId)">
+                    <i class="bi bi-check-circle me-2"></i>Assign Otomatis
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Unified Manual Assign Modal -->
+<div class="modal fade" id="manualAssignModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manual Assignment - <span id="manualTicketId"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Pilih Petugas</label>
+                    <select class="form-select" id="petugasSelect">
+                        <option selected disabled>-- Pilih Petugas --</option>
+                        <option>Ahmad Fauzi - Load: 2 tiket</option>
+                        <option>Siti Aminah - Load: 3 tiket</option>
+                        <option>Rizki Pratama - Load: 1 tiket</option>
+                        <option>Desi Marlina - Load: 2 tiket</option>
+                        <option>Budi Santoso - Load: 0 tiket</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Catatan untuk Petugas (Opsional)</label>
+                    <textarea class="form-control" id="catatanText" rows="3" placeholder="Tambahkan catatan khusus jika ada..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="manualAssignBtn" onclick="confirmManualAssign(currentTicketId)">
+                    <i class="bi bi-check-circle me-2"></i>Assign Manual
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
 <script>
+let currentTicketId = null;
+let autoAssignModal = null;
+let manualAssignModal = null;
+
+// Initialize modals only once on page load
+document.addEventListener('DOMContentLoaded', function() {
+    autoAssignModal = new bootstrap.Modal(document.getElementById('autoAssignModal'), {
+        backdrop: 'static',
+        keyboard: false
+    });
+    
+    manualAssignModal = new bootstrap.Modal(document.getElementById('manualAssignModal'), {
+        backdrop: 'static',
+        keyboard: false
+    });
+});
+
+// Show Auto Assign Modal
+function showAutoAssignModal(ticketId, jenisPekerjaan, prioritas) {
+    currentTicketId = ticketId;
+    document.getElementById('autoTicketId').textContent = ticketId;
+    document.getElementById('autoJenisPekerjaan').textContent = jenisPekerjaan;
+    document.getElementById('autoPrioritas').textContent = prioritas;
+    
+    autoAssignModal.show();
+}
+
+// Show Manual Assign Modal
+function showManualAssignModal(ticketId) {
+    currentTicketId = ticketId;
+    document.getElementById('manualTicketId').textContent = ticketId;
+    document.getElementById('petugasSelect').value = '';
+    document.getElementById('catatanText').value = '';
+    
+    manualAssignModal.show();
+}
+
 function confirmAutoAssign(ticketId) {
+    if (!ticketId) {
+        showToast('ID Tiket tidak valid', 'danger');
+        return;
+    }
+
+    const btn = document.getElementById('autoAssignBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+
     fetch(`/api/ticket/auto-assign/${ticketId}`, {
         method: 'POST',
         headers: {
@@ -428,21 +475,41 @@ function confirmAutoAssign(ticketId) {
             'Content-Type': 'application/json'
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+    })
     .then(data => {
-        showToast(data.message, 'success');
+        autoAssignModal.hide();
+        showToast('Tiket berhasil diassign secara otomatis!', 'success');
         setTimeout(() => location.reload(), 1500);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Gagal mengassign tiket. Silakan coba lagi.', 'danger');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     });
 }
 
 function confirmManualAssign(ticketId) {
-    const petugasSelect = document.getElementById(`petugas_${ticketId}`);
+    if (!ticketId) {
+        showToast('ID Tiket tidak valid', 'danger');
+        return;
+    }
+
+    const petugasSelect = document.getElementById('petugasSelect');
     const petugas = petugasSelect.value;
     
     if (!petugas) {
         showToast('Pilih petugas terlebih dahulu', 'warning');
         return;
     }
+
+    const btn = document.getElementById('manualAssignBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
 
     fetch(`/api/ticket/manual-assign/${ticketId}`, {
         method: 'POST',
@@ -452,24 +519,37 @@ function confirmManualAssign(ticketId) {
         },
         body: JSON.stringify({ petugas: petugas })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+    })
     .then(data => {
-        showToast(data.message, 'success');
+        manualAssignModal.hide();
+        showToast('Tiket berhasil diassign secara manual!', 'success');
         setTimeout(() => location.reload(), 1500);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Gagal mengassign tiket. Silakan coba lagi.', 'danger');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     });
 }
 
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
-    toast.className = `alert alert-${type} alert-dismissible position-fixed top-0 end-0 m-3`;
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+    toast.setAttribute('role', 'alert');
     toast.style.zIndex = '9999';
+    toast.style.maxWidth = '500px';
     toast.innerHTML = `
         ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
     document.body.appendChild(toast);
     
-    setTimeout(() => toast.remove(), 3000);
+    const bsAlert = new bootstrap.Alert(toast);
+    setTimeout(() => bsAlert.close(), 4000);
 }
 </script>
 @endpush
