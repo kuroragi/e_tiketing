@@ -861,83 +861,513 @@ Struktur menu aplikasi dirancang agar mudah dipahami dan disesuaikan dengan pera
 
 ## 4.4 Gambaran Antarmuka Aplikasi
 
-Antarmuka aplikasi dirancang dengan prinsip sederhana dan informatif, antara lain:
+Antarmuka aplikasi dirancang dengan prinsip sederhana dan informatif, dengan menggunakan Bootstrap 5.3.2 sebagai framework UI, Bootstrap Icons 1.11.1 untuk ikon, dan Blade templating untuk rendering dinamis. Desain responsif diterapkan pada semua halaman untuk mendukung akses dari berbagai perangkat.
 
-1. Halaman dashboard menampilkan grafik atau ringkasan angka jumlah tiket.
-2. Halaman pengajuan tiket menggunakan formulir yang jelas dan ringkas.
-3. Halaman daftar tiket menampilkan status pekerjaan secara visual.
-4. Halaman laporan menyajikan data dalam bentuk tabel dan ringkasan.
+Antarmuka terdiri dari beberapa bagian utama:
 
-Desain visual dibuat konsisten agar pengguna mudah beradaptasi.
+1. **Layout Utama**: Navigasi atas (navbar) dengan logo instansi dan menu pengguna; sidebar navigasi di kiri dengan menu sesuai peran pengguna; area konten utama; footer.
+2. **Halaman Dashboard**: Menampilkan ringkasan statistik dengan kartu KPI, grafik tren, dan daftar aktivitas terbaru.
+3. **Halaman Pengajuan Tiket**: Formulir terstruktur dengan field wajib/opsional, validasi inline, dan preview.
+4. **Halaman Daftar Tiket**: Tabel dengan pencarian, filter, dan sortir; status ditampilkan dengan badge warna; aksi per baris.
+5. **Halaman Detail Tiket**: Informasi utama dalam panel, timeline aktivitas kronologis, lampiran, dan riwayat status.
+6. **Halaman Manajemen Tiket (Admin)**: Antarmuka tab untuk penugasan otomatis, penugasan manual, simulasi konfigurasi, dan history perubahan.
+7. **Halaman Laporan**: Filter dan widget untuk tampilan ringkas; ekspor CSV/PDF tersedia.
 
-### 4.4.1 Spesifikasi Layar
+### 4.4.1 Spesifikasi Layar & Komponen
 
-- Login
-  - Field: email/username, kata sandi; aksi: masuk, lupa kata sandi.
-  - Validasi sisi-klien & sisi-server; pesan kesalahan jelas.
+**A. Halaman Login**
+- Komponen: Logo/brand, form login (email/username, password), tombol "Masuk", link "Lupa Kata Sandi".
+- Validasi sisi-klien: field wajib, format email; sisi-server: kredensial & aktifasi akun.
+- Pesan: sukses (redirect dashboard), gagal (credential invalid / akun tidak aktif), warning (rate limit).
+- Styling: Warna brand Kominfo (biru), form responsif, centered layout.
 
-- Dashboard
-  - Widget KPI: total tiket periode berjalan, baru, diproses, selesai; tren bulanan; daftar tugas saya (Petugas); aktivitas terbaru.
-  - Filter cepat: periode (minggu/bulan/khusus), SKPD (Admin/Pimpinan), kategori.
+**B. Halaman Dashboard**
+- Widget KPI (4 kartu):
+  - Total Tiket (periode berjalan)
+  - Tiket Baru (badge warning)
+  - Tiket Diproses (badge info)
+  - Tiket Selesai (badge success)
+- Grafik tren: Bar/line chart bulanan menampilkan trend per status (library Chart.js).
+- Daftar aktivitas terbaru: Tabel mini 5–10 baris terakhir dengan kolom nomor tiket, judul, status, waktu.
+- Filter cepat: Dropdown periode (minggu/bulan), SKPD (untuk Admin/Pimpinan).
+- Akses berdasarkan peran:
+  - SKPD: melihat hanya tiket miliknya; KPI sesuai data pribadi.
+  - Petugas: melihat semua tiket + tugas saya (assigned to me).
+  - Pimpinan: melihat ringkasan agregat; filter SKPD.
+  - Admin: akses penuh; informasi sistem (user aktif, log aktivitas terbaru).
 
-- Pengajuan Tiket
-  - Field wajib: Judul (≤150), Deskripsi (≥20), Kategori, Prioritas, Kontak/PIC.
-  - Field opsional: Lampiran (pdf/jpg/png ≤ 10 MB/berkas), tanggal target.
-  - Aksi: Kirim (membuat tiket `Baru`), Simpan Draf (opsional), Batalkan.
+**C. Halaman Pengajuan Tiket**
+- Judul halaman: "Ajukan Tiket Pekerjaan Baru" / "Formulir Pengajuan Tiket".
+- Form struktur:
+  - **Field Wajib**:
+    - Judul Pekerjaan (text input, ≤150 karakter, counter visual).
+    - Deskripsi Rinci (textarea, ≥20 karakter, counter).
+    - Kategori/Jenis Pekerjaan (select dropdown, 4+ opsi: PIC Presensi, Perbaikan Portal, Troubleshooting, Maintenance Server).
+    - Prioritas (radio/select: Urgent, Tinggi, Sedang, Rendah; dengan badge warna).
+    - Kontak/PIC (text input, auto-fill dari profil).
+  - **Field Opsional**:
+    - Tanggal Target (date picker, tidak wajib).
+    - Lampiran (file upload, multiple, max 10 MB/berkas, jenis: pdf/jpg/png).
+  - Validasi inline: warna border (hijau valid, merah invalid); pesan error di bawah field; progress bar untuk upload.
+- Tombol aksi:
+  - "Kirim Tiket" (primary, POST, membuat tiket status "Baru").
+  - "Batalkan" (secondary, reset form).
+- Notifikasi: Toast success (nomor tiket + tautan ke detail); toast error (daftar field bermasalah).
+- Styling: Form responsif 2-kolom (tablet/desktop), 1-kolom (mobile); jarak konsisten (spacing grid).
 
-- Daftar Tiket
-  - Kolom: Nomor, Judul, SKPD, Kategori, Prioritas, Status, Petugas, Dibuat, Diperbarui.
-  - Fitur: pencarian, filter (status/kategori/prioritas/SKPD/periode/petugas), sortir, pagination.
-  - Aksi baris: Lihat, Ubah Status (role sesuai), Assign (Petugas/Admin).
+**D. Halaman Daftar Tiket**
+- Judul: "Daftar Tiket" / "Tiket Pekerjaan".
+- Toolbar atas:
+  - Input pencarian (placeholder: "Cari nomor/judul tiket...").
+  - Filter dropdown: Status, Kategori, Prioritas, SKPD, Petugas, Periode.
+  - Sortir dropdown: Terbaru, Prioritas Tertinggi, Deadline Terdekat.
+  - Tombol "Reset Filter", "Export CSV" (untuk auth users).
+- Tabel utama:
+  - Kolom: Nomor Tiket (link), Judul, SKPD, Kategori, Prioritas (badge warna), Status (badge warna), Petugas, Dibuat, Diperbarui.
+  - Warna status: Baru (abu/gray), Diproses (biru), Selesai (hijau), Ditolak (merah), Dibatalkan (kuning).
+  - Baris aksi klik → detail tiket; tombol aksi: "Lihat", "Ubah Status" (Petugas/Admin only), "Assign" (Petugas/Admin).
+- Pagination: Tampil 20 baris/halaman; nav prev/next/nomor halaman.
+- Empty state: Ikon kosong + pesan "Belum ada tiket" + tombol "Buat Tiket Baru" (untuk SKPD).
+- Styling: Tabel responsif (scroll horizontal di mobile); zebra striping; hover highlight baris.
 
-- Detail Tiket
-  - Bagian: Informasi Utama, Timeline Aktivitas, Lampiran, Riwayat Status.
-  - Aksi: Ubah Status (Petugas/Admin), Assign (Petugas/Admin), Tambah Komentar/Lampiran (SKPD & Petugas), Tutup Tiket (Petugas/Admin).
+**E. Halaman Detail Tiket**
+- Header: Nomor tiket (besar, uppercase), status (badge), prioritas (badge), tombol aksi ("Ubah Status", "Assign", "Batalkan" sesuai peran).
+- Tab/Bagian:
+  1. **Informasi Utama** (default aktif):
+     - Judul, Deskripsi, SKPD, Kategori, Prioritas, Kontak/PIC, Tanggal Dibuat, Tanggal Target (jika ada), Tanggal Selesai (jika selesai).
+     - Layout: 2-kolom (desktop), 1-kolom (mobile).
+  2. **Timeline Aktivitas**:
+     - Kronologis vertikal: setiap entry (komentar/status change) dengan timestamp, nama pengguna, avatar, teks.
+     - Komentar: form input di atas; tampil di bawah; tampil nama, waktu, teks; opsi ubah/hapus untuk pemilik/admin.
+     - Status change: entry sistem (badge + "ubah dari X ke Y oleh nama").
+  3. **Lampiran**:
+     - Grid thumbnail/list untuk file; klik unduh; upload baru (SKPD/Petugas).
+  4. **Riwayat Status**:
+     - Tabel: Waktu, Status Lama, Status Baru, Petugas, Keterangan (optional).
+- Modals:
+  - Ubah Status: select status target, textarea keterangan, tombol simpan/batal.
+  - Assign Petugas: select petugas, textarea instruksi, tombol assign/batal.
+  - Selesaikan Tiket: textarea ringkasan hasil, opsi unggah berkas bukti, tombol selesai/batal.
+- Styling: Card/panel layout; border left berwarna sesuai status; form elemen responsif.
 
-- Manajemen Data (Admin)
-  - Pengguna, SKPD, Kategori, Prioritas: tabel CRUD; pengaturan SMTP dan identitas.
+**F. Halaman Manajemen Tiket (Admin)**
+- Navigasi Tab (4 tab):
+  1. **Pending** (default): Tabel tiket dengan status "Baru" belum diassign; kolom Nomor, Judul, SKPD, Jenis, Prioritas, Waktu Masuk; aksi "Assign Otomatis", "Assign Manual".
+  2. **Auto Assignment**: Form konfigurasi dengan accordion per jenis pekerjaan:
+     - Header accordion: ikon, nama jenis, toggle enable/disable, badge status (Aktif/Tidak).
+     - Body: Tabel kondisi-petugas-persentase; tombol Edit/Hapus rule; tombol "Tambah Aturan".
+     - Tombol submit: "Simpan Konfigurasi", "Reset", "Export", "Import".
+     - Bagian algoritma penjelasan: 4 langkah dengan pseudocode.
+     - Tab tambahan: "Beban Kerja" (chart bar petugas + tabel load), "Simulasi" (dropdown jenis/prioritas + tombol "Jalankan" + hasil), "History" (tabel perubahan konfigurasi + restore).
+  3. **Manual Assignment**: Daftar tiket pending + grid 6-kolom petugas (card: nama, skill, load badge, radio select); modal detail assignment per tiket; tombol "Assign Tiket".
+  4. **History**: Tabel riwayat assignment (tanggal, admin, perubahan, status, restore button) + statistik KPI (total, %, avg waktu) + chart distribusi metode (pie/doughnut).
+  - Styling: Tab nav dengan ikon; tab pane fade-in; accordion collapse; modals dengan backdrop static.
 
-- Laporan
-  - Filter: periode, SKPD, kategori, status.
-  - Tampil: ringkasan angka, grafik sederhana, tabel rekap; aksi ekspor CSV/PDF.
+**G. Halaman Laporan**
+- Filter bar atas: Periode (date range picker), SKPD, Kategori, Status.
+- Tombol: "Terapkan", "Reset", "Export CSV", "Export PDF".
+- Tampilan ringkas:
+  - 4 KPI card: Total Tiket, Selesai, Rata-rata Waktu, Backlog Aktif.
+  - Grafik tren (bulan lalu): line/bar chart per status.
+  - Tabel rekap: Kolom SKPD/Kategori, Jumlah Tiket, Selesai, Durasi Rata-rata, Last Update.
+  - Drill-down: Klik row → daftar tiket terfilter.
+- Styling: Card-based layout; grid kolom responsif; grafik Chart.js.
 
-### 4.4.2 Pola Interaksi & Aksesibilitas
+**H. Halaman Manajemen Data (Admin)**
+- Menu navigasi tab/sidebar: Pengguna, SKPD, Jenis Pekerjaan, Prioritas, Pengaturan, Log Aktivitas.
+- **Pengguna**:
+  - Tabel: Nama, Email, Peran, SKPD (jika petugas), Status, Aksi.
+  - Modal CRUD: Tambah/Ubah pengguna; form nama, email, peran, SKPD, password (hide/show toggle).
+  - Aksi: Edit, Reset Password, Nonaktifkan, Hapus (confirm).
+- **SKPD**:
+  - Tabel: Nama, Kontak, Penanggung Jawab, Jumlah Pengguna, Status.
+  - Modal CRUD: Form nama, kontak, kepala SKPD.
+- **Jenis Pekerjaan/Prioritas**:
+  - Tabel CRUD sederhana.
+  - Prioritas: include field warna (color picker).
+- **Pengaturan**:
+  - Form: SMTP host/port/user/password, dari alamat email, logo instansi (upload), nama instansi, batas ukuran lampiran.
+  - Tombol: Simpan, Test Email.
+- **Log Aktivitas**:
+  - Tabel: Waktu, Pengguna, Entitas, Aksi, Detail (expandable JSON).
+  - Filter: Pengguna, Tipe Entitas, Periode.
+  - No CRUD; read-only.
+- Styling: Tabel CRUD terstruktur; form modal; validasi inline; loading state pada submit.
 
-- Komponen: Blade + Tailwind (opsional), form dengan validasi inline, modals untuk aksi kritikal.
-- Status UI: loading spinner pada aksi berat; empty state informatif; konfirmasi untuk tindakan destruktif.
-- Aksesibilitas: kontras memadai, fokus indikator, teks alt pada ikon, navigasi keyboard.
+**I. Halaman Panduan, Tentang, Hubungi (Statis)**
+- Breadcrumb, hero section kecil.
+- Panduan: Accordion FAQ atau tab per peran.
+- Tentang: Deskripsi sistem, version, link sosial.
+- Hubungi: Form kontak + info kontak Kominfo.
 
-<!-- Catatan Duplikasi: Spesifikasi UI di Bab II 2.5 memuat poin yang sama; bagian ini memberikan rincian layar. -->
+**J. Komponen Bersama (Recurring)**
+- Navbar: Logo, judul halaman singkat, dropdown pengguna (logout, profile opsional).
+- Sidebar: Menu item dengan icon + label; highlight aktif; collapse toggle.
+- Footer: Quick links, informasi instansi, copyright.
+- Alerts: Success/error/warning/info toast (top-right, auto-close 4s); inline alert card (close button).
+- Modals: Header (title + close), body, footer (tombol).
+- Form: Label + input/select/textarea; validasi feedback; helper text; required indicator (*).
+- Table: Sortable header (icon sort), pagination, empty state.
+- Badge: Status (warna semantik), prioritas (warna), angka (number).
+
+### 4.4.2 Desain Visual & Gaya
+
+- **Palet Warna**:
+  - Brand: Biru (#0d6efd), Biru Gelap (#0b5ed7).
+  - Status: Baru (abu #f8f9fa), Diproses (biru #0dcaf0), Selesai (hijau #198754), Ditolak (merah #dc3545), Dibatalkan (kuning #ffc107).
+  - Prioritas: Urgent (merah), Tinggi (kuning), Sedang (biru), Rendah (hijau).
+  - Neutral: Teks (#212529), Background (#f8f9fa), Border (#dee2e6).
+- **Typography**: Inter (Google Fonts / Bunny), sans-serif; ukuran base 16px; heading h1–h6 dengan skala 1.5–2.5.
+- **Spacing**: Grid 8px; padding form 1.25rem; margin antar section 1.5rem.
+- **Komponen**:
+  - Tombol: Padding 0.75rem 1.25rem; border radius 0.375rem; hover + active state.
+  - Input: Padding 0.5rem 0.75rem; border 1px solid #dee2e6; focus outline biru; background putih.
+  - Card: Border none; box-shadow 0 0.125rem 0.25rem rgba(0,0,0,0.075); border-left 4px (warna sesuai konteks).
+  - Badge: Font-size 0.75rem; padding 0.375rem 0.75rem; border-radius 0.5rem.
+- **Responsive**:
+  - Breakpoint: xs (< 576px), sm (≥ 576px), md (≥ 768px), lg (≥ 992px), xl (≥ 1200px).
+  - Sidebar: collapse di mobile; drawer/toggle menu.
+  - Tabel: scroll horizontal di mobile; reduce kolom jika perlu.
+- **Aksesibilitas**:
+  - Kontras min 4.5:1 (text/bg).
+  - Focus indicator: outline 2px solid brand-blue.
+  - Teks alt untuk ikon; label eksplisit form.
+  - Keyboard navigation: tab flow logis, Enter/Space untuk button/toggle.
+
+### 4.4.3 Alur Navigasi Utama per Peran
+
+**SKPD (Pengguna)**:
+Login → Dashboard (ringkas) → Menu: Pengajuan Tiket, Tiket Saya, Laporan, Panduan.
+
+**Petugas Kominfo**:
+Login → Dashboard → Menu: Daftar Tiket, Laporan Ringkas, Manajemen Tiket (jika kewenangan), Panduan.
+
+**Admin**:
+Login → Dashboard → Menu: Semua (Daftar Tiket, Manajemen Tiket, Laporan, Manajemen Data, Log Aktivitas, Pengaturan).
+
+**Pimpinan**:
+Login → Dashboard (ringkas agregat) → Menu: Dashboard, Laporan (penuh), akses baca Tiket.
+
+### 4.4.4 Pola Interaksi Kunci
+
+- **Pengajuan Tiket (SKPD)**: Form → Validasi inline → Kirim → Toast sukses (nomor tiket) → Notifikasi email ke Kominfo.
+- **Penugasan Tiket (Admin/Petugas)**:
+  - Auto: Pilih tiket → Lihat rekomendasi algoritma → Tombol "Assign Otomatis" → Toast sukses.
+  - Manual: Pilih tiket → Modal select petugas → Tombol "Assign" → Toast sukses → Notifikasi email.
+- **Ubah Status (Petugas)**: Detail tiket → Tombol "Ubah Status" → Modal dropdown status + textarea → Tombol "Simpan" → Update data + entry timeline + notifikasi email pemohon.
+- **Selesaikan Tiket (Petugas)**: Detail tiket → Tombol "Selesai" → Modal ringkasan hasil + lampiran → Tombol "Selesaikan" → Status "Selesai" + timestamp + notifikasi email.
+- **Laporan (Pimpinan)**: Filter → Terapkan → Lihat ringkas/grafik/tabel → Ekspor CSV/PDF.
+- **Konfigurasi Auto Assignment (Admin)**: Tab "Auto Assignment" → Edit accordion rules → Tombol "Simpan" → Toast sukses → History entry + restore option.
 
 ## 4.5 Desain Arsitektur Sistem (Gambaran Umum)
 
-Secara umum, arsitektur sistem dirancang sebagai berikut:
+Sistem Ticketing Layanan Kominfo Kota Bukittinggi dibangun dengan arsitektur web application berbasis Laravel 12.0+, yang mendukung skalabilitas, maintainability, dan keamanan. Aplikasi bersifat monolithic dengan separation of concerns yang jelas antara presentasi, logika bisnis, dan data.
 
-* Aplikasi berbasis web yang diakses melalui jaringan internal Pemko.
-* Database terpusat untuk menyimpan data tiket dan laporan.
-* Mekanisme autentikasi dan otorisasi berdasarkan peran pengguna.
-
-Arsitektur ini dipilih untuk mendukung kemudahan pengelolaan, keamanan data, dan pengembangan sistem di masa depan.
+Pendekatan MVC (Model-View-Controller) dengan arsitektur berlapis (layered architecture) diterapkan untuk memastikan kode terstruktur dan mudah ditest.
 
 ### 4.5.1 Arsitektur Logis
 
-- Presentasi: Blade/Vite, komponen UI, validasi klien, notifikasi toast.
-- Aplikasi (Laravel): controller, service layer, policy/authorization, validation, job/queue (opsional untuk email).
-- Data: MySQL/MariaDB; storage untuk lampiran; migrasi & seeding.
-- Integrasi: SMTP untuk email notifikasi.
+**Lapisan Presentasi (Presentation Layer)**:
+- **View**: Blade templating (Blade components, reusable partials).
+  - Layout induk: `e-ticket.blade.php` (navbar, sidebar, breadcrumb, footer).
+  - Halaman spesifik di: `resources/views/pages/` (admin/, user/).
+  - Komponen UI: form, table, modal, card, badge, alert.
+  - Asset: CSS (Bootstrap 5.3.2), JS (Vanilla JS + Chart.js, tanpa jQuery).
+- **Frontend Validation**: HTML5 constraints + Bootstrap validation feedback.
+- **Interaksi**: AJAX fetch untuk operasi asinkron (assignment tiket, status update); modal interaction; toast notifications.
 
-### 4.5.2 Topologi Deploy (Contoh)
+**Lapisan Aplikasi (Application/Business Logic Layer)**:
+- **Controller**: Menerima request, orchestrate logika, return response (view/JSON).
+  - Konvensi: `KominfoController` (tiket workflow), `PageController` (halaman statis user), `AdminPageController` (halaman admin), `TicketManagementController` (assignment & konfigurasi).
+  - Setiap method menangani use case spesifik (create, store, update, show, list).
+- **Service/Business Logic** (opsional di MVP, dapat ditambah P1):
+  - Enkapsulasi logika kompleks (algoritma auto-assignment, kalkulasi SLA, notifikasi).
+  - Contoh: `AssignmentService` (rule-based ticket assignment), `NotificationService` (email).
+- **Request Validation** (FormRequest):
+  - Custom validation rule untuk tiket, pengguna, master data.
+  - Pesan error lokal (Bahasa Indonesia).
+- **Authorization (Policy)** (opsional di MVP):
+  - Kontrol akses berbasis peran & resource (siapa boleh ubah tiket mana).
+  - Contoh: `TicketPolicy` (user hanya ubah tiket miliknya/assigned, admin ubah semua).
+- **Model** (Eloquent ORM):
+  - Relasi: `User` → `Ticket`, `Ticket` → `Comment/Attachment/Status History`.
+  - Scope: untuk filter umum (my tickets, pending, completed).
+  - Accessor/Mutator: format data (status badge, nomor tiket, durasi).
 
-- Server aplikasi: Linux (Nginx + PHP-FPM) atau Windows (IIS). PHP 8.x.
-- Database: MySQL/MariaDB; akses jaringan internal.
-- Penyimpanan lampiran: disk lokal `storage/app/public` atau network share; publikasi via symlink.
-- Konfigurasi via `.env`: kredensial DB, SMTP, batas unggahan, nama instansi.
+**Lapisan Data (Data Access Layer)**:
+- **Database**: MySQL 8.0+ / MariaDB 10.5+.
+- **Migrasi**: Versionable schema (bisa rollback).
+- **Seeding**: Data master inisial (SKPD, jenis pekerjaan, prioritas, pengguna default).
+- **Relationships** (Eloquent):
+  - One-to-many: User → Tickets; Department → Users; Category → Tickets.
+  - One-to-many polymorphic: Tiket → Comments/Attachments; Activity log → Entities.
+- **Caching** (optional di P1):
+  - Cache query ringkasan (KPI dashboard) per 5 menit.
+  - Cache kategori/prioritas/SKPD master data.
 
-### 4.5.3 Keamanan, Logging, Observability
+**Integrasi Eksternal**:
+- **Email (SMTP)**: Laravel Mail + queue (optional, synchronous di MVP).
+  - Template: Mailable class + markdown/blade template.
+  - Event-driven: tiket dibuat, status berubah, assigned, selesai.
+- **File Storage**: Local disk (`storage/app/public`) atau S3-compatible.
+  - Symlink publik untuk unduh lampiran.
+  - Validasi tipe/ukuran di backend.
 
-- HTTPS wajib; hardening header; rate limiting endpoint login.
-- Logging: `storage/logs` terstruktur; audit log aktivitas pada tiket & master data.
-- Backup: DB harian, retensi ≥30 hari; pemulihan insiden terprosedur.
+**Logging & Monitoring**:
+- **Application Log**: `storage/logs/` (Monolog, daily rotation).
+- **Audit Log**: Custom table `audit_logs` (user, action, entity, timestamp, diff).
+- **Error Tracking**: Exception handling terpusat; logging ke stderr/file.
+
+### 4.5.2 Stack Teknologi Detail
+
+**Backend**:
+- PHP 8.2+ (strict types, named arguments, enum).
+- Laravel 12.0+ (latest LTS).
+- Composer (dependency management).
+- Database Driver: PDO MySQL.
+
+**Frontend**:
+- HTML5, CSS3, JavaScript ES6+.
+- Bootstrap 5.3.2 (responsive, utility-first option tersedia).
+- Bootstrap Icons 1.11.1 (SVG, auto-loading).
+- Chart.js 3.9.1 (data visualization, pie/bar/line).
+- Blade templating (server-side).
+- Vite (optional, untuk asset bundling; saat ini tidak wajib).
+
+**Development & Deployment**:
+- Version control: Git (GitHub/GitLab).
+- Local dev: Laravel Sail (Docker) or native PHP + MySQL.
+- Testing: PHPUnit (feature/unit test, optional di MVP).
+- Linting: PHP_CodeSniffer (PSR-12).
+- CI/CD: GitHub Actions or similar (optional untuk MVP).
+
+### 4.5.3 Topologi Deploy (Contoh - On-Premise)**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Client (Browser)                         │
+│            Chrome, Edge, Firefox (Modern)                    │
+└─────────────────────────────┬───────────────────────────────┘
+                              │ HTTPS
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   Web Server Layer                           │
+├─────────────────────────────────────────────────────────────┤
+│ OS: Linux (Ubuntu 22.04 LTS recommended) / Windows Server   │
+│ Web Server: Nginx 1.24+ (reverse proxy, static files)       │
+│ or IIS (Windows alternative)                                 │
+└─────────────────────────────┬───────────────────────────────┘
+                              │ localhost:9000 (Unix socket)
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 Application Layer                            │
+├─────────────────────────────────────────────────────────────┤
+│ PHP-FPM 8.2 (fastcgi process manager)                       │
+│ Laravel 12.0 Application (MVC, ~50 routes)                  │
+│ Scheduler (optional cron: email queue, log rotation)        │
+└─────────────────────────────┬───────────────────────────────┘
+                              │ TCP 3306
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  Database Layer                              │
+├─────────────────────────────────────────────────────────────┤
+│ MySQL 8.0+ / MariaDB 10.5+                                  │
+│ Database: 'ticketing' (UTF-8 mb4 collation)                 │
+│ Backup: Daily snapshots, 30-day retention                   │
+└─────────────────────────────────────────────────────────────┘
+
+                    ┌─────────────────┐
+                    │ Storage Layer   │
+                    ├─────────────────┤
+                    │ Lampiran tiket  │
+                    │ storage/app/pub │
+                    │ (Local disk or  │
+                    │  Network share) │
+                    └─────────────────┘
+
+                    ┌─────────────────┐
+                    │ Mail Service    │
+                    ├─────────────────┤
+                    │ SMTP Gateway    │
+                    │ (e.g., Postfix) │
+                    │ or External SaaS│
+                    └─────────────────┘
+```
+
+**Spec Server (Estimasi untuk 1000 tiket/bulan)**:
+- CPU: 2-4 cores.
+- RAM: 4–8 GB (PHP-FPM pool, database buffer).
+- Storage: 50 GB (SSD untuk DB, 100+ GB untuk lampiran jika banyak).
+- Network: 1 Mbps uplink (cukup untuk traffic internal).
+- Backup: 2 TB (untuk retensi 30 hari backup harian).
+
+### 4.5.4 Keamanan, Logging, Observability
+
+**Keamanan**:
+- **HTTPS**: Sertifikat SSL/TLS (Let's Encrypt free atau corporate); wajib selalu.
+- **Header Security**: X-Frame-Options, X-Content-Type-Options, Strict-Transport-Security (HSTS).
+- **Authentication**: Session cookie + token CSRF; rate limiting login (5 attempt/15 menit).
+- **Authorization**: Middleware `auth`, `role:admin|petugas|skpd|pimpinan` pada route.
+- **Input Validation**: Sanitasi input (Illuminate\Validation\Rule), escape output (Blade {{}}).
+- **Password**: Hashing bcrypt/argon2 (Laravel default).
+- **Database**: Query parameterized (Eloquent ORM, hindari raw SQL).
+- **File Upload**: Whitelist MIME type, scan virus (ClamAV optional), store outside webroot.
+- **Environment**: .env tidak di version control; config via environment variable.
+
+**Logging**:
+- **Application**: Laravel log (Monolog driver, daily rotation, 14 hari retensi).
+  - Level: error, warning (untuk tindakan kritis: login, assign, selesai tiket).
+  - Format: timestamp, level, message, context (user_id, ticket_id).
+- **Audit Log** (custom table):
+  - Setiap CRUD pada tiket, master data, konfigurasi → entry audit_logs.
+  - Field: id, user_id, action, entity_type, entity_id, meta (JSON diff/detail), created_at.
+  - Query audit via admin panel dengan filter user/entity/date.
+- **Access Log** (web server):
+  - Nginx/IIS access log; log 404, 500, request lama (>2s).
+
+**Monitoring & Observability**:
+- **Dashboard Health** (opsional P1):
+  - Widget: DB connection ok, file storage writable, SMTP reachable, disk space.
+  - Alert admin jika issue (inline dalam UI).
+- **Error Tracking** (opsional P1):
+  - Integration dengan Sentry / rollbar untuk exception tracking.
+  - Notifikasi email admin jika error rate > threshold.
+- **Performance**:
+  - Log query > 1s (database query logging, optional).
+  - Monitor PHP-FPM pool status.
+  - Cache hit ratio untuk master data.
+
+### 4.5.5 Struktur Direktori Laravel
+
+```
+e-ticketing/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── KominfoController.php
+│   │   │   ├── PageController.php
+│   │   │   ├── AdminPageController.php
+│   │   │   ├── TicketManagementController.php
+│   │   │   └── ... (AuthController, dll)
+│   │   ├── Middleware/ (auth, role, etc.)
+│   │   └── Requests/ (Form validation)
+│   ├── Models/
+│   │   ├── User.php
+│   │   ├── Ticket.php
+│   │   ├── Department.php
+│   │   ├── Category.php
+│   │   ├── Priority.php
+│   │   ├── TicketComment.php
+│   │   ├── TicketAttachment.php
+│   │   ├── AuditLog.php
+│   │   └── ...
+│   ├── Services/ (optional, business logic)
+│   │   ├── AssignmentService.php
+│   │   ├── NotificationService.php
+│   │   └── ...
+│   ├── Policies/ (optional, authorization)
+│   │   └── TicketPolicy.php
+│   ├── Providers/
+│   │   └── AppServiceProvider.php
+│   └── ...
+├── bootstrap/
+│   ├── app.php
+│   └── providers.php
+├── config/
+│   ├── app.php, auth.php, cache.php, database.php, mail.php, session.php, ...
+│   └── ...
+├── database/
+│   ├── migrations/
+│   │   ├── 2024_01_22_create_users_table.php
+│   │   ├── 2024_01_22_create_departments_table.php
+│   │   ├── 2024_01_22_create_categories_table.php
+│   │   ├── 2024_01_22_create_priorities_table.php
+│   │   ├── 2024_01_22_create_tickets_table.php
+│   │   ├── 2024_01_22_create_ticket_comments_table.php
+│   │   ├── 2024_01_22_create_ticket_attachments_table.php
+│   │   ├── 2024_01_22_create_audit_logs_table.php
+│   │   └── ...
+│   ├── seeders/
+│   │   ├── DatabaseSeeder.php
+│   │   ├── UserSeeder.php
+│   │   ├── DepartmentSeeder.php
+│   │   ├── CategorySeeder.php
+│   │   └── ...
+│   └── factories/ (test data)
+├── public/
+│   ├── index.php (entry point)
+│   ├── css/ (built assets)
+│   ├── js/ (built assets)
+│   └── storage/ (symlink ke storage/app/public)
+├── resources/
+│   ├── views/
+│   │   ├── layouts/
+│   │   │   ├── e-ticket.blade.php (main layout)
+│   │   │   └── auth.blade.php (optional)
+│   │   ├── pages/
+│   │   │   ├── dashboard.blade.php
+│   │   │   ├── tiket/
+│   │   │   │   ├── index.blade.php (daftar)
+│   │   │   │   ├── create.blade.php (pengajuan form)
+│   │   │   │   ├── show.blade.php (detail)
+│   │   │   │   └── ...
+│   │   │   ├── admin/
+│   │   │   │   ├── pengguna/
+│   │   │   │   ├── skpd/
+│   │   │   │   ├── jenis-pekerjaan/
+│   │   │   │   ├── manajemen-tiket/
+│   │   │   │   │   ├── index.blade.php (pending tab)
+│   │   │   │   │   ├── auto-assignment.blade.php (config)
+│   │   │   │   │   ├── manual-assignment.blade.php (manual)
+│   │   │   │   │   └── history.blade.php (history)
+│   │   │   │   └── ...
+│   │   │   └── ...
+│   │   └── ...
+│   ├── css/
+│   │   └── app.css (custom styles)
+│   └── js/
+│       └── app.js (global scripts)
+├── routes/
+│   ├── web.php (main routes)
+│   ├── api.php (optional, API routes untuk AJAX)
+│   └── console.php
+├── storage/
+│   ├── app/public/ (lampiran tiket, symlinked ke public/storage)
+│   ├── logs/ (aplikasi log)
+│   └── framework/ (cache, session, views)
+├── tests/ (PHPUnit tests, optional)
+├── vendor/ (Composer dependencies)
+├── .env (environment config, not in git)
+├── .env.example (template .env)
+├── composer.json
+├── package.json (optional, untuk asset)
+├── vite.config.js (optional)
+├── phpunit.xml
+├── artisan (CLI)
+└── README.md
+```
+
+### 4.5.6 Alur Request-Response Contoh (Pengajuan Tiket)**
+
+```
+1. User (SKPD) → Browser → GET /tiket/pengajuan
+   └─→ Router (web.php) → KominfoController@create
+       └─→ return view('pages.tiket.create') → Blade render → HTML form
+           └─→ Browser display form
+
+2. User fill form + POST /tiket/pengajuan
+   └─→ Router → KominfoController@store
+       └─→ FormRequest validate input
+       └─→ Model::create() [Eloquent] → insert DB
+       └─→ Storage::put() [lampiran] → save file
+       └─→ Mail::send() [notifikasi, async queue optional] → SMTP
+       └─→ AuditLog::record() [log activity]
+       └─→ return redirect()->route('tiket.show', $ticket->id)
+           └─→ Browser redirect → GET /tiket/{id}
+               └─→ show() render detail page
+```
+
+
 
 ## 4.6 Ringkasan Desain Aplikasi
 
@@ -961,25 +1391,318 @@ Untuk mendukung proses bisnis, sistem ini menggunakan beberapa data utama, antar
 
 Struktur data ini dirancang sederhana namun cukup untuk mendukung kebutuhan pelaporan dan analisis beban kerja.
 
-### 4.7.1 Entitas & Atribut (Ringkas)
+### 4.7.1 Entitas & Atribut (Detail)**
 
-- users: id, name, email, password_hash, role, department_id (nullable), status, created_at, updated_at
-- departments (SKPD): id, name, contact, head, created_at, updated_at
-- categories: id, name, description, created_at, updated_at
-- priorities: id, name, weight, color, created_at, updated_at
-- tickets: id, number, title, description, requester_id, department_id, category_id, priority_id, assignee_id (nullable), status, target_date (nullable), closed_at (nullable), created_at, updated_at
-- ticket_comments: id, ticket_id, user_id, body, created_at
-- ticket_attachments: id, ticket_id, user_id, filename, path, size, mime, created_at
-- audit_logs: id, entity_type, entity_id, action, user_id, meta(json), created_at
+**Entity: users**
+- id: BIGINT, primary key, auto-increment.
+- name: VARCHAR(255), nama pengguna lengkap.
+- email: VARCHAR(255), unique, alamat email.
+- password: VARCHAR(255), hash bcrypt/argon2.
+- email_verified_at: TIMESTAMP, nullable (verifikasi email, opsional MVP).
+- role: ENUM('admin', 'petugas', 'skpd', 'pimpinan'), peran akses.
+- department_id: BIGINT, foreign key → departments, nullable (untuk role SKPD/Petugas).
+- status: ENUM('aktif', 'nonaktif'), status akun.
+- created_at: TIMESTAMP, waktu pembuatan.
+- updated_at: TIMESTAMP, waktu perubahan terakhir.
+- Indeks: email (unique), role, department_id, status.
 
-### 4.7.2 Relasi Utama
+**Entity: departments (SKPD)**
+- id: BIGINT, primary key.
+- name: VARCHAR(255), nama SKPD.
+- code: VARCHAR(50), kode identifikasi.
+- contact: VARCHAR(100), nomor kontak/telp.
+- head: VARCHAR(255), nama kepala SKPD.
+- address: TEXT, nullable, alamat SKPD.
+- status: ENUM('aktif', 'nonaktif'), status.
+- created_at, updated_at: TIMESTAMP.
+- Indeks: name, code.
 
-- users (1) — (n) tickets sebagai requester/assignee
-- departments (1) — (n) users dan tickets
-- tickets (1) — (n) ticket_comments dan ticket_attachments
-- categories/priorities (1) — (n) tickets
+**Entity: categories (Jenis Pekerjaan)**
+- id: BIGINT, primary key.
+- name: VARCHAR(255), nama kategori (PIC Presensi, Perbaikan Portal, dll).
+- description: TEXT, nullable, deskripsi detail.
+- status: ENUM('aktif', 'nonaktif').
+- created_at, updated_at: TIMESTAMP.
+- Indeks: name.
 
-## 4.8 Desain Dashboard Pimpinan
+**Entity: priorities**
+- id: BIGINT, primary key.
+- name: VARCHAR(100), nama prioritas (Urgent, Tinggi, Sedang, Rendah).
+- weight: INT, bobot untuk sorting/algo (4=Urgent, 3=Tinggi, 2=Sedang, 1=Rendah).
+- color: VARCHAR(7), kode warna hex (#dc3545 untuk Urgent, dll).
+- description: TEXT, nullable.
+- created_at, updated_at: TIMESTAMP.
+- Indeks: weight.
+
+**Entity: tickets (Tiket Pekerjaan)**
+- id: BIGINT, primary key.
+- number: VARCHAR(50), unique, nomor tiket format TAHUN-BULAN-SEKUENS (2026-01-0001).
+- title: VARCHAR(255), judul tiket (≤150 displayed, tapi stored penuh).
+- description: LONGTEXT, deskripsi rinci pekerjaan.
+- requester_id: BIGINT, foreign key → users (SKPD pemohon).
+- department_id: BIGINT, foreign key → departments (SKPD pemohon, denormalisasi).
+- category_id: BIGINT, foreign key → categories (jenis pekerjaan).
+- priority_id: BIGINT, foreign key → priorities (level prioritas).
+- assignee_id: BIGINT, nullable, foreign key → users (petugas penanggung jawab).
+- status: ENUM('baru', 'diproses', 'selesai', 'ditolak', 'dibatalkan').
+  - baru: tiket baru masuk, belum diassign/diproses.
+  - diproses: sedang dikerjakan petugas.
+  - selesai: pekerjaan selesai, ditandai oleh petugas.
+  - ditolak: tiket ditolak (tidak sesuai/tidak bisa dikerjakan).
+  - dibatalkan: tiket dibatalkan oleh SKPD/admin.
+- target_date: DATE, nullable, tanggal target penyelesaian (jika diisi pemohon).
+- assigned_at: TIMESTAMP, nullable, waktu tiket diassign.
+- started_at: TIMESTAMP, nullable, waktu status berubah ke diproses.
+- closed_at: TIMESTAMP, nullable, waktu status berubah ke selesai/ditolak/dibatalkan.
+- summary: LONGTEXT, nullable, ringkasan hasil pekerjaan (untuk selesai/ditolak).
+- created_at, updated_at: TIMESTAMP.
+- Indeks: number (unique), status, department_id, category_id, assignee_id, created_at.
+- Full-text index: (title, description) untuk search.
+
+**Entity: ticket_comments (Komentar/Progres Tiket)**
+- id: BIGINT, primary key.
+- ticket_id: BIGINT, foreign key → tickets.
+- user_id: BIGINT, foreign key → users (pembuat komentar).
+- body: LONGTEXT, isi komentar/progres.
+- type: ENUM('comment', 'note', 'status_change'), tipe entry (opsional detail).
+- created_at: TIMESTAMP, waktu komentar.
+- updated_at: TIMESTAMP (soft update untuk edit komentar, opsional MVP).
+- deleted_at: TIMESTAMP, nullable (soft delete opsional).
+- Indeks: ticket_id, user_id, created_at.
+
+**Entity: ticket_attachments (Lampiran Tiket)**
+- id: BIGINT, primary key.
+- ticket_id: BIGINT, foreign key → tickets.
+- user_id: BIGINT, foreign key → users (uploader).
+- original_name: VARCHAR(255), nama file original.
+- stored_name: VARCHAR(255), nama file tersimpan (hashed untuk keamanan).
+- path: VARCHAR(500), path relatif ke storage.
+- mime_type: VARCHAR(100), tipe MIME (application/pdf, image/jpeg, dll).
+- size: BIGINT, ukuran byte.
+- created_at: TIMESTAMP.
+- Indeks: ticket_id, user_id.
+
+**Entity: audit_logs (Log Audit/Aktivitas)**
+- id: BIGINT, primary key.
+- user_id: BIGINT, foreign key → users.
+- action: VARCHAR(50), tindakan (created, updated, deleted, status_changed, assigned).
+- entity_type: VARCHAR(100), tipe entity (Ticket, User, Category, dll - polymorphic).
+- entity_id: BIGINT, ID entity yang berubah.
+- entity_name: VARCHAR(255), nullable, nama entity (nomor tiket, nama user, dll).
+- old_value: JSON, nullable, nilai sebelum (untuk perubahan).
+- new_value: JSON, nullable, nilai sesudah.
+- description: TEXT, nullable, deskripsi perubahan (human-readable).
+- ip_address: VARCHAR(45), IP user (untuk security).
+- user_agent: TEXT, nullable, browser user agent.
+- created_at: TIMESTAMP.
+- Indeks: user_id, entity_type, entity_id, action, created_at.
+
+**Entity: settings (Pengaturan Sistem, opsional)**
+- id: BIGINT, primary key.
+- key: VARCHAR(100), unique, kunci pengaturan (smtp_host, app_name, max_upload_size).
+- value: LONGTEXT, nilai setting.
+- type: VARCHAR(50), tipe (string, integer, boolean, json).
+- updated_at: TIMESTAMP.
+- Indeks: key (unique).
+
+### 4.7.2 Relasi Utama (Eloquent Relationships)
+
+```php
+// User
+User::tickets()->hasMany(Ticket::class, 'requester_id')  // SKPD yang membuat
+User::assignedTickets()->hasMany(Ticket::class, 'assignee_id')  // Tiket yang ditugaskan
+User::department()->belongsTo(Department::class)  // SKPD user
+User::comments()->hasMany(TicketComment::class)  // Komentar user
+
+// Ticket
+Ticket::requester()->belongsTo(User::class, 'requester_id')  // Pembuat
+Ticket::assignee()->belongsTo(User::class, 'assignee_id')  // Petugas
+Ticket::department()->belongsTo(Department::class)  // SKPD pemohon
+Ticket::category()->belongsTo(Category::class)  // Jenis pekerjaan
+Ticket::priority()->belongsTo(Priority::class)  // Prioritas
+Ticket::comments()->hasMany(TicketComment::class)  // Komentar & progres
+Ticket::attachments()->hasMany(TicketAttachment::class)  // Lampiran
+
+// Department
+Department::users()->hasMany(User::class)  // User di SKPD
+Department::tickets()->hasMany(Ticket::class)  // Tiket dari SKPD
+
+// Polymorphic (Audit)
+AuditLog::auditable()->morphTo()  // Tunjuk entity yang diaudit
+```
+
+### 4.7.3 Indeks & Query Optimization
+
+- **Primary/Foreign Keys**: Indexed by default di Laravel migration.
+- **Status Index**: (status, created_at DESC) untuk filter & sort cepat.
+- **Department/Category/Priority**: Foreign key indexed untuk join cepat.
+- **Full-text Search**: FULLTEXT index pada (tickets.title, tickets.description).
+- **Date Range Queries**: Separate index pada created_at untuk periode filter.
+- **Composite Index**: (status, department_id, created_at DESC) untuk daftar tiket SKPD.
+- **Audit Log**: (entity_type, entity_id, created_at DESC) untuk audit trail per entity.
+
+
+
+## 4.8 Desain Sistem Assignment & Konfigurasi (Admin)**
+
+Untuk mendukung pengelolaan penugasan tiket yang efisien, sistem menyediakan dua pendekatan: **assignment otomatis berbasis aturan** dan **assignment manual oleh admin/authorized personnel**.
+
+### 4.8.1 Komponen: Manajemen Tiket (Tab Interface)**
+
+Halaman ini terdapat di `/admin/ticket-management` dan menggunakan tab navigation untuk mengorganisir 4 mode operasi:
+
+**Tab 1: Pending Tickets**
+- Menampilkan daftar tiket dengan status "Baru" yang belum diassign.
+- Tabel: Nomor Tiket, Judul, SKPD, Jenis Pekerjaan, Prioritas, Waktu Masuk.
+- Aksi per baris: Tombol "Assign Otomatis" (modal preview rekomendasi), "Assign Manual" (modal select petugas).
+- Fungsi: Titik masuk utama untuk penugasan tiket.
+
+**Tab 2: Auto Assignment (Konfigurasi)**
+- **Daftar Petugas**: 5 kartu menampilkan petugas, kode identitas (A–E), dan keahlian masing-masing.
+- **Form Konfigurasi**:
+  - Accordion per jenis pekerjaan (4 item: PIC Presensi, Perbaikan Portal, Troubleshooting, Maintenance Server).
+  - Per jenis pekerjaan: toggle enable/disable, tabel aturan (Kondisi | Petugas | Persentase %).
+  - Tombol "Tambah Aturan", "Edit", "Hapus" per row.
+  - Contoh aturan: "Urgent, PIC Presensi → Ahmad Fauzi (A) 70%, Siti Aminah (B) 30%".
+  - Buttons: "Simpan Konfigurasi", "Reset ke Default", "Export Config" (JSON), "Import Config" (JSON).
+- **Algoritma Penjelasan**: 4 langkah pseudocode (identifikasi keahlian → filter prioritas → pertimbangkan beban kerja → round-robin weighted probability).
+- **Sub-Tab: Beban Kerja Petugas**:
+  - Bar chart: Tiket aktif per petugas (update real-time saat assignment).
+  - Tabel: Petugas, Jumlah Tiket Aktif, % Load, Status (Tersedia/Ringan/Sedang/Tinggi).
+  - Guna: Transparansi distribusi beban untuk admin.
+- **Sub-Tab: Simulasi Assignment**:
+  - Dropdown: Pilih Jenis Pekerjaan, Pilih Prioritas.
+  - Tombol: "Jalankan Simulasi".
+  - Hasil: Petugas terpilih, alasan pemilihan, penjelasan 4-step algoritma.
+  - Guna: Testing konfigurasi sebelum apply ke live.
+- **Sub-Tab: History Konfigurasi**:
+  - Tabel: Tanggal, Admin Pembuat Perubahan, Deskripsi Perubahan (e.g., "Update rule PIC Presensi: Ahmad 70% → 80%"), Status (Aktif/Tidak Aktif), Tombol "Restore".
+  - Guna: Audit trail & rollback konfigurasi jika diperlukan.
+
+**Tab 3: Manual Assignment**
+- **Daftar Tiket Pending**: Menampilkan 2–5 tiket terbaru dengan status "Baru" yang belum diassign.
+- **Grid Petugas**: 6-kolom card layout menampilkan 5 petugas (nama, keahlian, badge beban kerja saat ini).
+- **Modal Assignment** (per tiket):
+  - Informasi tiket: Nomor, Judul, Kategori, Prioritas (preview singkat).
+  - Form: Select petugas (radio button + card click), textarea catatan (opsional).
+  - Alert informatif: Rekomendasi petugas berdasarkan beban kerja terendah.
+  - Tombol: "Assign Tiket", "Batalkan".
+  - Proses: Saat "Assign" diklik → tiket di-assign ke petugas → status update → notifikasi email ke petugas.
+- **Sidebar Info**: Rekomendasi petugas 3 teratas (load terendah + sesuai keahlian).
+- Guna: Fleksibilitas admin/pimpinan untuk keputusan khusus (urgency, preferensi, pertimbangan lain).
+
+**Tab 4: History Assignment**
+- **KPI Cards** (4 item):
+  - Total Assignment (semua waktu): 254
+  - Assignment Otomatis (%): 74%
+  - Assignment Manual (%): 26%
+  - Rata-rata Waktu (jam): 2.5h
+- **Grafik**:
+  - Pie/Doughnut chart: Perbandingan Otomatis vs Manual.
+  - Bar chart: Assignment per petugas (breakdown otomatis vs manual).
+- **Filter**: Metode (Otomatis/Manual), Petugas, Tanggal (month picker).
+- **Tabel Assignment History**:
+  - Kolom: Tiket ID, Judul, Petugas, Metode (badge), Tanggal, Waktu Penyelesaian (jam), Status (Selesai/Berlangsung/Ditolak).
+  - 18 row data sampel (mix otomatis & manual).
+  - Pagination.
+  - Aksi: Klik row → expand detail (modal).
+- **Aksi Export**: CSV, PDF.
+- Guna: Analytics assignment trend, efektivitas algoritma vs manual, performa petugas per metode.
+
+### 4.8.2 Alur Assignment Otomatis**
+
+```
+1. Admin/Petugas buka tab "Pending" → lihat tiket baru.
+2. Klik tombol "Assign Otomatis" pada tiket.
+3. Modal preview:
+   - Jenis pekerjaan: PIC Presensi
+   - Prioritas: Urgent
+   - Rekomendasi: Ahmad Fauzi (A) karena 70% rule + load terendah
+   - Tombol: "Assign Otomatis" / "Batalkan"
+4. Klik "Assign Otomatis":
+   - Backend:
+     a) Identifikasi petugas sesuai keahlian jenis pekerjaan.
+     b) Filter berdasarkan prioritas (aturan konfigurasi).
+     c) Pilih petugas dengan beban kerja terendah (load balancing).
+     d) Update tiket.assignee_id, status="diproses" (opsional), assigned_at=now().
+     e) Record audit_log (action="assigned", method="automatic").
+     f) Send email notifikasi ke petugas & pemohon.
+   - UI: Toast sukses "Tiket diassign ke [Petugas]" → auto-refresh daftar pending.
+5. Tiket hilang dari pending, masuk ke backlog petugas.
+```
+
+### 4.8.3 Alur Assignment Manual**
+
+```
+1. Admin buka tab "Manual Assignment" → lihat tiket pending.
+2. Klik tombol "Assign Sekarang" pada tiket.
+3. Modal pilih petugas:
+   - Tabel/grid 5 petugas (nama, skill, load saat ini).
+   - Radio select petugas (user click card untuk select).
+   - Textarea catatan instruksi (opsional).
+   - Tombol: "Assign Tiket" / "Batalkan"
+4. Klik "Assign Tiket":
+   - Backend:
+     a) Validasi petugas dipilih (required).
+     b) Update tiket.assignee_id = selected_petugas_id.
+     c) Record audit_log (action="assigned", method="manual", assigned_by=admin_id, notes=catatan).
+     d) Send email notifikasi ke petugas & pemohon dengan catatan instruksi.
+   - UI: Toast sukses "Tiket diassign ke [Petugas]" → modal close → daftar refresh.
+5. Sidebar rekomendasi update realtime berdasarkan perubahan load.
+6. Admin dapat ulangi untuk tiket lain atau pindah ke tab lain.
+```
+
+### 4.8.4 Spesifikasi Algoritma Auto-Assignment**
+
+Algoritma assignment otomatis berbasis rule (deterministic, tidak random):
+
+```pseudo
+function auto_assign_ticket(ticket):
+  // Step 1: Identifikasi petugas sesuai keahlian
+  eligible_petugas = []
+  for each config_rule in assignment_config[ticket.jenis_pekerjaan]:
+    if config_rule.enabled:
+      petugas_options = config_rule.petugas_list  // e.g., [Ahmad (A), Siti (B)]
+      eligible_petugas.append(petugas_options)
+  
+  if eligible_petugas.empty():
+    return error("Tidak ada petugas sesuai jenis pekerjaan")
+  
+  // Step 2: Filter berdasarkan prioritas & aturan
+  priority_rules = assignment_config[ticket.jenis_pekerjaan][ticket.priority]
+  selected_candidates = priority_rules.petugas_list  // [Ahmad 70%, Siti 30%]
+  
+  // Step 3: Pertimbangkan beban kerja saat ini
+  weighted_candidates = []
+  for each (petugas, percentage) in selected_candidates:
+    current_load = count_active_tickets(petugas)  // load saat ini
+    max_capacity = 5  // cap per petugas
+    if current_load < max_capacity:
+      weighted_candidates.append({petugas: petugas, weight: percentage, load: current_load})
+  
+  if weighted_candidates.empty():
+    // Fallback: semua penuh, assign ke dengan load terendah
+    fallback = selected_candidates.sort_by_load().first()
+    return fallback
+  
+  // Step 4: Weighted random selection (atau deterministic round-robin)
+  selected_petugas = weighted_candidates.weighted_random_select()
+  
+  // Update database
+  ticket.assignee_id = selected_petugas.id
+  ticket.assigned_at = now()
+  ticket.save()
+  
+  // Log & notifikasi
+  audit_log.create(action="assigned", method="automatic", petugas=selected_petugas.id)
+  send_email_notification(selected_petugas, ticket)
+  
+  return selected_petugas
+```
+
+---
+
+## 4.9 Desain Dashboard Pimpinan
 
 Dashboard pimpinan dirancang untuk memberikan gambaran cepat mengenai kondisi pekerjaan Kominfo, antara lain:
 

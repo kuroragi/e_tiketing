@@ -1,16 +1,25 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\KominfoController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\AdminPageController;
 use App\Http\Controllers\TicketManagementController;
 use App\Services\TelegramService;
 
-// Redirect root to dashboard
 Route::redirect('/', '/dashboard');
+// Authentication Routes - Rute Autentikasi
+// Route::group(['middleware' => 'guest'], function () {
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    // Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+// });
 
-// E-Ticket System Routes - Sistem Ticketing Kominfo Bukittinggi
+// Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+
+// Redirect root to dashboard
+
+// E-Ticket System Routes - Sistem Ticketing Kominfo Bukittinggi (Protected by Auth Middleware)
 Route::group(['prefix' => '/'], function () {
     
     // Dashboard - Halaman utama dengan ringkasan
