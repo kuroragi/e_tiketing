@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -6,116 +6,107 @@ use App\Http\Controllers\KominfoController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\AdminPageController;
 use App\Http\Controllers\TicketManagementController;
-use App\Services\TelegramService;
 
-Route::redirect('/', '/dashboard');
-// Authentication Routes - Rute Autentikasi
-// Route::group(['middleware' => 'guest'], function () {
+// Authentication Routes
+Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    // Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
-// });
+    Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+});
 
-// Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-// Redirect root to dashboard
+// Redirect root
+Route::redirect('/', '/dashboard');
 
-// E-Ticket System Routes - Sistem Ticketing Kominfo Bukittinggi (Protected by Auth Middleware)
-Route::group(['prefix' => '/'], function () {
-    
-    // Dashboard - Halaman utama dengan ringkasan
-    Route::get('dashboard', [KominfoController::class, 'dashboard'])->name('dashboard');
-    
+// Protected Routes (all roles)
+Route::middleware(['auth'])->group(function () {
+
+    // Dashboard
+    Route::get('/dashboard', [KominfoController::class, 'dashboard'])->name('dashboard');
+
     // Tiket Routes
-    Route::group(['prefix' => 'tiket'], function () {
-        // Pengajuan tiket baru (untuk SKPD)
-        Route::get('pengajuan', [KominfoController::class, 'create'])->name('tiket.create');
-        Route::post('pengajuan', [KominfoController::class, 'store'])->name('tiket.store');
-        
-        // Daftar tiket (untuk staff Kominfo)
-        Route::get('daftar', [KominfoController::class, 'index'])->name('tiket.index');
-        
-        // Detail tiket (AJAX)
+    Route::prefix('tiket')->group(function () {
+        Route::get('daftar', [KominfoController::class, 'index'])
+            ->middleware('role:petugas,admin,pimpinan')
+            ->name('tiket.index');
+
+        Route::get('pengajuan', [KominfoController::class, 'create'])
+            ->middleware('role:skpd,admin')
+            ->name('tiket.create');
+        Route::post('pengajuan', [KominfoController::class, 'store'])
+            ->middleware('role:skpd,admin')
+            ->name('tiket.store');
+
         Route::get('{id}', [KominfoController::class, 'show'])->name('tiket.show');
-        
-        // Update status tiket (AJAX)
-        Route::put('{id}/status', [KominfoController::class, 'updateStatus'])->name('tiket.update-status');
+
+        Route::put('{id}/status', [KominfoController::class, 'updateStatus'])
+            ->middleware('role:petugas,admin')
+            ->name('tiket.update-status');
+
+        Route::put('{id}/assign', [KominfoController::class, 'assign'])
+            ->middleware('role:petugas,admin')
+            ->name('tiket.assign');
+
+        Route::post('{id}/komentar', [KominfoController::class, 'addComment'])->name('tiket.comment');
+        Route::post('{id}/lampiran', [KominfoController::class, 'uploadAttachment'])->name('tiket.attachment');
+        Route::get('lampiran/{attachmentId}/download', [KominfoController::class, 'downloadAttachment'])
+            ->name('tiket.attachment.download');
     });
-    
-    // Laporan untuk pimpinan
-    Route::get('laporan', [KominfoController::class, 'laporan'])->name('laporan.index');
-});
 
-// Static Pages Routes - Halaman Statis untuk User
-Route::group(['prefix' => '/'], function () {
-    // Panduan Penggunaan
-    Route::get('panduan', [PageController::class, 'panduan'])->name('panduan');
-    
-    // Tentang Sistem
-    Route::get('tentang', [PageController::class, 'tentang'])->name('tentang');
-    
-    // Hubungi Kami
-    Route::get('hubungi', [PageController::class, 'hubungi'])->name('hubungi');
-    
-    // Kebijakan Privasi
-    Route::get('kebijakan', [PageController::class, 'kebijakan'])->name('kebijakan');
-    
-    // Syarat dan Ketentuan
-    Route::get('syarat-ketentuan', [PageController::class, 'syaratKetentuan'])->name('syarat-ketentuan');
-});
+    // Laporan
+    Route::get('/laporan', [KominfoController::class, 'laporan'])
+        ->middleware('role:admin,petugas,pimpinan')
+        ->name('laporan.index');
 
-// Admin Pages Routes - Halaman Administrasi
-Route::group(['prefix' => 'admin'], function () {
-    // Dashboard Admin
-    Route::get('dashboard', [AdminPageController::class, 'dashboard'])->name('admin.dashboard');
-    
-    // Manajemen Pengguna
-    Route::get('pengguna', [AdminPageController::class, 'pengguna'])->name('admin.pengguna');
-    
-    // Manajemen SKPD
-    Route::get('skpd', [AdminPageController::class, 'skpd'])->name('admin.skpd');
-    
-    // Manajemen Jenis Pekerjaan
-    Route::get('jenis-pekerjaan', [AdminPageController::class, 'jenisPekerjaan'])->name('admin.jenis-pekerjaan');
-    
-    // Pengaturan Sistem
-    Route::get('pengaturan', [AdminPageController::class, 'pengaturan'])->name('admin.pengaturan');
-    
-    // Log Aktivitas
-    Route::get('log-aktivitas', [AdminPageController::class, 'logAktivitas'])->name('admin.log-aktivitas');
-    
-    // Laporan Admin
-    Route::get('laporan', [AdminPageController::class, 'laporan'])->name('admin.laporan');
-});
+    Route::get('/laporan/export/csv', [KominfoController::class, 'exportCsv'])
+        ->middleware('role:admin,pimpinan')
+        ->name('laporan.export.csv');
 
-// Ticket Management Routes - Manajemen Assignment Tiket
-Route::group(['prefix' => 'admin/ticket-management'], function () {
-    // Main Index - Lihat pending tickets
-    Route::get('/', [TicketManagementController::class, 'index'])->name('ticket.management.index');
-    
-    // Auto Assignment - Konfigurasi assignment otomatis
-    Route::get('auto-assignment', [TicketManagementController::class, 'autoAssignment'])->name('ticket.management.auto');
-    Route::post('save-auto-config', [TicketManagementController::class, 'saveAutoAssignment'])->name('ticket.management.save-auto');
-    
-    // Manual Assignment - Assign manual oleh admin
-    Route::get('manual-assignment', [TicketManagementController::class, 'manualAssignment'])->name('ticket.management.manual');
-    
-    // History - Riwayat assignment
-    Route::get('history', [TicketManagementController::class, 'history'])->name('ticket.management.history');
-});
+    // Static Pages
+    Route::get('/panduan', [PageController::class, 'panduan'])->name('panduan');
+    Route::get('/tentang', [PageController::class, 'tentang'])->name('tentang');
+    Route::get('/hubungi', [PageController::class, 'hubungi'])->name('hubungi');
+    Route::get('/kebijakan', [PageController::class, 'kebijakan'])->name('kebijakan');
+    Route::get('/syarat-ketentuan', [PageController::class, 'syaratKetentuan'])->name('syarat-ketentuan');
 
-// Ticket Management API Routes
-Route::group(['prefix' => 'api/ticket'], function () {
-    // Auto assign tiket
-    Route::post('auto-assign/{id}', [TicketManagementController::class, 'saveAutoAssignment'])->name('api.ticket.auto-assign');
-    
-    // Manual assign tiket
-    Route::post('manual-assign/{id}', [TicketManagementController::class, 'assignManual'])->name('api.ticket.manual-assign');
-});
+    // Admin Routes
+    Route::prefix('admin')->middleware('role:admin')->group(function () {
+        Route::get('dashboard', [AdminPageController::class, 'dashboard'])->name('admin.dashboard');
 
+        Route::get('pengguna', [AdminPageController::class, 'pengguna'])->name('admin.pengguna');
+        Route::post('pengguna', [AdminPageController::class, 'storeUser'])->name('admin.pengguna.store');
+        Route::put('pengguna/{id}', [AdminPageController::class, 'updateUser'])->name('admin.pengguna.update');
+        Route::delete('pengguna/{id}', [AdminPageController::class, 'destroyUser'])->name('admin.pengguna.destroy');
 
-// Note: Testing send messaege to Telegram
-Route::get('/test-telegram', function () {
-    $message = "Ini adalah pesan percobaan dari sistem E-Ticketing Kominfo Bukittinggi.";
-    $sent = TelegramService::send($message);
-    return $sent ? 'Pesan berhasil dikirim ke Telegram.' : 'Gagal mengirim pesan ke Telegram.\nerror: '.$sent;
+        Route::get('skpd', [AdminPageController::class, 'skpd'])->name('admin.skpd');
+        Route::post('skpd', [AdminPageController::class, 'storeDepartment'])->name('admin.skpd.store');
+        Route::put('skpd/{id}', [AdminPageController::class, 'updateDepartment'])->name('admin.skpd.update');
+        Route::delete('skpd/{id}', [AdminPageController::class, 'destroyDepartment'])->name('admin.skpd.destroy');
+
+        Route::get('jenis-pekerjaan', [AdminPageController::class, 'jenisPekerjaan'])->name('admin.jenis-pekerjaan');
+        Route::post('jenis-pekerjaan', [AdminPageController::class, 'storeCategory'])->name('admin.jenis-pekerjaan.store');
+        Route::put('jenis-pekerjaan/{id}', [AdminPageController::class, 'updateCategory'])->name('admin.jenis-pekerjaan.update');
+        Route::delete('jenis-pekerjaan/{id}', [AdminPageController::class, 'destroyCategory'])->name('admin.jenis-pekerjaan.destroy');
+
+        Route::get('pengaturan', [AdminPageController::class, 'pengaturan'])->name('admin.pengaturan');
+        Route::post('pengaturan', [AdminPageController::class, 'savePengaturan'])->name('admin.pengaturan.save');
+
+        Route::get('log-aktivitas', [AdminPageController::class, 'logAktivitas'])->name('admin.log-aktivitas');
+        Route::get('laporan', [AdminPageController::class, 'laporan'])->name('admin.laporan');
+    });
+
+    // Ticket Management (Admin/Petugas)
+    Route::prefix('admin/ticket-management')->middleware('role:admin,petugas')->group(function () {
+        Route::get('/', [TicketManagementController::class, 'index'])->name('ticket.management.index');
+        Route::get('auto-assignment', [TicketManagementController::class, 'autoAssignment'])->name('ticket.management.auto');
+        Route::post('save-auto-config', [TicketManagementController::class, 'saveAutoAssignment'])->name('ticket.management.save-auto');
+        Route::get('manual-assignment', [TicketManagementController::class, 'manualAssignment'])->name('ticket.management.manual');
+        Route::get('history', [TicketManagementController::class, 'history'])->name('ticket.management.history');
+    });
+
+    // API AJAX routes
+    Route::prefix('api/ticket')->middleware('role:admin,petugas')->group(function () {
+        Route::post('auto-assign/{id}', [TicketManagementController::class, 'autoAssign'])->name('api.ticket.auto-assign');
+        Route::post('manual-assign/{id}', [TicketManagementController::class, 'assignManual'])->name('api.ticket.manual-assign');
+    });
 });

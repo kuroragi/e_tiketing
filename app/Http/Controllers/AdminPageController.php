@@ -2,413 +2,373 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\AuditLog;
+use App\Models\Category;
+use App\Models\Department;
+use App\Models\Priority;
+use App\Models\Setting;
+use App\Models\Ticket;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AdminPageController extends Controller
 {
-    /**
-     * Dashboard Administrasi
-     */
+    //  Dashboard Admin 
+
     public function dashboard()
     {
         $stats = [
-            [
-                'label' => 'Total Pengguna',
-                'nilai' => 45,
-                'icon' => 'bi-people',
-                'color' => 'primary',
-                'change' => '+5 minggu ini'
-            ],
-            [
-                'label' => 'Total SKPD',
-                'nilai' => 10,
-                'icon' => 'bi-building',
-                'color' => 'info',
-                'change' => 'Stabil'
-            ],
-            [
-                'label' => 'Total Tiket',
-                'nilai' => 156,
-                'icon' => 'bi-ticket',
-                'color' => 'success',
-                'change' => '+12 minggu ini'
-            ],
-            [
-                'label' => 'Tiket Pending',
-                'nilai' => 8,
-                'icon' => 'bi-hourglass-bottom',
-                'color' => 'warning',
-                'change' => 'Urgent'
-            ]
+            ['label' => 'Total Pengguna',  'nilai' => User::count(),                              'icon' => 'bi-people',         'color' => 'primary', 'change' => User::where('created_at', '>=', now()->subWeek())->count() . ' minggu ini'],
+            ['label' => 'Total SKPD',      'nilai' => Department::aktif()->count(),                'icon' => 'bi-building',        'color' => 'info',    'change' => 'Aktif: ' . Department::aktif()->count()],
+            ['label' => 'Total Tiket',     'nilai' => Ticket::count(),                             'icon' => 'bi-ticket',          'color' => 'success', 'change' => '+' . Ticket::where('created_at', '>=', now()->subWeek())->count() . ' minggu ini'],
+            ['label' => 'Tiket Pending',   'nilai' => Ticket::whereIn('status', ['baru','diproses'])->count(), 'icon' => 'bi-hourglass-bottom', 'color' => 'warning', 'change' => Ticket::where('status','baru')->count() . ' belum diassign'],
         ];
 
-        $recentActivities = [
-            [
-                'user' => 'Ahmad Fauzi',
-                'action' => 'Membuat tiket baru',
-                'target' => 'TKT-2026-001',
-                'waktu' => '2 jam lalu',
-                'icon' => 'bi-plus-circle',
-                'color' => 'success'
-            ],
-            [
-                'user' => 'Siti Aminah',
-                'action' => 'Update status tiket',
-                'target' => 'TKT-2026-002',
-                'waktu' => '4 jam lalu',
-                'icon' => 'bi-pencil',
-                'color' => 'info'
-            ],
-            [
-                'user' => 'Rizki Pratama',
-                'action' => 'Menyelesaikan tiket',
-                'target' => 'TKT-2026-003',
-                'waktu' => '1 hari lalu',
-                'icon' => 'bi-check-circle',
-                'color' => 'success'
-            ],
-            [
-                'user' => 'Admin',
-                'action' => 'Menambah pengguna baru',
-                'target' => 'Dudi Santoso',
-                'waktu' => '2 hari lalu',
-                'icon' => 'bi-person-plus',
-                'color' => 'primary'
-            ]
-        ];
+        $recentActivities = AuditLog::with('user')
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get()
+            ->map(fn($log) => [
+                'user'   => $log->user->name ?? 'Sistem',
+                'action' => $log->actionLabel(),
+                'target' => $log->entity_name ?? '-',
+                'waktu'  => $log->created_at->diffForHumans(),
+                'icon'   => match($log->action) {
+                    'created'        => 'bi-plus-circle',
+                    'updated'        => 'bi-pencil',
+                    'status_changed' => 'bi-arrow-repeat',
+                    'assigned'       => 'bi-person-check',
+                    'login'          => 'bi-box-arrow-in-right',
+                    'logout'         => 'bi-box-arrow-right',
+                    default          => 'bi-activity',
+                },
+                'color'  => match($log->action) {
+                    'created'   => 'success',
+                    'updated'   => 'info',
+                    'login'     => 'primary',
+                    'assigned'  => 'warning',
+                    default     => 'secondary',
+                },
+            ])->toArray();
 
         return view('pages.admin.dashboard', compact('stats', 'recentActivities'));
     }
 
-    /**
-     * Halaman Manajemen Pengguna
-     */
+    //  Pengguna 
+
     public function pengguna()
     {
-        $users = [
-            [
-                'id' => 1,
-                'nama' => 'Ahmad Fauzi',
-                'email' => 'ahmad.fauzi@kominfo.go.id',
-                'username' => 'ahmad.fauzi',
-                'role' => 'Petugas Kominfo',
-                'skpd' => 'Kominfo',
-                'status' => 'aktif',
-                'terdaftar' => '2025-01-15'
-            ],
-            [
-                'id' => 2,
-                'nama' => 'Siti Aminah',
-                'email' => 'siti.aminah@kominfo.go.id',
-                'username' => 'siti.aminah',
-                'role' => 'Petugas Kominfo',
-                'skpd' => 'Kominfo',
-                'status' => 'aktif',
-                'terdaftar' => '2025-02-10'
-            ],
-            [
-                'id' => 3,
-                'nama' => 'Dr. Siti Rahma',
-                'email' => 'siti.rahma@pendidikan.go.id',
-                'username' => 'dr.siti.rahma',
-                'role' => 'Pengguna SKPD',
-                'skpd' => 'Dinas Pendidikan',
-                'status' => 'aktif',
-                'terdaftar' => '2025-01-20'
-            ],
-            [
-                'id' => 4,
-                'nama' => 'dr. Ahmad Yani',
-                'email' => 'ahmad.yani@kesehatan.go.id',
-                'username' => 'dr.ahmad.yani',
-                'role' => 'Pengguna SKPD',
-                'skpd' => 'Dinas Kesehatan',
-                'status' => 'aktif',
-                'terdaftar' => '2025-02-05'
-            ]
-        ];
-
-        $roles = [
-            ['id' => 1, 'nama' => 'Administrator', 'deskripsi' => 'Akses penuh ke sistem'],
-            ['id' => 2, 'nama' => 'Pimpinan', 'deskripsi' => 'Akses ke laporan dan monitoring'],
-            ['id' => 3, 'nama' => 'Petugas Kominfo', 'deskripsi' => 'Kelola tiket pekerjaan'],
-            ['id' => 4, 'nama' => 'Pengguna SKPD', 'deskripsi' => 'Ajukan tiket pekerjaan']
-        ];
-
-        return view('pages.admin.pengguna', compact('users', 'roles'));
+        $users       = User::with('department')->orderBy('name')->paginate(20);
+        $departments = Department::aktif()->orderBy('name')->get();
+        return view('pages.admin.pengguna', compact('users', 'departments'));
     }
 
-    /**
-     * Halaman Manajemen SKPD
-     */
+    public function storeUser(Request $request)
+    {
+        $validated = $request->validate([
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|unique:users,email',
+            'password'      => 'required|string|min:8|confirmed',
+            'role'          => 'required|in:admin,petugas,skpd,pimpinan',
+            'department_id' => 'nullable|exists:departments,id',
+            'status'        => 'required|in:aktif,nonaktif',
+        ]);
+
+        $user = User::create([
+            'name'          => $validated['name'],
+            'email'         => $validated['email'],
+            'password'      => Hash::make($validated['password']),
+            'role'          => $validated['role'],
+            'department_id' => $validated['department_id'] ?? null,
+            'status'        => $validated['status'],
+        ]);
+
+        AuditLog::create([
+            'user_id'     => Auth::id(),
+            'action'      => 'created',
+            'entity_type' => 'User',
+            'entity_id'   => $user->id,
+            'entity_name' => $user->name,
+            'description' => "Pengguna baru dibuat: {$user->name} ({$user->role})",
+            'ip_address'  => $request->ip(),
+            'user_agent'  => $request->userAgent(),
+        ]);
+
+        return redirect()->route('admin.pengguna')->with('success', "Pengguna {$user->name} berhasil ditambahkan.");
+    }
+
+    public function updateUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $validated = $request->validate([
+            'name'          => 'required|string|max:255',
+            'email'         => "required|email|unique:users,email,{$id}",
+            'role'          => 'required|in:admin,petugas,skpd,pimpinan',
+            'department_id' => 'nullable|exists:departments,id',
+            'status'        => 'required|in:aktif,nonaktif',
+            'password'      => 'nullable|string|min:8|confirmed',
+        ]);
+
+        $updateData = [
+            'name'          => $validated['name'],
+            'email'         => $validated['email'],
+            'role'          => $validated['role'],
+            'department_id' => $validated['department_id'] ?? null,
+            'status'        => $validated['status'],
+        ];
+
+        if (! empty($validated['password'])) {
+            $updateData['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($updateData);
+
+        AuditLog::create([
+            'user_id'     => Auth::id(),
+            'action'      => 'updated',
+            'entity_type' => 'User',
+            'entity_id'   => $user->id,
+            'entity_name' => $user->name,
+            'description' => "Data pengguna diperbarui: {$user->name}",
+            'ip_address'  => $request->ip(),
+            'user_agent'  => $request->userAgent(),
+        ]);
+
+        return redirect()->route('admin.pengguna')->with('success', "Data pengguna {$user->name} berhasil diperbarui.");
+    }
+
+    public function destroyUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->id === Auth::id()) {
+            return redirect()->route('admin.pengguna')->with('error', 'Tidak dapat menghapus akun Anda sendiri.');
+        }
+
+        $name = $user->name;
+        $user->delete();
+
+        AuditLog::create([
+            'user_id'     => Auth::id(),
+            'action'      => 'deleted',
+            'entity_type' => 'User',
+            'entity_id'   => $id,
+            'entity_name' => $name,
+            'description' => "Pengguna dihapus: {$name}",
+            'ip_address'  => $request->ip(),
+            'user_agent'  => $request->userAgent(),
+        ]);
+
+        return redirect()->route('admin.pengguna')->with('success', "Pengguna {$name} berhasil dihapus.");
+    }
+
+    //  SKPD 
+
     public function skpd()
     {
-        $skpdList = [
-            [
-                'id' => 1,
-                'nama' => 'Dinas Pendidikan dan Kebudayaan',
-                'singkatan' => 'Disdik',
-                'alamat' => 'Jl. Pendidikan No. 1',
-                'kontak' => '(0752) 12345',
-                'email' => 'disdik@bukittinggi.go.id',
-                'pimpinan' => 'Dr. Siti Rahma',
-                'total_tiket' => 45,
-                'status' => 'aktif'
-            ],
-            [
-                'id' => 2,
-                'nama' => 'Dinas Kesehatan',
-                'singkatan' => 'Dinkes',
-                'alamat' => 'Jl. Kesehatan No. 2',
-                'kontak' => '(0752) 23456',
-                'email' => 'dinkes@bukittinggi.go.id',
-                'pimpinan' => 'dr. Ahmad Yani',
-                'total_tiket' => 38,
-                'status' => 'aktif'
-            ],
-            [
-                'id' => 3,
-                'nama' => 'Dinas Pekerjaan Umum dan Penataan Ruang',
-                'singkatan' => 'DPUPR',
-                'alamat' => 'Jl. PU No. 3',
-                'kontak' => '(0752) 34567',
-                'email' => 'dpupr@bukittinggi.go.id',
-                'pimpinan' => 'Ir. Joni Iskandar',
-                'total_tiket' => 23,
-                'status' => 'aktif'
-            ],
-            [
-                'id' => 4,
-                'nama' => 'Dinas Keuangan dan Aset Daerah',
-                'singkatan' => 'DKAD',
-                'alamat' => 'Jl. Keuangan No. 4',
-                'kontak' => '(0752) 45678',
-                'email' => 'dkad@bukittinggi.go.id',
-                'pimpinan' => 'Ir. Dewi Sartika',
-                'total_tiket' => 28,
-                'status' => 'aktif'
-            ]
-        ];
-
-        return view('pages.admin.skpd', compact('skpdList'));
+        $departments = Department::withCount('users', 'tickets')->orderBy('name')->paginate(20);
+        return view('pages.admin.skpd', compact('departments'));
     }
 
-    /**
-     * Halaman Manajemen Jenis Pekerjaan
-     */
+    public function storeDepartment(Request $request)
+    {
+        $validated = $request->validate([
+            'name'    => 'required|string|max:255',
+            'code'    => 'required|string|max:50|unique:departments,code',
+            'contact' => 'nullable|string|max:100',
+            'head'    => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+            'status'  => 'required|in:aktif,nonaktif',
+        ]);
+
+        $dept = Department::create($validated);
+
+        AuditLog::create([
+            'user_id' => Auth::id(), 'action' => 'created', 'entity_type' => 'Department',
+            'entity_id' => $dept->id, 'entity_name' => $dept->name,
+            'description' => "SKPD baru: {$dept->name}", 'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->route('admin.skpd')->with('success', "SKPD {$dept->name} berhasil ditambahkan.");
+    }
+
+    public function updateDepartment(Request $request, $id)
+    {
+        $dept = Department::findOrFail($id);
+
+        $validated = $request->validate([
+            'name'    => 'required|string|max:255',
+            'code'    => "required|string|max:50|unique:departments,code,{$id}",
+            'contact' => 'nullable|string|max:100',
+            'head'    => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+            'status'  => 'required|in:aktif,nonaktif',
+        ]);
+
+        $dept->update($validated);
+
+        AuditLog::create([
+            'user_id' => Auth::id(), 'action' => 'updated', 'entity_type' => 'Department',
+            'entity_id' => $dept->id, 'entity_name' => $dept->name,
+            'description' => "SKPD diperbarui: {$dept->name}", 'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->route('admin.skpd')->with('success', "SKPD {$dept->name} berhasil diperbarui.");
+    }
+
+    public function destroyDepartment(Request $request, $id)
+    {
+        $dept = Department::findOrFail($id);
+        $name = $dept->name;
+        $dept->delete();
+
+        AuditLog::create([
+            'user_id' => Auth::id(), 'action' => 'deleted', 'entity_type' => 'Department',
+            'entity_id' => $id, 'entity_name' => $name,
+            'description' => "SKPD dihapus: {$name}", 'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->route('admin.skpd')->with('success', "SKPD {$name} berhasil dihapus.");
+    }
+
+    //  Jenis Pekerjaan 
+
     public function jenisPekerjaan()
     {
-        $jenisList = [
-            [
-                'id' => 1,
-                'nama' => 'Perbaikan Website',
-                'kode' => 'WEB',
-                'deskripsi' => 'Perbaikan dan update website resmi SKPD',
-                'estimasi_hari' => '1-3',
-                'total_tiket' => 45,
-                'total_selesai' => 42,
-                'status' => 'aktif'
-            ],
-            [
-                'id' => 2,
-                'nama' => 'Maintenance Server/Database',
-                'kode' => 'SRV',
-                'deskripsi' => 'Maintenance dan monitoring server serta database',
-                'estimasi_hari' => '1-2',
-                'total_tiket' => 35,
-                'total_selesai' => 32,
-                'status' => 'aktif'
-            ],
-            [
-                'id' => 3,
-                'nama' => 'Pengembangan Aplikasi',
-                'kode' => 'APP',
-                'deskripsi' => 'Pengembangan dan update aplikasi bisnis',
-                'estimasi_hari' => '5-10',
-                'total_tiket' => 28,
-                'total_selesai' => 24,
-                'status' => 'aktif'
-            ],
-            [
-                'id' => 4,
-                'nama' => 'Perbaikan Jaringan/Internet',
-                'kode' => 'NET',
-                'deskripsi' => 'Troubleshooting dan perbaikan jaringan',
-                'estimasi_hari' => '1',
-                'total_tiket' => 25,
-                'total_selesai' => 23,
-                'status' => 'aktif'
-            ],
-            [
-                'id' => 5,
-                'nama' => 'Instalasi Software',
-                'kode' => 'SOFT',
-                'deskripsi' => 'Instalasi dan konfigurasi software',
-                'estimasi_hari' => '1-2',
-                'total_tiket' => 18,
-                'total_selesai' => 18,
-                'status' => 'aktif'
-            ]
-        ];
-
-        return view('pages.admin.jenis-pekerjaan', compact('jenisList'));
+        $categories = Category::withCount('tickets')->orderBy('name')->paginate(20);
+        $priorities = Priority::ordered()->get();
+        return view('pages.admin.jenis-pekerjaan', compact('categories', 'priorities'));
     }
 
-    /**
-     * Halaman Pengaturan Sistem
-     */
+    public function storeCategory(Request $request)
+    {
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255|unique:categories,name',
+            'description' => 'nullable|string',
+            'status'      => 'required|in:aktif,nonaktif',
+        ]);
+
+        $cat = Category::create($validated);
+
+        AuditLog::create([
+            'user_id' => Auth::id(), 'action' => 'created', 'entity_type' => 'Category',
+            'entity_id' => $cat->id, 'entity_name' => $cat->name,
+            'description' => "Kategori baru: {$cat->name}", 'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->route('admin.jenis-pekerjaan')->with('success', "Kategori {$cat->name} berhasil ditambahkan.");
+    }
+
+    public function updateCategory(Request $request, $id)
+    {
+        $cat = Category::findOrFail($id);
+
+        $validated = $request->validate([
+            'name'        => "required|string|max:255|unique:categories,name,{$id}",
+            'description' => 'nullable|string',
+            'status'      => 'required|in:aktif,nonaktif',
+        ]);
+
+        $cat->update($validated);
+
+        AuditLog::create([
+            'user_id' => Auth::id(), 'action' => 'updated', 'entity_type' => 'Category',
+            'entity_id' => $cat->id, 'entity_name' => $cat->name,
+            'description' => "Kategori diperbarui: {$cat->name}", 'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->route('admin.jenis-pekerjaan')->with('success', "Kategori {$cat->name} berhasil diperbarui.");
+    }
+
+    public function destroyCategory(Request $request, $id)
+    {
+        $cat = Category::findOrFail($id);
+        $name = $cat->name;
+        $cat->delete();
+
+        AuditLog::create([
+            'user_id' => Auth::id(), 'action' => 'deleted', 'entity_type' => 'Category',
+            'entity_id' => $id, 'entity_name' => $name,
+            'description' => "Kategori dihapus: {$name}", 'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->route('admin.jenis-pekerjaan')->with('success', "Kategori {$name} berhasil dihapus.");
+    }
+
+    //  Pengaturan 
+
     public function pengaturan()
     {
-        $settings = [
-            'nama_sistem' => 'Sistem Ticketing Layanan Kominfo Kota Bukittinggi',
-            'versi' => '1.0',
-            'url_sistem' => 'http://e-ticketing.bukittinggi.go.id',
-            'nama_organisasi' => 'Dinas Komunikasi dan Informatika Kota Bukittinggi',
-            'email_admin' => 'admin@kominfo.bukittinggi.go.id',
-            'telepon' => '(0752) 123-4567',
-            'alamat' => 'Jl. Panglima Nyak Arief No. 45, Bukittinggi',
-            'jam_operasional' => 'Senin - Jumat, 08:00 - 17:00 WIB'
-        ];
-
-        $emailSettings = [
-            'mail_driver' => 'smtp',
-            'mail_host' => 'smtp.gmail.com',
-            'mail_port' => '587',
-            'mail_encryption' => 'tls',
-            'mail_from_name' => 'Sistem E-Ticketing Kominfo'
-        ];
-
-        $systemSettings = [
-            [
-                'kategori' => 'Umum',
-                'settings' => [
-                    ['key' => 'maintenance_mode', 'label' => 'Mode Maintenance', 'value' => false, 'type' => 'boolean'],
-                    ['key' => 'allow_registration', 'label' => 'Izinkan Registrasi Pengguna Baru', 'value' => true, 'type' => 'boolean']
-                ]
-            ],
-            [
-                'kategori' => 'Tiket',
-                'settings' => [
-                    ['key' => 'auto_close_days', 'label' => 'Hari untuk Auto-Close Tiket', 'value' => '30', 'type' => 'number'],
-                    ['key' => 'reminder_days', 'label' => 'Hari Pengingat Tiket Pending', 'value' => '7', 'type' => 'number'],
-                    ['key' => 'sla_urgent', 'label' => 'SLA Urgent (jam)', 'value' => '24', 'type' => 'number'],
-                    ['key' => 'sla_tinggi', 'label' => 'SLA Tinggi (jam)', 'value' => '48', 'type' => 'number']
-                ]
-            ],
-            [
-                'kategori' => 'Notifikasi',
-                'settings' => [
-                    ['key' => 'notif_email', 'label' => 'Notifikasi Email', 'value' => true, 'type' => 'boolean'],
-                    ['key' => 'notif_sms', 'label' => 'Notifikasi SMS', 'value' => false, 'type' => 'boolean']
-                ]
-            ]
-        ];
-
-        return view('pages.admin.pengaturan', compact('settings', 'emailSettings', 'systemSettings'));
+        $settings = Setting::all()->keyBy('key');
+        return view('pages.admin.pengaturan', compact('settings'));
     }
 
-    /**
-     * Halaman Log Aktivitas
-     */
-    public function logAktivitas()
+    public function savePengaturan(Request $request)
     {
-        $logs = [
-            [
-                'id' => 1,
-                'user' => 'Ahmad Fauzi',
-                'action' => 'CREATE_TICKET',
-                'action_label' => 'Membuat Tiket Baru',
-                'target' => 'TKT-2026-001',
-                'target_label' => 'Perbaikan Website',
-                'status' => 'success',
-                'ip_address' => '192.168.1.100',
-                'waktu' => Carbon::now()->subHours(2)
-            ],
-            [
-                'id' => 2,
-                'user' => 'Siti Aminah',
-                'action' => 'UPDATE_TICKET',
-                'action_label' => 'Update Status Tiket',
-                'target' => 'TKT-2026-002',
-                'target_label' => 'Diproses → Selesai',
-                'status' => 'success',
-                'ip_address' => '192.168.1.101',
-                'waktu' => Carbon::now()->subHours(4)
-            ],
-            [
-                'id' => 3,
-                'user' => 'Admin',
-                'action' => 'CREATE_USER',
-                'action_label' => 'Menambah Pengguna',
-                'target' => 'dudi.santoso',
-                'target_label' => 'Dudi Santoso',
-                'status' => 'success',
-                'ip_address' => '192.168.1.102',
-                'waktu' => Carbon::now()->subDays(1)
-            ],
-            [
-                'id' => 4,
-                'user' => 'Rizki Pratama',
-                'action' => 'LOGIN',
-                'action_label' => 'Login Sistem',
-                'target' => 'N/A',
-                'target_label' => 'Login Berhasil',
-                'status' => 'success',
-                'ip_address' => '192.168.1.103',
-                'waktu' => Carbon::now()->subDays(1)
-            ],
-            [
-                'id' => 5,
-                'user' => 'Admin',
-                'action' => 'DELETE_USER',
-                'action_label' => 'Menghapus Pengguna',
-                'target' => 'budi.santoso',
-                'target_label' => 'Budi Santoso',
-                'status' => 'danger',
-                'ip_address' => '192.168.1.102',
-                'waktu' => Carbon::now()->subDays(2)
-            ]
-        ];
+        $allowed = ['app_name', 'app_description', 'app_institution', 'max_upload_size', 'mail_from_name', 'mail_from_address', 'smtp_host', 'smtp_port'];
 
-        $filters = [
-            'actions' => ['CREATE_TICKET', 'UPDATE_TICKET', 'CREATE_USER', 'LOGIN', 'DELETE_USER'],
-            'statuses' => ['success', 'danger', 'warning']
-        ];
+        foreach ($allowed as $key) {
+            if ($request->has($key)) {
+                Setting::set($key, $request->get($key));
+            }
+        }
 
-        return view('pages.admin.log-aktivitas', compact('logs', 'filters'));
+        AuditLog::create([
+            'user_id' => Auth::id(), 'action' => 'updated', 'entity_type' => 'Setting',
+            'entity_id' => 0, 'entity_name' => 'Pengaturan Sistem',
+            'description' => 'Pengaturan sistem diperbarui', 'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->route('admin.pengaturan')->with('success', 'Pengaturan berhasil disimpan.');
     }
 
-    /**
-     * Halaman Laporan Admin
-     */
+    //  Log Aktivitas 
+
+    public function logAktivitas(Request $request)
+    {
+        $query = AuditLog::with('user')->orderByDesc('created_at');
+
+        if ($request->filled('user_id'))     $query->where('user_id', $request->user_id);
+        if ($request->filled('entity_type')) $query->where('entity_type', $request->entity_type);
+        if ($request->filled('action'))      $query->where('action', $request->action);
+        if ($request->filled('dari'))        $query->where('created_at', '>=', Carbon::parse($request->dari)->startOfDay());
+        if ($request->filled('sampai'))      $query->where('created_at', '<=', Carbon::parse($request->sampai)->endOfDay());
+
+        $logs      = $query->paginate(50)->withQueryString();
+        $users     = User::orderBy('name')->get();
+        $entityTypes = AuditLog::distinct()->pluck('entity_type');
+
+        return view('pages.admin.log-aktivitas', compact('logs', 'users', 'entityTypes'));
+    }
+
+    //  Laporan Admin 
+
     public function laporan()
     {
-        $reportData = [
-            'periode' => 'Bulan Januari 2026',
-            'total_tiket' => 156,
-            'tiket_selesai' => 142,
-            'tiket_diproses' => 8,
-            'tiket_baru' => 6,
-            'persentase_selesai' => 91,
-            'rata_waktu_penyelesaian' => 3.2,
-            'kepuasan_pengguna' => 4.2
+        $dari   = now()->startOfMonth();
+        $sampai = now()->endOfMonth();
+
+        $total   = Ticket::whereBetween('created_at', [$dari, $sampai])->count();
+        $selesai = Ticket::whereBetween('created_at', [$dari, $sampai])->where('status', 'selesai')->count();
+
+        $summary = [
+            'total_tiket'        => $total,
+            'tiket_selesai'      => $selesai,
+            'persentase_selesai' => $total ? round($selesai / $total * 100) : 0,
         ];
 
-        $topSkpd = [
-            ['skpd' => 'Dinas Pendidikan', 'tiket' => 45, 'selesai' => 42],
-            ['skpd' => 'Dinas Kesehatan', 'tiket' => 38, 'selesai' => 35],
-            ['skpd' => 'Dinas Keuangan', 'tiket' => 28, 'selesai' => 24],
-            ['skpd' => 'Dinas PU', 'tiket' => 23, 'selesai' => 21]
-        ];
+        $petugasStats = User::where('role', 'petugas')
+            ->withCount([
+                'assignedTickets as total_assigned',
+                'assignedTickets as total_selesai' => fn($q) => $q->where('status', 'selesai'),
+            ])
+            ->orderByDesc('total_assigned')
+            ->get();
 
-        $topJenis = [
-            ['jenis' => 'Perbaikan Website', 'tiket' => 45],
-            ['jenis' => 'Maintenance Server', 'tiket' => 35],
-            ['jenis' => 'Update Aplikasi', 'tiket' => 28],
-            ['jenis' => 'Perbaikan Jaringan', 'tiket' => 25]
-        ];
-
-        return view('pages.admin.laporan', compact('reportData', 'topSkpd', 'topJenis'));
+        return view('pages.admin.laporan', compact('summary', 'petugasStats', 'dari', 'sampai'));
     }
 }

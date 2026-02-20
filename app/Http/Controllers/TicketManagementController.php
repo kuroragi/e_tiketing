@@ -2,280 +2,232 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\AuditLog;
+use App\Models\Ticket;
+use App\Models\TicketComment;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TicketManagementController extends Controller
 {
-    /**
-     * Halaman utama manajemen tiket
-     */
+    //  Pending Tickets 
+
     public function index()
     {
-        $pendingTickets = [
-            [
-                'id' => 'TKT-2026-001',
-                'judul' => 'PIC Presensi - Integrasi Database Baru',
-                'skpd' => 'Dinas Pendidikan',
-                'jenis_pekerjaan' => 'PIC Presensi',
-                'prioritas' => 'Tinggi',
-                'status' => 'Baru',
-                'tanggal_masuk' => Carbon::now()->subHours(2),
-                'deskripsi' => 'Integrasi database presensi dengan sistem terbaru'
-            ],
-            [
-                'id' => 'TKT-2026-002',
-                'judul' => 'Perbaikan Portal - Login Error',
-                'skpd' => 'Dinas Kesehatan',
-                'jenis_pekerjaan' => 'Perbaikan Portal',
-                'prioritas' => 'Urgent',
-                'status' => 'Baru',
-                'tanggal_masuk' => Carbon::now()->subHours(5),
-                'deskripsi' => 'Portal tidak bisa login, error 500 di halaman login'
-            ],
-            [
-                'id' => 'TKT-2026-003',
-                'judul' => 'Troubleshooting - Jaringan Offline',
-                'skpd' => 'Dinas Keuangan',
-                'jenis_pekerjaan' => 'Troubleshooting',
-                'prioritas' => 'Urgent',
-                'status' => 'Baru',
-                'tanggal_masuk' => Carbon::now()->subDays(1),
-                'deskripsi' => 'Jaringan kantor offline, semua komputer tidak bisa internet'
-            ],
-            [
-                'id' => 'TKT-2026-004',
-                'judul' => 'PIC Presensi - Data Migration',
-                'skpd' => 'BKD',
-                'jenis_pekerjaan' => 'PIC Presensi',
-                'prioritas' => 'Sedang',
-                'status' => 'Baru',
-                'tanggal_masuk' => Carbon::now()->subDays(1),
-                'deskripsi' => 'Migrasi data presensi dari sistem lama ke sistem baru'
-            ]
-        ];
+        $pendingTickets = Ticket::with(['department', 'category', 'priority', 'requester'])
+            ->where('status', 'baru')
+            ->whereNull('assignee_id')
+            ->orderByDesc('created_at')
+            ->paginate(20);
 
-        return view('pages.admin.manajemen-tiket.index', compact('pendingTickets'));
+        $petugasList = User::where('role', 'petugas')
+            ->where('status', 'aktif')
+            ->withCount(['assignedTickets as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
+            ->orderBy('name')
+            ->get();
+
+        return view('pages.admin.manajemen-tiket.index', compact('pendingTickets', 'petugasList'));
     }
 
-    /**
-     * Halaman Assignment Otomatis
-     */
+    //  Auto Assignment Config 
+
     public function autoAssignment()
     {
-        $assignmentRules = [
-            [
-                'jenis_pekerjaan' => 'PIC Presensi',
-                'rules' => [
-                    ['kondisi' => 'Prioritas Urgent', 'petugas' => 'Ahmad Fauzi (A)', 'persentase' => 70],
-                    ['kondisi' => 'Prioritas Sedang', 'petugas' => 'Siti Aminah (B)', 'persentase' => 30]
-                ]
-            ],
-            [
-                'jenis_pekerjaan' => 'Perbaikan Portal',
-                'rules' => [
-                    ['kondisi' => 'Prioritas Urgent', 'petugas' => 'Siti Aminah (B)', 'persentase' => 60],
-                    ['kondisi' => 'Prioritas Tinggi', 'petugas' => 'Rizki Pratama (C)', 'persentase' => 40]
-                ]
-            ],
-            [
-                'jenis_pekerjaan' => 'Troubleshooting',
-                'rules' => [
-                    ['kondisi' => 'Prioritas Urgent', 'petugas' => 'Rizki Pratama (C)', 'persentase' => 50],
-                    ['kondisi' => 'Prioritas Urgent', 'petugas' => 'Desi Marlina (D)', 'persentase' => 50]
-                ]
-            ],
-            [
-                'jenis_pekerjaan' => 'Maintenance Server',
-                'rules' => [
-                    ['kondisi' => 'Semua Prioritas', 'petugas' => 'Budi Santoso (E)', 'persentase' => 100]
-                ]
-            ]
-        ];
+        $petugasList = User::where('role', 'petugas')
+            ->where('status', 'aktif')
+            ->withCount(['assignedTickets as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
+            ->orderBy('name')
+            ->get();
 
-        $petugasList = [
-            ['id' => 1, 'nama' => 'Ahmad Fauzi', 'kode' => 'A', 'keahlian' => ['PIC Presensi', 'Troubleshooting']],
-            ['id' => 2, 'nama' => 'Siti Aminah', 'kode' => 'B', 'keahlian' => ['PIC Presensi', 'Perbaikan Portal']],
-            ['id' => 3, 'nama' => 'Rizki Pratama', 'kode' => 'C', 'keahlian' => ['Perbaikan Portal', 'Troubleshooting']],
-            ['id' => 4, 'nama' => 'Desi Marlina', 'kode' => 'D', 'keahlian' => ['Troubleshooting', 'Maintenance Server']],
-            ['id' => 5, 'nama' => 'Budi Santoso', 'kode' => 'E', 'keahlian' => ['Maintenance Server', 'PIC Presensi']]
-        ];
+        // Beban kerja petugas
+        $bebanKerja = $petugasList->map(fn($p) => [
+            'id'          => $p->id,
+            'nama'        => $p->name,
+            'aktif_count' => $p->aktif_count,
+            'load_pct'    => $p->aktif_count > 0 ? min(100, round($p->aktif_count / 10 * 100)) : 0,
+            'status'      => match(true) {
+                $p->aktif_count === 0      => 'Tersedia',
+                $p->aktif_count <= 3       => 'Ringan',
+                $p->aktif_count <= 6       => 'Sedang',
+                default                    => 'Tinggi',
+            },
+        ])->toArray();
 
-        $jenisPekerjaanList = [
-            'PIC Presensi',
-            'Perbaikan Portal',
-            'Troubleshooting',
-            'Maintenance Server',
-            'Update Aplikasi'
-        ];
-
-        return view('pages.admin.manajemen-tiket.auto-assignment', compact('assignmentRules', 'petugasList', 'jenisPekerjaanList'));
+        return view('pages.admin.manajemen-tiket.auto-assignment', compact('petugasList', 'bebanKerja'));
     }
 
-    /**
-     * Halaman Assignment Manual
-     */
+    public function saveAutoAssignment(Request $request)
+    {
+        // Konfigurasi auto-assignment disimpan di settings sebagai JSON
+        $config = $request->input('config', []);
+        \App\Models\Setting::set('auto_assignment_config', $config, 'json');
+
+        AuditLog::create([
+            'user_id'     => Auth::id(),
+            'action'      => 'updated',
+            'entity_type' => 'Setting',
+            'entity_id'   => 0,
+            'entity_name' => 'Auto Assignment Config',
+            'description' => 'Konfigurasi auto-assignment diperbarui',
+            'ip_address'  => $request->ip(),
+            'user_agent'  => $request->userAgent(),
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Konfigurasi berhasil disimpan.']);
+    }
+
+    //  Manual Assignment 
+
     public function manualAssignment()
     {
-        $pendingTickets = [
-            [
-                'id' => 'TKT-2026-001',
-                'judul' => 'PIC Presensi - Integrasi Database Baru',
-                'skpd' => 'Dinas Pendidikan',
-                'jenis_pekerjaan' => 'PIC Presensi',
-                'prioritas' => 'Tinggi',
-                'tanggal_masuk' => Carbon::now()->subHours(2),
-                'pemohon' => 'Dr. Siti Rahma',
-                'deskripsi' => 'Integrasi database presensi dengan sistem terbaru'
-            ],
-            [
-                'id' => 'TKT-2026-002',
-                'judul' => 'Perbaikan Portal - Login Error',
-                'skpd' => 'Dinas Kesehatan',
-                'jenis_pekerjaan' => 'Perbaikan Portal',
-                'prioritas' => 'Urgent',
-                'tanggal_masuk' => Carbon::now()->subHours(5),
-                'pemohon' => 'dr. Ahmad Yani',
-                'deskripsi' => 'Portal tidak bisa login, error 500 di halaman login'
-            ]
-        ];
+        $pendingTickets = Ticket::with(['department', 'category', 'priority'])
+            ->whereIn('status', ['baru'])
+            ->whereNull('assignee_id')
+            ->orderByDesc(
+                \App\Models\Priority::select('weight')
+                    ->whereColumn('priorities.id', 'tickets.priority_id')
+            )
+            ->limit(10)
+            ->get();
 
-        $petugasList = [
-            ['id' => 1, 'nama' => 'Ahmad Fauzi', 'skill' => 'PIC Presensi, Troubleshooting', 'load' => 2],
-            ['id' => 2, 'nama' => 'Siti Aminah', 'skill' => 'PIC Presensi, Perbaikan Portal', 'load' => 3],
-            ['id' => 3, 'nama' => 'Rizki Pratama', 'skill' => 'Perbaikan Portal, Troubleshooting', 'load' => 1],
-            ['id' => 4, 'nama' => 'Desi Marlina', 'skill' => 'Troubleshooting, Maintenance Server', 'load' => 2],
-            ['id' => 5, 'nama' => 'Budi Santoso', 'skill' => 'Maintenance Server, PIC Presensi', 'load' => 0]
-        ];
+        $petugasList = User::where('role', 'petugas')
+            ->where('status', 'aktif')
+            ->withCount(['assignedTickets as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
+            ->orderBy('aktif_count')
+            ->get();
 
         return view('pages.admin.manajemen-tiket.manual-assignment', compact('pendingTickets', 'petugasList'));
     }
 
-    /**
-     * Halaman History Tiket
-     */
-    public function history()
+    //  History 
+
+    public function history(Request $request)
     {
-        $assignmentHistory = [
-            [
-                'id' => 'TKT-2026-050',
-                'judul' => 'PIC Presensi - Update Data',
-                'petugas' => 'Ahmad Fauzi',
-                'metode' => 'Otomatis',
-                'tanggal' => Carbon::now()->subDays(5),
-                'waktu' => 2,
-                'status' => 'Selesai'
-            ],
-            [
-                'id' => 'TKT-2026-051',
-                'judul' => 'Perbaikan Portal - SQL Error',
-                'petugas' => 'Siti Aminah',
-                'metode' => 'Manual',
-                'tanggal' => Carbon::now()->subDays(4),
-                'waktu' => 3,
-                'status' => 'Selesai'
-            ],
-            [
-                'id' => 'TKT-2026-052',
-                'judul' => 'Troubleshooting - Server Down',
-                'petugas' => 'Rizki Pratama',
-                'metode' => 'Otomatis',
-                'tanggal' => Carbon::now()->subDays(3),
-                'waktu' => 1,
-                'status' => 'Selesai'
-            ],
-            [
-                'id' => 'TKT-2026-053',
-                'judul' => 'Maintenance Server - Database Backup',
-                'petugas' => 'Budi Santoso',
-                'metode' => 'Manual',
-                'tanggal' => Carbon::now()->subDays(2),
-                'waktu' => 4,
-                'status' => 'Selesai'
-            ],
-            [
-                'id' => 'TKT-2026-054',
-                'judul' => 'Update Aplikasi - New Features',
-                'petugas' => 'Siti Aminah',
-                'metode' => 'Manual',
-                'tanggal' => Carbon::now()->subDays(1),
-                'waktu' => 2,
-                'status' => 'Berlangsung'
-            ]
+        $query = AuditLog::with('user')
+            ->where('action', 'assigned')
+            ->where('entity_type', 'Ticket')
+            ->orderByDesc('created_at');
+
+        if ($request->filled('dari'))   $query->where('created_at', '>=', Carbon::parse($request->dari)->startOfDay());
+        if ($request->filled('sampai')) $query->where('created_at', '<=', Carbon::parse($request->sampai)->endOfDay());
+
+        $history = $query->paginate(25)->withQueryString();
+
+        $kpi = [
+            'total_assignment' => AuditLog::where('action', 'assigned')->where('entity_type', 'Ticket')->count(),
+            'bulan_ini'        => AuditLog::where('action', 'assigned')->where('entity_type', 'Ticket')->whereMonth('created_at', now()->month)->count(),
         ];
 
-        $statistics = [
-            'total_assignment' => 254,
-            'auto_assignment' => 74,
-            'manual_assignment' => 26,
-            'avg_time' => 2.5
-        ];
-
-        $assignmentByPetugas = [
-            [
-                'nama' => 'Ahmad Fauzi',
-                'total' => 45,
-                'otomatis' => 35,
-                'manual' => 10
-            ],
-            [
-                'nama' => 'Siti Aminah',
-                'total' => 52,
-                'otomatis' => 38,
-                'manual' => 14
-            ],
-            [
-                'nama' => 'Rizki Pratama',
-                'total' => 38,
-                'otomatis' => 30,
-                'manual' => 8
-            ],
-            [
-                'nama' => 'Desi Marlina',
-                'total' => 42,
-                'otomatis' => 32,
-                'manual' => 10
-            ],
-            [
-                'nama' => 'Budi Santoso',
-                'total' => 77,
-                'otomatis' => 52,
-                'manual' => 25
-            ]
-        ];
-
-        $petugasList = [
-            ['id' => 1, 'nama' => 'Ahmad Fauzi'],
-            ['id' => 2, 'nama' => 'Siti Aminah'],
-            ['id' => 3, 'nama' => 'Rizki Pratama'],
-            ['id' => 4, 'nama' => 'Desi Marlina'],
-            ['id' => 5, 'nama' => 'Budi Santoso']
-        ];
-
-        return view('pages.admin.manajemen-tiket.history', compact('assignmentHistory', 'statistics', 'assignmentByPetugas', 'petugasList'));
+        return view('pages.admin.manajemen-tiket.history', compact('history', 'kpi'));
     }
 
-    /**
-     * Simpan assignment otomatis
-     */
-    public function saveAutoAssignment(Request $request)
+    //  API: Auto Assign 
+
+    public function autoAssign(Request $request, $id)
     {
-        // Logika simpan konfigurasi assignment otomatis
+        $ticket  = Ticket::with(['category', 'priority'])->findOrFail($id);
+        $request->validate(['assignee_id' => 'nullable|exists:users,id']);
+
+        if ($request->filled('assignee_id')) {
+            // Gunakan petugas yang dipilih dari simulasi
+            $assignee = User::findOrFail($request->assignee_id);
+        } else {
+            // Cari petugas dengan beban terkecil
+            $assignee = User::where('role', 'petugas')
+                ->where('status', 'aktif')
+                ->withCount(['assignedTickets as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
+                ->orderBy('aktif_count')
+                ->first();
+        }
+
+        if (! $assignee) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada petugas tersedia.'], 422);
+        }
+
+        $ticket->update([
+            'assignee_id' => $assignee->id,
+            'assigned_at' => now(),
+            'status'      => 'diproses',
+            'started_at'  => now(),
+        ]);
+
+        TicketComment::create([
+            'ticket_id' => $ticket->id,
+            'user_id'   => Auth::id(),
+            'body'      => "Tiket di-assign secara otomatis ke **{$assignee->name}**",
+            'type'      => 'assignment',
+        ]);
+
+        AuditLog::create([
+            'user_id'     => Auth::id(),
+            'action'      => 'assigned',
+            'entity_type' => 'Ticket',
+            'entity_id'   => $ticket->id,
+            'entity_name' => $ticket->number,
+            'new_value'   => ['assignee_id' => $assignee->id, 'assignee_name' => $assignee->name, 'method' => 'automatic'],
+            'description' => "Tiket {$ticket->number} di-assign otomatis ke {$assignee->name}",
+            'ip_address'  => $request->ip(),
+            'user_agent'  => $request->userAgent(),
+        ]);
+
         return response()->json([
-            'success' => true,
-            'message' => 'Konfigurasi assignment otomatis berhasil disimpan'
+            'success'  => true,
+            'message'  => "Tiket berhasil di-assign ke {$assignee->name}",
+            'assignee' => ['id' => $assignee->id, 'name' => $assignee->name],
         ]);
     }
 
-    /**
-     * Assign tiket manual
-     */
-    public function assignManual(Request $request)
+    //  API: Manual Assign 
+
+    public function assignManual(Request $request, $id)
     {
-        // Logika assign tiket ke petugas
+        $ticket = Ticket::findOrFail($id);
+
+        $request->validate([
+            'assignee_id' => 'required|exists:users,id',
+            'catatan'     => 'nullable|string|max:500',
+        ]);
+
+        $assignee = User::findOrFail($request->assignee_id);
+        $user     = Auth::user();
+
+        $ticket->update([
+            'assignee_id' => $assignee->id,
+            'assigned_at' => now(),
+            'status'      => 'diproses',
+            'started_at'  => $ticket->started_at ?? now(),
+        ]);
+
+        $body = "Tiket di-assign secara manual ke **{$assignee->name}**";
+        if ($request->filled('catatan')) {
+            $body .= "\n\nCatatan: " . $request->catatan;
+        }
+
+        TicketComment::create([
+            'ticket_id' => $ticket->id,
+            'user_id'   => $user->id,
+            'body'      => $body,
+            'type'      => 'assignment',
+        ]);
+
+        AuditLog::create([
+            'user_id'     => $user->id,
+            'action'      => 'assigned',
+            'entity_type' => 'Ticket',
+            'entity_id'   => $ticket->id,
+            'entity_name' => $ticket->number,
+            'new_value'   => ['assignee_id' => $assignee->id, 'assignee_name' => $assignee->name, 'method' => 'manual', 'notes' => $request->catatan],
+            'description' => "Tiket {$ticket->number} di-assign manual ke {$assignee->name}",
+            'ip_address'  => $request->ip(),
+            'user_agent'  => $request->userAgent(),
+        ]);
+
         return response()->json([
-            'success' => true,
-            'message' => 'Tiket berhasil diassign ke petugas: ' . $request->petugas
+            'success'  => true,
+            'message'  => "Tiket berhasil di-assign ke {$assignee->name}",
+            'assignee' => ['id' => $assignee->id, 'name' => $assignee->name],
         ]);
     }
 }
