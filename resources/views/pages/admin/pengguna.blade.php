@@ -95,10 +95,10 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="user-avatar me-2">{{ substr($user['nama'], 0, 1) }}</div>
+                                        <div class="user-avatar me-2">{{ substr($user['name'], 0, 1) }}</div>
                                         <div>
                                             <strong>{{ $user['nama'] }}</strong><br>
-                                            <small class="text-muted">@{{ $user['username'] }}</small>
+                                            <small class="text-muted">{{ $user['name'] }}</small>
                                         </div>
                                     </div>
                                 </td>

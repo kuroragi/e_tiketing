@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class AdminPageController extends Controller
 {
@@ -61,9 +62,10 @@ class AdminPageController extends Controller
 
     public function pengguna()
     {
-        $users       = User::with('department')->orderBy('name')->paginate(20);
+        $users       = User::with(['department', 'roles'])->orderBy('name')->paginate(20);
         $departments = Department::aktif()->orderBy('name')->get();
-        return view('pages.admin.pengguna', compact('users', 'departments'));
+        $roles       = Role::orderBy('name')->get();
+        return view('pages.admin.pengguna', compact('users', 'departments', 'roles'));
     }
 
     public function storeUser(Request $request)
@@ -85,6 +87,9 @@ class AdminPageController extends Controller
             'department_id' => $validated['department_id'] ?? null,
             'status'        => $validated['status'],
         ]);
+
+        // Assign Spatie role
+        $user->syncRoles([$validated['role']]);
 
         AuditLog::create([
             'user_id'     => Auth::id(),
@@ -126,6 +131,9 @@ class AdminPageController extends Controller
         }
 
         $user->update($updateData);
+
+        // Sync Spatie role
+        $user->syncRoles([$validated['role']]);
 
         AuditLog::create([
             'user_id'     => Auth::id(),

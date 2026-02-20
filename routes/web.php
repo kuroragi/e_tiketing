@@ -6,6 +6,8 @@ use App\Http\Controllers\KominfoController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\AdminPageController;
 use App\Http\Controllers\TicketManagementController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PermissionController;
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
@@ -93,6 +95,22 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('log-aktivitas', [AdminPageController::class, 'logAktivitas'])->name('admin.log-aktivitas');
         Route::get('laporan', [AdminPageController::class, 'laporan'])->name('admin.laporan');
+
+        // Role Management
+        Route::prefix('roles')->name('admin.roles.')->group(function () {
+            Route::get('/',         [RoleController::class, 'index'])->name('index');
+            Route::post('/',        [RoleController::class, 'store'])->name('store');
+            Route::put('{id}',      [RoleController::class, 'update'])->name('update');
+            Route::delete('{id}',   [RoleController::class, 'destroy'])->name('destroy');
+        });
+
+        // Permission Management
+        Route::prefix('permissions')->name('admin.permissions.')->group(function () {
+            Route::get('/',         [PermissionController::class, 'index'])->name('index');
+            Route::post('/',        [PermissionController::class, 'store'])->name('store');
+            Route::put('{id}',      [PermissionController::class, 'update'])->name('update');
+            Route::delete('{id}',   [PermissionController::class, 'destroy'])->name('destroy');
+        });
     });
 
     // Ticket Management (Admin/Petugas)

@@ -22,7 +22,7 @@ class UserSeeder extends Seeder
             [
                 'name'          => 'Administrator Sistem',
                 'email'         => 'admin@kominfo.bukittinggi.go.id',
-                'password'      => Hash::make('password'),
+                'password'      => Hash::make('zaq123Qwerty'),
                 'role'          => 'admin',
                 'department_id' => $kominfoDept?->id,
                 'status'        => 'aktif',

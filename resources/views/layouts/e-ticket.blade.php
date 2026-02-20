@@ -343,6 +343,16 @@
                                 <i class="bi bi-shuffle me-2"></i>Manajemen Tiket
                                 <small class="text-muted d-block">Auto & manual assignment</small>
                             </a>
+                            <a class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}"
+                                href="{{ route('admin.roles.index') }}">
+                                <i class="bi bi-shield-lock me-2"></i>Manajemen Role
+                                <small class="text-muted d-block">Kelola role pengguna</small>
+                            </a>
+                            <a class="nav-link {{ request()->routeIs('admin.permissions.*') ? 'active' : '' }}"
+                                href="{{ route('admin.permissions.index') }}">
+                                <i class="bi bi-key me-2"></i>Manajemen Permission
+                                <small class="text-muted d-block">Kelola hak akses sistem</small>
+                            </a>
 
                             <h6 class="text-muted mb-3 mt-4">INFORMASI</h6>
                             <a class="nav-link {{ request()->routeIs('panduan') ? 'active' : '' }}"

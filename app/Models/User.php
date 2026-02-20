@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles;
 
     protected $fillable = [
         'name',
@@ -56,7 +57,11 @@ class User extends Authenticatable
         return $this->role === 'pimpinan';
     }
 
-    public function hasRole(string|array $roles): bool
+    /**
+     * Check role against both Spatie roles and legacy role column.
+     * Override Spatie's hasRole to also support legacy column checks.
+     */
+    public function hasRoleName(string|array $roles): bool
     {
         return in_array($this->role, (array) $roles);
     }

@@ -11,13 +11,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Alias middleware untuk role-based access control
+        // Spatie permission middleware
         $middleware->alias([
-            'role'   => \App\Http\Middleware\RoleMiddleware::class,
-            'active' => \App\Http\Middleware\CheckUserActive::class,
+            'role'              => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission'        => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role_or_permission'=> \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'active'            => \App\Http\Middleware\CheckUserActive::class,
         ]);
 
-        // Terapkan CheckUserActive pada semua request web yang terautentikasi
+        // Terapkan CheckUserActive pada semua request web
         $middleware->appendToGroup('web', \App\Http\Middleware\CheckUserActive::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
