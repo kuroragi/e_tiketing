@@ -64,7 +64,7 @@ class AdminPageController extends Controller
     {
         $users       = User::with(['department', 'roles'])->orderBy('name')->paginate(20);
         $departments = Department::aktif()->orderBy('name')->get();
-        $roles       = Role::orderBy('name')->get();
+        $roles       = Role::withCount('users')->orderBy('name')->get();
         return view('pages.admin.pengguna', compact('users', 'departments', 'roles'));
     }
 
@@ -74,7 +74,7 @@ class AdminPageController extends Controller
             'name'          => 'required|string|max:255',
             'email'         => 'required|email|unique:users,email',
             'password'      => 'required|string|min:8|confirmed',
-            'role'          => 'required|in:admin,petugas,skpd,pimpinan',
+            'role'          => 'required|string|exists:roles,name',
             'department_id' => 'nullable|exists:departments,id',
             'status'        => 'required|in:aktif,nonaktif',
         ]);
@@ -112,7 +112,7 @@ class AdminPageController extends Controller
         $validated = $request->validate([
             'name'          => 'required|string|max:255',
             'email'         => "required|email|unique:users,email,{$id}",
-            'role'          => 'required|in:admin,petugas,skpd,pimpinan',
+            'role'          => 'required|string|exists:roles,name',
             'department_id' => 'nullable|exists:departments,id',
             'status'        => 'required|in:aktif,nonaktif',
             'password'      => 'nullable|string|min:8|confirmed',
