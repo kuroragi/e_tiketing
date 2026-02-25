@@ -37,45 +37,16 @@
                                 </h6>
                             </div>
                             <div class="col-md-6">
-                                <label for="skpd" class="form-label">SKPD/Unit Kerja *</label>
-                                <select class="form-select @error('skpd') is-invalid @enderror" name="skpd"
-                                    id="skpd" required>
-                                    <option value="">Pilih SKPD...</option>
-                                    @foreach ($skpdList ?? [] as $skpd)
-                                        <option value="{{ $skpd['id'] }}"
-                                            {{ old('skpd') == $skpd['id'] ? 'selected' : '' }}>
-                                            {{ $skpd['nama'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('skpd')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <label class="form-label">SKPD/Unit Kerja</label>
+                                <input type="text" class="form-control" value="{{ auth()->user()->department->name ?? 'Tidak terdaftar' }}" readonly>
+                                <div class="form-text">SKPD otomatis sesuai akun Anda</div>
                             </div>
                             <div class="col-md-6">
-                                <label for="nama_pemohon" class="form-label">Nama Pemohon *</label>
-                                <input type="text" class="form-control @error('nama_pemohon') is-invalid @enderror"
-                                    name="nama_pemohon" id="nama_pemohon" value="{{ old('nama_pemohon') }}" required>
-                                @error('nama_pemohon')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <label for="jabatan" class="form-label">Jabatan</label>
-                                <input type="text" class="form-control @error('jabatan') is-invalid @enderror"
-                                    name="jabatan" id="jabatan" value="{{ old('jabatan') }}">
-                                @error('jabatan')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="col-md-6">
-                                <label for="kontak" class="form-label">No. Telepon/WA *</label>
-                                <input type="tel" class="form-control @error('kontak') is-invalid @enderror"
-                                    name="kontak" id="kontak" value="{{ old('kontak') }}" required>
-                                @error('kontak')
+                                <label for="contact_pic" class="form-label">Nama / No. Telepon PIC *</label>
+                                <input type="text" class="form-control @error('contact_pic') is-invalid @enderror"
+                                    name="contact_pic" id="contact_pic" value="{{ old('contact_pic', auth()->user()->name) }}" required
+                                    placeholder="Nama dan nomor WA yang bisa dihubungi">
+                                @error('contact_pic')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -90,27 +61,27 @@
                                 </h6>
                             </div>
                             <div class="col-md-8">
-                                <label for="judul" class="form-label">Judul/Ringkasan Pekerjaan *</label>
-                                <input type="text" class="form-control @error('judul') is-invalid @enderror"
-                                    name="judul" id="judul" value="{{ old('judul') }}"
+                                <label for="title" class="form-label">Judul/Ringkasan Pekerjaan *</label>
+                                <input type="text" class="form-control @error('title') is-invalid @enderror"
+                                    name="title" id="title" value="{{ old('title') }}"
                                     placeholder="Contoh: Perbaikan Jaringan Internet Kantor SKPD" required>
-                                @error('judul')
+                                @error('title')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-4">
-                                <label for="jenis_pekerjaan" class="form-label">Jenis Pekerjaan *</label>
-                                <select class="form-select @error('jenis_pekerjaan') is-invalid @enderror"
-                                    name="jenis_pekerjaan" id="jenis_pekerjaan" required>
+                                <label for="category_id" class="form-label">Jenis Pekerjaan *</label>
+                                <select class="form-select @error('category_id') is-invalid @enderror"
+                                    name="category_id" id="category_id" required>
                                     <option value="">Pilih Jenis...</option>
-                                    @foreach ($jenisPekerjaan ?? [] as $jenis)
-                                        <option value="{{ $jenis['id'] }}"
-                                            {{ old('jenis_pekerjaan') == $jenis['id'] ? 'selected' : '' }}>
-                                            {{ $jenis['nama'] }}
+                                    @foreach ($jenisKerjaan ?? [] as $jenis)
+                                        <option value="{{ $jenis->id }}"
+                                            {{ old('category_id') == $jenis->id ? 'selected' : '' }}>
+                                            {{ $jenis->name }}
                                         </option>
                                     @endforeach
                                 </select>
-                                @error('jenis_pekerjaan')
+                                @error('category_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -118,56 +89,49 @@
 
                         <div class="row mb-4">
                             <div class="col-12">
-                                <label for="deskripsi" class="form-label">Deskripsi Lengkap Pekerjaan *</label>
-                                <textarea class="form-control @error('deskripsi') is-invalid @enderror" name="deskripsi" id="deskripsi" rows="5"
+                                <label for="description" class="form-label">Deskripsi Lengkap Pekerjaan *</label>
+                                <textarea class="form-control @error('description') is-invalid @enderror" name="description" id="description" rows="5"
                                     required
-                                    placeholder="Jelaskan secara detail pekerjaan yang diminta, kondisi saat ini, dan hasil yang diharapkan...">{{ old('deskripsi') }}</textarea>
-                                @error('deskripsi')
+                                    placeholder="Jelaskan secara detail pekerjaan yang diminta, kondisi saat ini, dan hasil yang diharapkan...">{{ old('description') }}</textarea>
+                                @error('description')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                <div class="form-text">Jelaskan sedetail mungkin agar tim Kominfo dapat memahami kebutuhan
-                                    Anda</div>
+                                <div class="form-text">Jelaskan sedetail mungkin agar tim Kominfo dapat memahami kebutuhan Anda (min. 20 karakter)</div>
                             </div>
                         </div>
 
                         <div class="row mb-4">
                             <div class="col-md-4">
-                                <label for="prioritas" class="form-label">Tingkat Prioritas *</label>
-                                <select class="form-select @error('prioritas') is-invalid @enderror" name="prioritas"
-                                    id="prioritas" required>
+                                <label for="priority_id" class="form-label">Tingkat Prioritas *</label>
+                                <select class="form-select @error('priority_id') is-invalid @enderror" name="priority_id"
+                                    id="priority_id" required>
                                     <option value="">Pilih Prioritas...</option>
-                                    <option value="rendah" {{ old('prioritas') == 'rendah' ? 'selected' : '' }}>
-                                        Rendah (Tidak Mendesak)
-                                    </option>
-                                    <option value="sedang" {{ old('prioritas') == 'sedang' ? 'selected' : '' }}>
-                                        Sedang (Normal)
-                                    </option>
-                                    <option value="tinggi" {{ old('prioritas') == 'tinggi' ? 'selected' : '' }}>
-                                        Tinggi (Mendesak)
-                                    </option>
+                                    @foreach ($prioritasList ?? [] as $prioritas)
+                                        <option value="{{ $prioritas->id }}"
+                                            {{ old('priority_id') == $prioritas->id ? 'selected' : '' }}>
+                                            {{ $prioritas->name }}
+                                        </option>
+                                    @endforeach
                                 </select>
-                                @error('prioritas')
+                                @error('priority_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-4">
-                                <label for="target_selesai" class="form-label">Target Waktu Penyelesaian</label>
-                                <input type="date" class="form-control @error('target_selesai') is-invalid @enderror"
-                                    name="target_selesai" id="target_selesai" value="{{ old('target_selesai') }}"
-                                    min="{{ date('Y-m-d') }}">
-                                @error('target_selesai')
+                                <label for="target_date" class="form-label">Target Waktu Penyelesaian</label>
+                                <input type="date" class="form-control @error('target_date') is-invalid @enderror"
+                                    name="target_date" id="target_date" value="{{ old('target_date') }}"
+                                    min="{{ date('Y-m-d', strtotime('+1 day')) }}">
+                                @error('target_date')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                                 <div class="form-text">Opsional - jika ada deadline khusus</div>
                             </div>
                             <div class="col-md-4">
-                                <label for="lokasi" class="form-label">Lokasi Pekerjaan</label>
-                                <input type="text" class="form-control @error('lokasi') is-invalid @enderror"
-                                    name="lokasi" id="lokasi" value="{{ old('lokasi') }}"
+                                <label class="form-label">Lokasi Pekerjaan</label>
+                                <input type="text" class="form-control"
+                                    name="location" value="{{ old('location') }}"
                                     placeholder="Contoh: Ruang IT Lantai 2">
-                                @error('lokasi')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
                             </div>
                         </div>
 
@@ -179,22 +143,17 @@
                                     Lampiran Pendukung
                                 </h6>
                             </div>
-                            <div class="col-md-6">
-                                <label for="lampiran" class="form-label">Upload File</label>
-                                <input type="file" class="form-control @error('lampiran') is-invalid @enderror"
-                                    name="lampiran" id="lampiran" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                            <div class="col-md-12">
+                                <label for="lampiran" class="form-label">Upload File (maks. 5 file)</label>
+                                <input type="file" class="form-control @error('lampiran') @error('lampiran.*') is-invalid @enderror @enderror"
+                                    name="lampiran[]" id="lampiran" accept=".pdf,.jpg,.jpeg,.png" multiple>
                                 @error('lampiran')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                <div class="form-text">File: PDF, DOC, DOCX, JPG, PNG (Max: 5MB)</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="catatan_tambahan" class="form-label">Catatan Tambahan</label>
-                                <textarea class="form-control @error('catatan_tambahan') is-invalid @enderror" name="catatan_tambahan"
-                                    id="catatan_tambahan" rows="3" placeholder="Informasi tambahan yang perlu diketahui...">{{ old('catatan_tambahan') }}</textarea>
-                                @error('catatan_tambahan')
+                                @error('lampiran.*')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                <div class="form-text">File: PDF, JPG, PNG (Max: 10MB per file, maks. 5 file)</div>
                             </div>
                         </div>
 
@@ -313,7 +272,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Character counter for description
-            const deskripsi = document.getElementById('deskripsi');
+            const deskripsi = document.getElementById('description');
             const charCounter = document.createElement('div');
             charCounter.className = 'form-text text-end';
             deskripsi.parentNode.appendChild(charCounter);
@@ -322,10 +281,10 @@
                 const length = this.value.length;
                 charCounter.textContent = `${length}/1000 karakter`;
 
-                if (length > 800) {
-                    charCounter.className = 'form-text text-end text-warning';
-                } else if (length > 900) {
+                if (length > 900) {
                     charCounter.className = 'form-text text-end text-danger';
+                } else if (length > 800) {
+                    charCounter.className = 'form-text text-end text-warning';
                 } else {
                     charCounter.className = 'form-text text-end text-muted';
                 }
@@ -335,7 +294,7 @@
             deskripsi.dispatchEvent(new Event('input'));
 
             // Priority helper
-            const prioritas = document.getElementById('prioritas');
+            const prioritas = document.getElementById('priority_id');
             prioritas.addEventListener('change', function() {
                 const helpTexts = {
                     'rendah': 'Pekerjaan tidak mendesak, dapat dikerjakan sesuai jadwal normal',
@@ -357,25 +316,25 @@
             // File upload validation
             const lampiran = document.getElementById('lampiran');
             lampiran.addEventListener('change', function() {
-                const file = this.files[0];
-                if (file) {
-                    const maxSize = 5 * 1024 * 1024; // 5MB
-                    const allowedTypes = ['application/pdf', 'application/msword',
-                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                        'image/jpeg', 'image/jpg', 'image/png'
-                    ];
+                const files = Array.from(this.files);
+                const maxSize = 10 * 1024 * 1024; // 10MB
+                const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
 
+                for (const file of files) {
                     if (file.size > maxSize) {
-                        alert('Ukuran file terlalu besar. Maksimal 5MB.');
+                        alert(`File "${file.name}" terlalu besar. Maksimal 10MB per file.`);
                         this.value = '';
                         return;
                     }
-
                     if (!allowedTypes.includes(file.type)) {
-                        alert('Tipe file tidak didukung. Gunakan PDF, DOC, DOCX, JPG, atau PNG.');
+                        alert(`Tipe file "${file.name}" tidak didukung. Gunakan PDF, JPG, atau PNG.`);
                         this.value = '';
                         return;
                     }
+                }
+                if (files.length > 5) {
+                    alert('Maksimal 5 file lampiran.');
+                    this.value = '';
                 }
             });
 

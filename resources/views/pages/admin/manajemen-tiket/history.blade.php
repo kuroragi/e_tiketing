@@ -25,7 +25,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <p class="text-muted mb-1 small"><i class="bi bi-stack me-2"></i>Total Assignment</p>
-                            <h3 class="mb-0">{{ $statistics['total_assignment'] }}</h3>
+                            <h3 class="mb-0">{{ $kpi['total_assignment'] ?? 0 }}</h3>
                         </div>
                         <i class="bi bi-stack text-primary" style="font-size: 2rem; opacity: 0.5;"></i>
                     </div>
@@ -38,7 +38,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <p class="text-muted mb-1 small"><i class="bi bi-robot me-2"></i>Otomatis</p>
-                            <h3 class="mb-0">{{ $statistics['auto_assignment'] }}%</h3>
+                            <h3 class="mb-0">{{ $kpi['bulan_ini'] ?? 0 }}</h3>
                         </div>
                         <i class="bi bi-robot text-success" style="font-size: 2rem; opacity: 0.5;"></i>
                     </div>
@@ -50,8 +50,8 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <p class="text-muted mb-1 small"><i class="bi bi-hand-index me-2"></i>Manual</p>
-                            <h3 class="mb-0">{{ $statistics['manual_assignment'] }}%</h3>
+                            <p class="text-muted mb-1 small"><i class="bi bi-hand-index me-2"></i>Manual (Bulan)</p>
+                            <h3 class="mb-0">-</h3>
                         </div>
                         <i class="bi bi-hand-index text-warning" style="font-size: 2rem; opacity: 0.5;"></i>
                     </div>
@@ -64,7 +64,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <p class="text-muted mb-1 small"><i class="bi bi-hourglass-end me-2"></i>Rata-rata Waktu</p>
-                            <h3 class="mb-0">{{ $statistics['avg_time'] }}h</h3>
+                            <h3 class="mb-0">-</h3>
                         </div>
                         <i class="bi bi-hourglass-end text-info" style="font-size: 2rem; opacity: 0.5;"></i>
                     </div>
@@ -100,7 +100,7 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    @foreach ($assignmentByPetugas as $petugas)
+                    @foreach ($assignmentByPetugas ?? [] as $petugas)
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h6 class="mb-0">{{ $petugas['nama'] }}</h6>
@@ -140,8 +140,8 @@
                     <label class="form-label small"><strong>Filter Petugas</strong></label>
                     <select class="form-select form-select-sm" id="petugasFilter">
                         <option value="">Semua Petugas</option>
-                        @foreach ($petugasList as $petugas)
-                            <option value="{{ $petugas['id'] }}">{{ $petugas['nama'] }}</option>
+                        @foreach ($petugasList ?? [] as $petugas)
+                            <option value="{{ $petugas->id }}">{{ $petugas->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -164,7 +164,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
                 <i class="bi bi-list-check me-2"></i>
-                Riwayat Assignment ({{ count($assignmentHistory) }} records)
+                Riwayat Assignment ({{ $history->total() }} records)
             </h5>
             <button class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-download me-1"></i>
@@ -185,54 +185,36 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($assignmentHistory as $record)
+                    @forelse($history as $log)
                         <tr>
                             <td>
-                                <strong class="text-primary">{{ $record['id'] }}</strong>
+                                <strong class="text-primary">{{ $log->entity_name }}</strong>
                             </td>
                             <td>
-                                <a href="javascript:void(0);" class="text-decoration-none">
-                                    {{ Str::limit($record['judul'], 30) }}
-                                </a>
+                                {{ Str::limit($log->description, 40) }}
                             </td>
                             <td>
-                                <span class="badge bg-light text-dark">{{ $record['petugas'] }}</span>
+                                <span class="badge bg-light text-dark">{{ $log->user->name ?? '-' }}</span>
                             </td>
                             <td>
-                                @if ($record['metode'] === 'Otomatis')
+                                @php $method = is_array($log->new_value) ? ($log->new_value['method'] ?? '-') : '-'; @endphp
+                                @if ($method === 'automatic')
                                     <span class="badge bg-success">
-                                        <i class="bi bi-robot me-1"></i>{{ $record['metode'] }}
+                                        <i class="bi bi-robot me-1"></i>Otomatis
                                     </span>
-                                @else
+                                @elseif($method === 'manual')
                                     <span class="badge bg-warning">
-                                        <i class="bi bi-hand-index me-1"></i>{{ $record['metode'] }}
-                                    </span>
-                                @endif
-                            </td>
-                            <td>
-                                <small>{{ $record['tanggal']->format('d M Y, H:i') }}</small>
-                            </td>
-                            <td>
-                                <span
-                                    class="badge bg-{{ $record['waktu'] <= 2 ? 'success' : ($record['waktu'] <= 4 ? 'info' : 'warning') }}">
-                                    {{ $record['waktu'] }}h
-                                </span>
-                            </td>
-                            <td>
-                                @if ($record['status'] === 'Selesai')
-                                    <span class="badge bg-success">
-                                        <i class="bi bi-check-circle me-1"></i>{{ $record['status'] }}
-                                    </span>
-                                @elseif($record['status'] === 'Berlangsung')
-                                    <span class="badge bg-info">
-                                        <i class="bi bi-hourglass-bottom me-1"></i>{{ $record['status'] }}
+                                        <i class="bi bi-hand-index me-1"></i>Manual
                                     </span>
                                 @else
-                                    <span class="badge bg-danger">
-                                        <i class="bi bi-x-circle me-1"></i>{{ $record['status'] }}
-                                    </span>
+                                    <span class="badge bg-secondary">{{ $method }}</span>
                                 @endif
                             </td>
+                            <td>
+                                <small>{{ $log->created_at->format('d M Y, H:i') }}</small>
+                            </td>
+                            <td>-</td>
+                            <td><span class="badge bg-info">Diproses</span></td>
                         </tr>
                     @empty
                         <tr>
@@ -246,15 +228,10 @@
             </table>
         </div>
         <div class="card-footer d-flex justify-content-between align-items-center">
-            <small class="text-muted">Menampilkan {{ count($assignmentHistory) }} dari
-                {{ $statistics['total_assignment'] }} records</small>
+                <small class="text-muted">Menampilkan {{ $history->count() }} dari
+                {{ $kpi['total_assignment'] ?? 0 }} records</small>
             <nav aria-label="Page navigation">
-                <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
-                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">Next</a></li>
-                </ul>
+                {{ $history->links() }}
             </nav>
         </div>
     </div>
@@ -305,7 +282,7 @@
             data: {
                 labels: ['Otomatis', 'Manual'],
                 datasets: [{
-                    data: [{{ $statistics['auto_assignment'] }}, {{ $statistics['manual_assignment'] }}],
+                    data: [{{ $kpi['bulan_ini'] ?? 0 }}, {{ max(0, ($kpi['total_assignment'] ?? 0) - ($kpi['bulan_ini'] ?? 0)) }}],
                     backgroundColor: ['#28a745', '#ffc107'],
                     borderColor: ['#fff', '#fff'],
                     borderWidth: 2

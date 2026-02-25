@@ -24,7 +24,7 @@
                     type="button" role="tab">
                     <i class="bi bi-hourglass-bottom me-2"></i>
                     Tiket Pending
-                    <span class="badge bg-warning ms-2">{{ count($pendingTickets) }}</span>
+                    <span class="badge bg-warning ms-2">{{ $pendingTickets->total() }}</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -77,42 +77,55 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($pendingTickets as $ticket)
+                                @forelse ($pendingTickets as $ticket)
                                     <tr>
                                         <td>
-                                            <strong>{{ $ticket['id'] }}</strong>
+                                            <a href="{{ route('tiket.show', $ticket->id) }}" class="fw-bold text-decoration-none">
+                                                {{ $ticket->number }}
+                                            </a>
                                         </td>
                                         <td>
-                                            <strong>{{ $ticket['judul'] }}</strong><br>
-                                            <small class="text-muted">{{ substr($ticket['deskripsi'], 0, 40) }}...</small>
+                                            <strong>{{ $ticket->title }}</strong><br>
+                                            <small class="text-muted">{{ Str::limit($ticket->description, 60) }}</small>
                                         </td>
-                                        <td>{{ $ticket['skpd'] }}</td>
+                                        <td>{{ $ticket->department->name ?? '-' }}</td>
                                         <td>
-                                            <span class="badge bg-info">{{ $ticket['jenis_pekerjaan'] }}</span>
+                                            <span class="badge bg-info">{{ $ticket->category->name ?? '-' }}</span>
                                         </td>
                                         <td>
-                                            <span
-                                                class="badge bg-{{ $ticket['prioritas'] === 'Urgent' ? 'danger' : ($ticket['prioritas'] === 'Tinggi' ? 'warning' : 'success') }}">
-                                                {{ $ticket['prioritas'] }}
+                                            @php $prio = $ticket->priority->name ?? '-'; @endphp
+                                            <span class="badge bg-{{ $prio === 'Urgent' ? 'danger' : ($prio === 'Tinggi' ? 'warning' : 'success') }}">
+                                                {{ $prio }}
                                             </span>
                                         </td>
                                         <td>
-                                            <small>{{ $ticket['tanggal_masuk']->diffForHumans() }}</small>
+                                            <small>{{ $ticket->created_at->diffForHumans() }}</small>
                                         </td>
                                         <td>
                                             <div class="btn-group btn-group-sm" role="group">
                                                 <button type="button" class="btn btn-outline-primary"
-                                                    onclick="showAutoAssignModal('{{ $ticket['id'] }}', '{{ $ticket['jenis_pekerjaan'] }}', '{{ $ticket['prioritas'] }}')">
+                                                    onclick="showAutoAssignModal('{{ $ticket->id }}', '{{ addslashes($ticket->category->name ?? '') }}', '{{ addslashes($ticket->priority->name ?? '') }}')">
                                                     <i class="bi bi-lightning-fill me-1"></i>Auto
                                                 </button>
                                                 <button type="button" class="btn btn-outline-info"
-                                                    onclick="showManualAssignModal('{{ $ticket['id'] }}')">
+                                                    onclick="showManualAssignModal('{{ $ticket->id }}')">
                                                     <i class="bi bi-hand-index me-1"></i>Manual
                                                 </button>
                                             </div>
                                         </td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-4">
+                                            <i class="bi bi-check-circle display-6 d-block mb-2 text-success"></i>
+                                            Tidak ada tiket yang menunggu assignment.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                        {{ $pendingTickets->links() }}
                             </tbody>
                         </table>
                     </div>
@@ -300,31 +313,16 @@
                         <div class="col-md-6 mb-4">
                             <h6>Petugas Tersedia</h6>
                             <div class="list-group">
-                                <div class="list-group-item">
-                                    <h6 class="mb-2">Ahmad Fauzi (A)</h6>
-                                    <small class="text-muted">Keahlian: PIC Presensi, Troubleshooting</small><br>
-                                    <span class="badge bg-info mt-2">Load: 2 tiket</span>
-                                </div>
-                                <div class="list-group-item">
-                                    <h6 class="mb-2">Siti Aminah (B)</h6>
-                                    <small class="text-muted">Keahlian: PIC Presensi, Perbaikan Portal</small><br>
-                                    <span class="badge bg-warning mt-2">Load: 3 tiket</span>
-                                </div>
-                                <div class="list-group-item">
-                                    <h6 class="mb-2">Rizki Pratama (C)</h6>
-                                    <small class="text-muted">Keahlian: Perbaikan Portal, Troubleshooting</small><br>
-                                    <span class="badge bg-success mt-2">Load: 1 tiket</span>
-                                </div>
-                                <div class="list-group-item">
-                                    <h6 class="mb-2">Desi Marlina (D)</h6>
-                                    <small class="text-muted">Keahlian: Troubleshooting, Maintenance Server</small><br>
-                                    <span class="badge bg-info mt-2">Load: 2 tiket</span>
-                                </div>
-                                <div class="list-group-item">
-                                    <h6 class="mb-2">Budi Santoso (E)</h6>
-                                    <small class="text-muted">Keahlian: Maintenance Server, PIC Presensi</small><br>
-                                    <span class="badge bg-success mt-2">Load: 0 tiket (Tersedia)</span>
-                                </div>
+                                @forelse ($petugasList ?? [] as $p)
+                                    <div class="list-group-item">
+                                        <h6 class="mb-1">{{ $p->name }}</h6>
+                                        <span class="badge bg-{{ $p->aktif_count === 0 ? 'success' : ($p->aktif_count <= 3 ? 'info' : ($p->aktif_count <= 6 ? 'warning' : 'danger')) }} mt-1">
+                                            Load: {{ $p->aktif_count }} tiket
+                                        </span>
+                                    </div>
+                                @empty
+                                    <div class="list-group-item text-muted">Tidak ada petugas aktif.</div>
+                                @endforelse
                             </div>
                         </div>
                         <div class="col-md-6 mb-4">
@@ -415,12 +413,10 @@
                     <div class="mb-3">
                         <label class="form-label">Pilih Petugas</label>
                         <select class="form-select" id="petugasSelect">
-                            <option selected disabled>-- Pilih Petugas --</option>
-                            <option>Ahmad Fauzi - Load: 2 tiket</option>
-                            <option>Siti Aminah - Load: 3 tiket</option>
-                            <option>Rizki Pratama - Load: 1 tiket</option>
-                            <option>Desi Marlina - Load: 2 tiket</option>
-                            <option>Budi Santoso - Load: 0 tiket</option>
+                            <option value="" selected disabled>-- Pilih Petugas --</option>
+                            @foreach ($petugasList ?? [] as $p)
+                                <option value="{{ $p->id }}">{{ $p->name }} — Load: {{ $p->aktif_count }} tiket</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="mb-3">
@@ -521,9 +517,10 @@
             }
 
             const petugasSelect = document.getElementById('petugasSelect');
-            const petugas = petugasSelect.value;
+            const assigneeId = petugasSelect.value;
+            const catatan = document.getElementById('catatanText').value;
 
-            if (!petugas) {
+            if (!assigneeId) {
                 showToast('Pilih petugas terlebih dahulu', 'warning');
                 return;
             }
@@ -540,7 +537,8 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        petugas: petugas
+                        assignee_id: assigneeId,
+                        catatan: catatan
                     })
                 })
                 .then(response => {

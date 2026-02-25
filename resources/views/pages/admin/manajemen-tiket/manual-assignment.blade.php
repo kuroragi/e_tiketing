@@ -43,7 +43,7 @@
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="bi bi-hourglass-bottom me-2"></i>
-                        Tiket Pending ({{ count($pendingTickets) }})
+                        Tiket Pending ({{ $pendingTickets->count() }})
                     </h5>
                 </div>
                 <div class="card-body">
@@ -53,24 +53,22 @@
                                 <div class="row">
                                     <div class="col-md-8">
                                         <h6 class="mb-1">
-                                            <strong>{{ $ticket['id'] }}</strong> - {{ $ticket['judul'] }}
+                                            <strong>{{ $ticket->number }}</strong> - {{ $ticket->title }}
                                         </h6>
                                         <p class="text-muted small mb-2">
-                                            <i class="bi bi-building me-1"></i>{{ $ticket['skpd'] }} |
-                                            <i class="bi bi-person me-1"></i>{{ $ticket['pemohon'] }}
+                                            <i class="bi bi-building me-1"></i>{{ $ticket->department->name ?? '-' }} |
+                                            <i class="bi bi-person me-1"></i>{{ $ticket->requester->name ?? '-' }}
                                         </p>
                                         <div class="mb-2">
-                                            <span class="badge bg-info">{{ $ticket['jenis_pekerjaan'] }}</span>
-                                            <span
-                                                class="badge bg-{{ $ticket['prioritas'] === 'Urgent' ? 'danger' : 'warning' }}">{{ $ticket['prioritas'] }}</span>
-                                            <span
-                                                class="badge bg-secondary">{{ $ticket['tanggal_masuk']->diffForHumans() }}</span>
+                                            <span class="badge bg-info">{{ $ticket->category->name ?? '-' }}</span>
+                                            <span class="badge bg-{{ ($ticket->priority->name ?? '') === 'Urgent' ? 'danger' : 'warning' }}">{{ $ticket->priority->name ?? '-' }}</span>
+                                            <span class="badge bg-secondary">{{ $ticket->created_at->diffForHumans() }}</span>
                                         </div>
-                                        <small class="text-muted">{{ $ticket['deskripsi'] }}</small>
+                                        <small class="text-muted">{{ Str::limit($ticket->description, 80) }}</small>
                                     </div>
                                     <div class="col-md-4">
                                         <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal"
-                                            data-bs-target="#assignModal{{ $ticket['id'] }}">
+                                            data-bs-target="#assignModal{{ $ticket->id }}">
                                             <i class="bi bi-person-check me-2"></i>
                                             Assign Sekarang
                                         </button>
@@ -80,21 +78,21 @@
                         </div>
 
                         <!-- Assignment Modal -->
-                        <div class="modal fade" id="assignModal{{ $ticket['id'] }}" tabindex="-1">
+                        <div class="modal fade" id="assignModal{{ $ticket->id }}" tabindex="-1">
                             <div class="modal-dialog modal-lg">
                                 <div class="modal-content">
                                     <div class="modal-header">
-                                        <h5 class="modal-title">Assign Tiket - {{ $ticket['id'] }}</h5>
+                                        <h5 class="modal-title">Assign Tiket - {{ $ticket->number }}</h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <div class="modal-body">
                                         <!-- Ticket Info -->
                                         <div class="alert alert-light border mb-4" role="alert">
-                                            <h6 class="mb-2">{{ $ticket['judul'] }}</h6>
+                                            <h6 class="mb-2">{{ $ticket->title }}</h6>
                                             <small class="text-muted">
-                                                <strong>SKPD:</strong> {{ $ticket['skpd'] }} |
-                                                <strong>Jenis:</strong> {{ $ticket['jenis_pekerjaan'] }} |
-                                                <strong>Prioritas:</strong> {{ $ticket['prioritas'] }}
+                                                <strong>SKPD:</strong> {{ $ticket->department->name ?? '-' }} |
+                                                <strong>Jenis:</strong> {{ $ticket->category->name ?? '-' }} |
+                                                <strong>Prioritas:</strong> {{ $ticket->priority->name ?? '-' }}
                                             </small>
                                         </div>
 
@@ -105,21 +103,18 @@
                                                 @foreach ($petugasList as $petugas)
                                                     <div class="col-md-6 mb-3">
                                                         <div class="card cursor-pointer petugas-card"
-                                                            data-petugas="{{ $petugas['id'] }}"
-                                                            onclick="selectPetugas(this, {{ $petugas['id'] }}, '{{ $ticket['id'] }}')">
+                                                            data-petugas="{{ $petugas->id }}"
+                                                            onclick="selectPetugas(this, {{ $petugas->id }}, '{{ $ticket->id }}')">
                                                             <div class="card-body">
                                                                 <div class="form-check">
                                                                     <input class="form-check-input petugas-radio"
-                                                                        type="radio" name="petugas_{{ $ticket['id'] }}"
-                                                                        value="{{ $petugas['id'] }}"
-                                                                        id="petugas_{{ $ticket['id'] }}_{{ $petugas['id'] }}">
+                                                                        type="radio" name="petugas_{{ $ticket->id }}"
+                                                                        value="{{ $petugas->id }}"
+                                                                        id="petugas_{{ $ticket->id }}_{{ $petugas->id }}">
                                                                     <label class="form-check-label w-100"
-                                                                        for="petugas_{{ $ticket['id'] }}_{{ $petugas['id'] }}">
-                                                                        <h6 class="mb-1">{{ $petugas['nama'] }}</h6>
-                                                                        <small
-                                                                            class="text-muted d-block mb-2">{{ $petugas['skill'] }}</small>
-                                                                        <span class="badge bg-warning">Load:
-                                                                            {{ $petugas['load'] }} tiket</span>
+                                                                        for="petugas_{{ $ticket->id }}_{{ $petugas->id }}">
+                                                                        <h6 class="mb-1">{{ $petugas->name }}</h6>
+                                                                        <span class="badge bg-{{ $petugas->aktif_count === 0 ? 'success' : ($petugas->aktif_count <= 3 ? 'info' : 'warning') }}">Load: {{ $petugas->aktif_count }} tiket</span>
                                                                     </label>
                                                                 </div>
                                                             </div>
@@ -152,7 +147,7 @@
                                         <button type="button" class="btn btn-secondary"
                                             data-bs-dismiss="modal">Batal</button>
                                         <button type="button" class="btn btn-primary"
-                                            onclick="confirmAssignment('{{ $ticket['id'] }}')">
+                                            onclick="confirmAssignment('{{ $ticket->id }}')">
                                             <i class="bi bi-check-circle me-2"></i>
                                             Assign Tiket
                                         </button>
@@ -178,15 +173,13 @@
                     @foreach ($petugasList as $petugas)
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h6 class="mb-0">{{ $petugas['nama'] }}</h6>
-                                <span
-                                    class="badge bg-{{ $petugas['load'] === 0 ? 'success' : ($petugas['load'] <= 2 ? 'info' : 'warning') }}">
-                                    {{ $petugas['load'] }} tiket
+                                <h6 class="mb-0">{{ $petugas->name }}</h6>
+                                <span class="badge bg-{{ $petugas->aktif_count === 0 ? 'success' : ($petugas->aktif_count <= 3 ? 'info' : 'warning') }}">
+                                    {{ $petugas->aktif_count }} tiket
                                 </span>
                             </div>
-                            <small class="text-muted d-block mb-2">{{ $petugas['skill'] }}</small>
                             <div class="progress" style="height: 5px;">
-                                <div class="progress-bar" style="width: {{ ($petugas['load'] / 5) * 100 }}%;"></div>
+                                <div class="progress-bar" style="width: {{ min(100, $petugas->aktif_count * 10) }}%;"></div>
                             </div>
                         </div>
                     @endforeach
@@ -249,7 +242,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        petugas_id: selectedPetugas.value
+                        assignee_id: selectedPetugas.value
                     })
                 })
                 .then(response => response.json())

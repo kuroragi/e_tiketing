@@ -30,10 +30,10 @@ class KominfoController extends Controller
         }
 
         $stats = [
-            'total_tiket'     => (clone $query)->count(),
-            'tiket_baru'      => (clone $query)->where('status', 'baru')->count(),
-            'tiket_diproses'  => (clone $query)->where('status', 'diproses')->count(),
-            'tiket_selesai'   => (clone $query)->where('status', 'selesai')->count(),
+            'total'    => (clone $query)->count(),
+            'baru'     => (clone $query)->where('status', 'baru')->count(),
+            'diproses' => (clone $query)->where('status', 'diproses')->count(),
+            'selesai'  => (clone $query)->where('status', 'selesai')->count(),
         ];
 
         // Rata-rata waktu penyelesaian (dalam hari)
@@ -200,7 +200,7 @@ class KominfoController extends Controller
 
         $tickets      = $query->paginate(20)->withQueryString();
         $skpdList     = Department::aktif()->orderBy('name')->get();
-        $petugasList  = User::where('role', 'petugas')->where('status', 'aktif')->orderBy('name')->get();
+        $petugasList  = User::role('petugas')->where('status', 'aktif')->orderBy('name')->get();
         $categories   = Category::aktif()->orderBy('name')->get();
         $priorities   = Priority::ordered()->get();
 
@@ -232,7 +232,7 @@ class KominfoController extends Controller
             abort(403);
         }
 
-        $petugasList = User::where('role', 'petugas')->where('status', 'aktif')->orderBy('name')->get();
+        $petugasList = User::role('petugas')->where('status', 'aktif')->orderBy('name')->get();
 
         return view('kominfo.tiket-detail', compact('ticket', 'petugasList'));
     }

@@ -317,7 +317,7 @@ class AdminPageController extends Controller
 
     public function savePengaturan(Request $request)
     {
-        $allowed = ['app_name', 'app_description', 'app_institution', 'max_upload_size', 'mail_from_name', 'mail_from_address', 'smtp_host', 'smtp_port'];
+        $allowed = ['app_name', 'app_description', 'app_institution', 'max_upload_size', 'allowed_mimetypes', 'mail_from_name', 'mail_from_address', 'smtp_host', 'smtp_port'];
 
         foreach ($allowed as $key) {
             if ($request->has($key)) {
@@ -360,16 +360,46 @@ class AdminPageController extends Controller
         $dari   = now()->startOfMonth();
         $sampai = now()->endOfMonth();
 
-        $total   = Ticket::whereBetween('created_at', [$dari, $sampai])->count();
-        $selesai = Ticket::whereBetween('created_at', [$dari, $sampai])->where('status', 'selesai')->count();
+        $total    = Ticket::whereBetween('created_at', [$dari, $sampai])->count();
+        $selesai  = Ticket::whereBetween('created_at', [$dari, $sampai])->where('status', 'selesai')->count();
+        $diproses = Ticket::whereBetween('created_at', [$dari, $sampai])->where('status', 'diproses')->count();
+        $baru     = Ticket::whereBetween('created_at', [$dari, $sampai])->where('status', 'baru')->count();
 
-        $summary = [
-            'total_tiket'        => $total,
-            'tiket_selesai'      => $selesai,
-            'persentase_selesai' => $total ? round($selesai / $total * 100) : 0,
+        // Rata-rata waktu penyelesaian
+        $closedTickets = Ticket::whereNotNull('closed_at')
+            ->whereBetween('created_at', [$dari, $sampai])
+            ->get();
+        $rataWaktu = $closedTickets->count()
+            ? round($closedTickets->avg(fn($t) => $t->created_at->diffInDays($t->closed_at)), 1)
+            : 0;
+
+        $reportData = [
+            'total_tiket'             => $total ?: 0,
+            'tiket_selesai'           => $selesai,
+            'tiket_diproses'          => $diproses,
+            'tiket_baru'              => $baru,
+            'persentase_selesai'      => $total ? round($selesai / $total * 100) : 0,
+            'rata_waktu_penyelesaian' => $rataWaktu,
+            'kepuasan_pengguna'       => 0,
+            'periode'                 => $dari->format('F Y'),
         ];
 
-        $petugasStats = User::where('role', 'petugas')
+        // Top SKPD by ticket count
+        $topSkpd = Department::withCount([
+            'tickets as tiket_count' => fn($q) => $q->whereBetween('created_at', [$dari, $sampai]),
+            'tickets as selesai_count' => fn($q) => $q->whereBetween('created_at', [$dari, $sampai])->where('status', 'selesai'),
+        ])->orderByDesc('tiket_count')->limit(10)->get()
+        ->map(fn($d) => ['skpd' => $d->name, 'tiket' => $d->tiket_count ?: 0, 'selesai' => $d->selesai_count ?: 0])
+        ->toArray();
+
+        // Top Jenis Pekerjaan
+        $topJenis = Category::withCount([
+            'tickets as tiket_count' => fn($q) => $q->whereBetween('created_at', [$dari, $sampai]),
+        ])->orderByDesc('tiket_count')->limit(10)->get()
+        ->map(fn($c) => ['jenis' => $c->name, 'tiket' => $c->tiket_count ?: 0])
+        ->toArray();
+
+        $petugasStats = User::role('petugas')
             ->withCount([
                 'assignedTickets as total_assigned',
                 'assignedTickets as total_selesai' => fn($q) => $q->where('status', 'selesai'),
@@ -377,6 +407,6 @@ class AdminPageController extends Controller
             ->orderByDesc('total_assigned')
             ->get();
 
-        return view('pages.admin.laporan', compact('summary', 'petugasStats', 'dari', 'sampai'));
+        return view('pages.admin.laporan', compact('reportData', 'topSkpd', 'topJenis', 'petugasStats', 'dari', 'sampai'));
     }
 }

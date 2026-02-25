@@ -76,14 +76,8 @@
                         <div class="card border-0 shadow-sm">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="mb-0">{{ $petugas['nama'] }}</h6>
-                                    <span class="badge bg-primary">{{ $petugas['kode'] }}</span>
-                                </div>
-                                <small class="text-muted d-block mb-3">Keahlian:</small>
-                                <div>
-                                    @foreach ($petugas['keahlian'] as $skill)
-                                        <span class="badge bg-light text-dark mb-1">{{ $skill }}</span>
-                                    @endforeach
+                                    <h6 class="mb-0">{{ $petugas->name }}</h6>
+                                    <span class="badge bg-{{ $petugas->aktif_count === 0 ? 'success' : ($petugas->aktif_count <= 3 ? 'info' : 'warning') }}">{{ $petugas->aktif_count }} tiket</span>
                                 </div>
                             </div>
                         </div>
@@ -101,7 +95,7 @@
                 </div>
                 <div class="card-body">
                     <form id="autoAssignmentForm">
-                        @foreach ($assignmentRules as $index => $rule)
+                        @foreach ($assignmentRules ?? [] as $index => $rule)
                             <div class="mb-4">
                                 <div class="border-bottom pb-3 mb-3">
                                     <h6 class="mb-3">
@@ -129,7 +123,7 @@
                                             <select class="form-select">
                                                 <option selected>{{ $ruleItem['petugas'] }}</option>
                                                 @foreach ($petugasList as $petugas)
-                                                    <option>{{ $petugas['nama'] }} ({{ $petugas['kode'] }})</option>
+                                                    <option>{{ $petugas->name }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -272,36 +266,14 @@
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        @foreach ($bebanKerja ?? [] as $bk)
                                         <tr>
-                                            <td><strong>Ahmad Fauzi (A)</strong></td>
-                                            <td>2</td>
-                                            <td>40%</td>
-                                            <td><span class="badge bg-info">Sedang</span></td>
+                                            <td><strong>{{ $bk['nama'] }}</strong></td>
+                                            <td>{{ $bk['aktif_count'] }}</td>
+                                            <td>{{ $bk['load_pct'] }}%</td>
+                                            <td><span class="badge bg-{{ $bk['aktif_count'] === 0 ? 'success' : ($bk['aktif_count'] <= 3 ? 'info' : ($bk['aktif_count'] <= 6 ? 'warning' : 'danger')) }}">{{ $bk['status'] }}</span></td>
                                         </tr>
-                                        <tr>
-                                            <td><strong>Siti Aminah (B)</strong></td>
-                                            <td>3</td>
-                                            <td>60%</td>
-                                            <td><span class="badge bg-warning">Tinggi</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>Rizki Pratama (C)</strong></td>
-                                            <td>1</td>
-                                            <td>20%</td>
-                                            <td><span class="badge bg-success">Ringan</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>Desi Marlina (D)</strong></td>
-                                            <td>2</td>
-                                            <td>40%</td>
-                                            <td><span class="badge bg-info">Sedang</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>Budi Santoso (E)</strong></td>
-                                            <td>0</td>
-                                            <td>0%</td>
-                                            <td><span class="badge bg-success">Tersedia</span></td>
-                                        </tr>
+                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>
@@ -450,10 +422,10 @@
             workloadChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['Ahmad Fauzi', 'Siti Aminah', 'Rizki Pratama', 'Desi Marlina', 'Budi Santoso'],
+                    labels: @json($bebanKerja ? array_column($bebanKerja, 'nama') : []),
                     datasets: [{
                         label: 'Tiket Aktif',
-                        data: [2, 3, 1, 2, 0],
+                        data: @json($bebanKerja ? array_column($bebanKerja, 'aktif_count') : []),
                         backgroundColor: ['#0d6efd', '#ffc107', '#28a745', '#0dcaf0', '#198754'],
                         borderRadius: 5
                     }]

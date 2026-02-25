@@ -123,10 +123,13 @@
                                         <td><strong>{{ $item['skpd'] }}</strong></td>
                                         <td class="text-center">{{ $item['tiket'] }}</td>
                                         <td class="text-center">{{ $item['selesai'] }}</td>
+                                        @if ($item['tiket'] > 0)
                                         <td class="text-center">
-                                            <span
-                                                class="badge bg-success">{{ round(($item['selesai'] / $item['tiket']) * 100) }}%</span>
+                                            <span class="badge bg-success">{{ round(($item['selesai'] / $item['tiket']) * 100) }}%</span>
                                         </td>
+                                        @else
+                                        <td class="text-center"><span class="badge bg-secondary">0%</span></td>
+                                        @endif
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -157,7 +160,7 @@
                             </thead>
                             <tbody>
                                 @php
-                                    $totalJenis = array_sum(array_column($topJenis, 'tiket'));
+                                    $totalJenis = array_sum(array_column($topJenis, 'tiket')) ?: 1;
                                 @endphp
                                 @foreach ($topJenis as $item)
                                     <tr>
@@ -199,7 +202,7 @@
                                 <p class="text-muted">Selesai</p>
                                 <div class="progress" style="height: 5px;">
                                     <div class="progress-bar bg-success"
-                                        style="width: {{ ($reportData['tiket_selesai'] / $reportData['total_tiket']) * 100 }}%;">
+                                        style="width: {{ $reportData['total_tiket'] ? round(($reportData['tiket_selesai'] / $reportData['total_tiket']) * 100) : 0 }}%;">
                                     </div>
                                 </div>
                             </div>
@@ -210,7 +213,7 @@
                                 <p class="text-muted">Diproses</p>
                                 <div class="progress" style="height: 5px;">
                                     <div class="progress-bar bg-info"
-                                        style="width: {{ ($reportData['tiket_diproses'] / $reportData['total_tiket']) * 100 }}%;">
+                                        style="width: {{ $reportData['total_tiket'] ? round(($reportData['tiket_diproses'] / $reportData['total_tiket']) * 100) : 0 }}%;">
                                     </div>
                                 </div>
                             </div>
@@ -221,7 +224,7 @@
                                 <p class="text-muted">Baru</p>
                                 <div class="progress" style="height: 5px;">
                                     <div class="progress-bar bg-warning"
-                                        style="width: {{ ($reportData['tiket_baru'] / $reportData['total_tiket']) * 100 }}%;">
+                                        style="width: {{ $reportData['total_tiket'] ? round(($reportData['tiket_baru'] / $reportData['total_tiket']) * 100) : 0 }}%;">
                                     </div>
                                 </div>
                             </div>

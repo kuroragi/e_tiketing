@@ -20,35 +20,35 @@
         <div class="card-body">
             <form method="GET" action="{{ route('laporan.index') }}" class="row g-3">
                 <div class="col-md-2">
-                    <label for="periode" class="form-label">Periode</label>
-                    <select class="form-select" name="periode" id="periode">
-                        <option value="bulan_ini" {{ request('periode', 'bulan_ini') === 'bulan_ini' ? 'selected' : '' }}>
-                            Bulan Ini</option>
-                        <option value="3_bulan" {{ request('periode') === '3_bulan' ? 'selected' : '' }}>3 Bulan Terakhir
-                        </option>
-                        <option value="tahun_ini" {{ request('periode') === 'tahun_ini' ? 'selected' : '' }}>Tahun Ini
-                        </option>
-                        <option value="custom" {{ request('periode') === 'custom' ? 'selected' : '' }}>Custom</option>
-                    </select>
-                </div>
-                <div class="col-md-2" id="start-date"
-                    style="display: {{ request('periode') === 'custom' ? 'block' : 'none' }}">
-                    <label for="start_date" class="form-label">Dari Tanggal</label>
-                    <input type="date" class="form-control" name="start_date" value="{{ request('start_date') }}">
-                </div>
-                <div class="col-md-2" id="end-date"
-                    style="display: {{ request('periode') === 'custom' ? 'block' : 'none' }}">
-                    <label for="end_date" class="form-label">Sampai Tanggal</label>
-                    <input type="date" class="form-control" name="end_date" value="{{ request('end_date') }}">
+                    <label for="dari" class="form-label">Dari Tanggal</label>
+                    <input type="date" class="form-control" name="dari" id="dari"
+                        value="{{ request('dari', now()->startOfMonth()->format('Y-m-d')) }}">
                 </div>
                 <div class="col-md-2">
-                    <label for="skpd_filter" class="form-label">SKPD</label>
-                    <select class="form-select" name="skpd_filter">
+                    <label for="sampai" class="form-label">Sampai Tanggal</label>
+                    <input type="date" class="form-control" name="sampai" id="sampai"
+                        value="{{ request('sampai', now()->endOfMonth()->format('Y-m-d')) }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="department_id" class="form-label">SKPD</label>
+                    <select class="form-select" name="department_id" id="department_id">
                         <option value="">Semua SKPD</option>
                         @foreach ($skpdList ?? [] as $skpd)
-                            <option value="{{ $skpd['id'] }}"
-                                {{ request('skpd_filter') == $skpd['id'] ? 'selected' : '' }}>
-                                {{ $skpd['nama'] }}
+                            <option value="{{ $skpd->id }}"
+                                {{ request('department_id') == $skpd->id ? 'selected' : '' }}>
+                                {{ $skpd->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="category_id" class="form-label">Kategori</label>
+                    <select class="form-select" name="category_id" id="category_id">
+                        <option value="">Semua Kategori</option>
+                        @foreach ($categories ?? [] as $cat)
+                            <option value="{{ $cat->id }}"
+                                {{ request('category_id') == $cat->id ? 'selected' : '' }}>
+                                {{ $cat->name }}
                             </option>
                         @endforeach
                     </select>
@@ -130,9 +130,9 @@
                 <div class="card-body stats-card">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <div class="stats-number text-warning">{{ $summary['beban_kerja'] ?? 0 }}</div>
-                            <div class="stats-label">Beban Kerja</div>
-                            <small class="text-muted">tiket/bulan</small>
+                            <div class="stats-number text-warning">{{ $summary['backlog'] ?? 0 }}</div>
+                            <div class="stats-label">Tiket Backlog</div>
+                            <small class="text-muted">baru + diproses</small>
                         </div>
                         <div class="align-self-center">
                             <i class="bi bi-graph-up display-4 text-warning opacity-25"></i>
@@ -368,44 +368,10 @@
 
 @push('scripts')
     <script>
-        document.getElementById('periode').addEventListener('change', function() {
-            const customFields = ['start-date', 'end-date'];
-            const isCustom = this.value === 'custom';
-
-            customFields.forEach(fieldId => {
-                document.getElementById(fieldId).style.display = isCustom ? 'block' : 'none';
-            });
-
-            if (!isCustom) {
-                this.form.submit();
-            }
-        });
-
         function exportReport() {
             const params = new URLSearchParams(window.location.search);
             params.set('export', 'true');
-
-            // Simulate export
-            showToast('Laporan sedang diexport...', 'info');
-
-            setTimeout(() => {
-                showToast('Laporan berhasil diexport!', 'success');
-            }, 2000);
-        }
-
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `alert alert-${type} alert-dismissible position-fixed top-0 end-0 m-3`;
-            toast.style.zIndex = '9999';
-            toast.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
+            window.location.href = '{{ route("laporan.export") }}?' + params.toString();
         }
     </script>
 @endpush

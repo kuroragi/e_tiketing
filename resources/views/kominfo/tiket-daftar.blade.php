@@ -17,7 +17,7 @@
         </div>
         <div>
             <span class="badge bg-light text-dark fs-6">
-                Total: {{ count($tickets ?? []) }} tiket
+                Total: {{ $tickets->total() }} tiket
             </span>
         </div>
     </div>
@@ -32,7 +32,7 @@
                     <label for="search" class="form-label">Pencarian</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" class="form-control" name="search" id="search" placeholder="Cari tiket..."
+                        <input type="text" class="form-control" name="search" id="search" placeholder="Cari no/judul..."
                             value="{{ request('search') }}">
                     </div>
                 </div>
@@ -47,21 +47,23 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label for="prioritas" class="form-label">Prioritas</label>
-                    <select class="form-select" name="prioritas" id="prioritas">
+                    <label for="priority_id" class="form-label">Prioritas</label>
+                    <select class="form-select" name="priority_id" id="priority_id">
                         <option value="">Semua Prioritas</option>
-                        <option value="tinggi" {{ request('prioritas') === 'tinggi' ? 'selected' : '' }}>Tinggi</option>
-                        <option value="sedang" {{ request('prioritas') === 'sedang' ? 'selected' : '' }}>Sedang</option>
-                        <option value="rendah" {{ request('prioritas') === 'rendah' ? 'selected' : '' }}>Rendah</option>
+                        @foreach ($priorities ?? [] as $p)
+                            <option value="{{ $p->id }}" {{ request('priority_id') == $p->id ? 'selected' : '' }}>
+                                {{ $p->name }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label for="skpd" class="form-label">SKPD</label>
-                    <select class="form-select" name="skpd" id="skpd">
+                    <label for="department_id" class="form-label">SKPD</label>
+                    <select class="form-select" name="department_id" id="department_id">
                         <option value="">Semua SKPD</option>
                         @foreach ($skpdList ?? [] as $skpd)
-                            <option value="{{ $skpd['id'] }}" {{ request('skpd') == $skpd['id'] ? 'selected' : '' }}>
-                                {{ $skpd['nama'] }}
+                            <option value="{{ $skpd->id }}" {{ request('department_id') == $skpd->id ? 'selected' : '' }}>
+                                {{ $skpd->name }}
                             </option>
                         @endforeach
                     </select>
@@ -108,10 +110,10 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card card-danger">
+            <div class="card card-primary">
                 <div class="card-body text-center">
-                    <h4 class="text-danger">{{ $stats['overdue'] ?? 0 }}</h4>
-                    <small class="text-muted">Terlambat</small>
+                    <h4 class="text-primary">{{ $stats['total'] ?? 0 }}</h4>
+                    <small class="text-muted">Total Tiket</small>
                 </div>
             </div>
         </div>
@@ -135,63 +137,62 @@
             </div>
         </div>
         <div class="card-body p-0">
-            @if (isset($tickets) && count($tickets) > 0)
+            @if ($tickets->count() > 0)
                 <!-- List View -->
                 <div id="list-container">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th width="5%">#</th>
+                                    <th width="8%">No. Tiket</th>
                                     <th width="25%">Judul Pekerjaan</th>
                                     <th width="15%">SKPD</th>
                                     <th width="10%">Prioritas</th>
                                     <th width="10%">Status</th>
                                     <th width="12%">Tanggal</th>
                                     <th width="13%">Petugas</th>
-                                    <th width="10%">Aksi</th>
+                                    <th width="7%">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($tickets as $index => $ticket)
-                                    <tr class="ticket-row" onclick="showTicketDetail({{ $ticket['id'] }})">
+                                @foreach ($tickets as $ticket)
+                                    <tr class="ticket-row" style="cursor:pointer"
+                                        onclick="window.location='{{ route('tiket.show', $ticket->id) }}'">
                                         <td>
-                                            <strong>{{ str_pad($ticket['id'], 4, '0', STR_PAD_LEFT) }}</strong>
+                                            <strong class="text-primary">{{ $ticket->number }}</strong>
                                         </td>
                                         <td>
-                                            <div class="fw-bold">{{ $ticket['judul'] }}</div>
-                                            <small
-                                                class="text-muted">{{ Str::limit($ticket['deskripsi'] ?? '', 50) }}</small>
+                                            <div class="fw-bold">{{ $ticket->title }}</div>
+                                            <small class="text-muted">{{ Str::limit($ticket->description, 50) }}</small>
                                         </td>
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <div class="user-avatar me-2">{{ substr($ticket['skpd'], 0, 1) }}</div>
-                                                <small>{{ $ticket['skpd'] }}</small>
+                                                <div class="user-avatar me-2">{{ substr($ticket->department->name ?? 'T', 0, 1) }}</div>
+                                                <small>{{ $ticket->department->name ?? '-' }}</small>
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="priority-{{ strtolower($ticket['prioritas']) }}">
+                                            <span class="priority-{{ strtolower($ticket->priority->name ?? 'rendah') }}">
                                                 <i class="bi bi-flag-fill"></i>
-                                                {{ ucfirst($ticket['prioritas']) }}
+                                                {{ ucfirst($ticket->priority->name ?? 'Rendah') }}
                                             </span>
                                         </td>
                                         <td>
-                                            <span class="status-badge status-{{ strtolower($ticket['status']) }}">
-                                                {{ $ticket['status'] }}
+                                            <span class="status-badge status-{{ strtolower($ticket->status) }}">
+                                                {{ ucfirst($ticket->status) }}
                                             </span>
                                         </td>
                                         <td>
-                                            <div>{{ $ticket['tanggal'] }}</div>
-                                            @if ($ticket['target'])
-                                                <small class="text-muted">Target: {{ $ticket['target'] }}</small>
+                                            <div>{{ $ticket->created_at->format('d/m/Y') }}</div>
+                                            @if ($ticket->target_date)
+                                                <small class="text-muted">Target: {{ \Carbon\Carbon::parse($ticket->target_date)->format('d/m/Y') }}</small>
                                             @endif
                                         </td>
                                         <td>
-                                            @if ($ticket['petugas'])
+                                            @if ($ticket->assignee)
                                                 <div class="d-flex align-items-center">
-                                                    <div class="user-avatar me-2">{{ substr($ticket['petugas'], 0, 1) }}
-                                                    </div>
-                                                    <small>{{ $ticket['petugas'] }}</small>
+                                                    <div class="user-avatar me-2">{{ substr($ticket->assignee->name, 0, 1) }}</div>
+                                                    <small>{{ $ticket->assignee->name }}</small>
                                                 </div>
                                             @else
                                                 <small class="text-muted">Belum ditugaskan</small>
@@ -204,33 +205,44 @@
                                                     <i class="bi bi-three-dots"></i>
                                                 </button>
                                                 <ul class="dropdown-menu">
-                                                    <li><a class="dropdown-item" href="{{ $ticket['id'] }}"
-                                                            onclick="showTicketDetail({{ $ticket['id'] }})">
-                                                            <i class="bi bi-eye me-2"></i>Lihat Detail
-                                                        </a></li>
-                                                    @if ($ticket['status'] === 'baru')
-                                                        <li><a class="dropdown-item" href="#"
-                                                                onclick="updateStatus({{ $ticket['id'] }}, 'diproses')">
-                                                                <i class="bi bi-play-circle me-2"></i>Mulai Kerjakan
-                                                            </a></li>
-                                                        <li><a class="dropdown-item" href="#"
-                                                                onclick="assignTicket({{ $ticket['id'] }})">
-                                                                <i class="bi bi-person-plus me-2"></i>Tugaskan
-                                                            </a></li>
+                                                    <li><a class="dropdown-item" href="{{ route('tiket.show', $ticket->id) }}">
+                                                        <i class="bi bi-eye me-2"></i>Lihat Detail
+                                                    </a></li>
+                                                    @if (in_array($ticket->status, ['baru', 'diproses']) && (auth()->user()->isAdmin() || auth()->user()->isPetugas()))
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        @if ($ticket->status === 'baru')
+                                                            <li>
+                                                                <form method="POST" action="{{ route('tiket.update-status', $ticket->id) }}">
+                                                                    @csrf @method('PUT')
+                                                                    <input type="hidden" name="status" value="diproses">
+                                                                    <button type="submit" class="dropdown-item">
+                                                                        <i class="bi bi-play-circle me-2"></i>Mulai Kerjakan
+                                                                    </button>
+                                                                </form>
+                                                            </li>
+                                                        @endif
+                                                        @if ($ticket->status === 'diproses')
+                                                            <li>
+                                                                <form method="POST" action="{{ route('tiket.update-status', $ticket->id) }}">
+                                                                    @csrf @method('PUT')
+                                                                    <input type="hidden" name="status" value="selesai">
+                                                                    <button type="submit" class="dropdown-item text-success">
+                                                                        <i class="bi bi-check-circle me-2"></i>Selesaikan
+                                                                    </button>
+                                                                </form>
+                                                            </li>
+                                                        @endif
+                                                        <li>
+                                                            <form method="POST" action="{{ route('tiket.update-status', $ticket->id) }}">
+                                                                @csrf @method('PUT')
+                                                                <input type="hidden" name="status" value="ditolak">
+                                                                <button type="submit" class="dropdown-item text-danger"
+                                                                    onclick="return confirm('Yakin tolak tiket ini?')">
+                                                                    <i class="bi bi-x-circle me-2"></i>Tolak
+                                                                </button>
+                                                            </form>
+                                                        </li>
                                                     @endif
-                                                    @if ($ticket['status'] === 'diproses')
-                                                        <li><a class="dropdown-item text-success" href="#"
-                                                                onclick="completeTicket({{ $ticket['id'] }})">
-                                                                <i class="bi bi-check-circle me-2"></i>Selesaikan
-                                                            </a></li>
-                                                    @endif
-                                                    <li>
-                                                        <hr class="dropdown-divider">
-                                                    </li>
-                                                    <li><a class="dropdown-item text-danger" href="#"
-                                                            onclick="rejectTicket({{ $ticket['id'] }})">
-                                                            <i class="bi bi-x-circle me-2"></i>Tolak
-                                                        </a></li>
                                                 </ul>
                                             </div>
                                         </td>
@@ -246,34 +258,41 @@
                     <div class="row p-3">
                         @foreach ($tickets as $ticket)
                             <div class="col-md-6 col-lg-4 mb-3">
-                                <div class="card ticket-card h-100" onclick="showTicketDetail({{ $ticket['id'] }})">
+                                <a href="{{ route('tiket.show', $ticket->id) }}" class="text-decoration-none">
+                                <div class="card ticket-card h-100">
                                     <div class="card-header d-flex justify-content-between align-items-center py-2">
-                                        <small class="fw-bold">#{{ str_pad($ticket['id'], 4, '0', STR_PAD_LEFT) }}</small>
-                                        <span class="status-badge status-{{ strtolower($ticket['status']) }}">
-                                            {{ $ticket['status'] }}
+                                        <small class="fw-bold text-primary">{{ $ticket->number }}</small>
+                                        <span class="status-badge status-{{ strtolower($ticket->status) }}">
+                                            {{ ucfirst($ticket->status) }}
                                         </span>
                                     </div>
                                     <div class="card-body">
-                                        <h6 class="card-title">{{ Str::limit($ticket['judul'], 40) }}</h6>
+                                        <h6 class="card-title text-dark">{{ Str::limit($ticket->title, 50) }}</h6>
                                         <p class="card-text small text-muted">
-                                            {{ Str::limit($ticket['deskripsi'] ?? '', 60) }}</p>
+                                            {{ Str::limit($ticket->description, 70) }}</p>
 
                                         <div class="d-flex align-items-center mb-2">
-                                            <div class="user-avatar me-2">{{ substr($ticket['skpd'], 0, 1) }}</div>
-                                            <small class="text-muted">{{ $ticket['skpd'] }}</small>
+                                            <div class="user-avatar me-2">{{ substr($ticket->department->name ?? 'T', 0, 1) }}</div>
+                                            <small class="text-muted">{{ $ticket->department->name ?? '-' }}</small>
                                         </div>
 
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <span class="priority-{{ strtolower($ticket['prioritas']) }}">
-                                                <i class="bi bi-flag-fill"></i>
+                                            <span class="priority-{{ strtolower($ticket->priority->name ?? 'rendah') }}">
+                                                <i class="bi bi-flag-fill"></i> {{ ucfirst($ticket->priority->name ?? 'Rendah') }}
                                             </span>
-                                            <small class="text-muted">{{ $ticket['tanggal'] }}</small>
+                                            <small class="text-muted">{{ $ticket->created_at->format('d/m/Y') }}</small>
                                         </div>
                                     </div>
                                 </div>
+                                </a>
                             </div>
                         @endforeach
                     </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="p-3">
+                    {{ $tickets->links() }}
                 </div>
             @else
                 <div class="text-center py-5">
@@ -285,12 +304,7 @@
         </div>
     </div>
 
-    <!-- Modals -->
-    @include('kominfo.partials.ticket-detail-modal')
     @include('kominfo.partials.assign-modal')
-    @include('kominfo.partials.complete-modal')
-    @include('kominfo.partials.reject-modal')
-
 @endsection
 
 @push('scripts')
@@ -317,140 +331,10 @@
             });
 
             // Auto-submit form on filter change
-            const filters = ['status', 'prioritas', 'skpd'];
-            filters.forEach(filterId => {
-                const element = document.getElementById(filterId);
-                if (element) {
-                    element.addEventListener('change', function() {
-                        this.form.submit();
-                    });
-                }
+            ['status', 'priority_id', 'department_id'].forEach(function(id) {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('change', function() { this.form.submit(); });
             });
         });
-
-        // Ticket actions
-        function showTicketDetail(ticketId) {
-            // Show modal with ticket details
-            const modal = new bootstrap.Modal(document.getElementById('ticketDetailModal'));
-            modal.show();
-
-            // Load ticket data (simulate API call)
-            loadTicketDetail(ticketId);
-        }
-
-        function loadTicketDetail(ticketId) {
-            // In real app, this would be an AJAX call
-            const tickets = @json($tickets ?? []);
-            const ticket = tickets.find(t => t.id == ticketId);
-
-            if (ticket) {
-                document.getElementById('ticketDetailContent').innerHTML = `
-            <div class="row">
-                <div class="col-md-8">
-                    <h5>${ticket.judul}</h5>
-                    <p class="text-muted">${ticket.deskripsi || 'Tidak ada deskripsi'}</p>
-                    
-                    <div class="row mb-3">
-                        <div class="col-6">
-                            <strong>SKPD:</strong><br>
-                            <span class="text-muted">${ticket.skpd}</span>
-                        </div>
-                        <div class="col-6">
-                            <strong>Pemohon:</strong><br>
-                            <span class="text-muted">${ticket.nama_pemohon || '-'}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-6">
-                            <strong>Tanggal Pengajuan:</strong><br>
-                            <span class="text-muted">${ticket.tanggal}</span>
-                        </div>
-                        <div class="col-6">
-                            <strong>Target Selesai:</strong><br>
-                            <span class="text-muted">${ticket.target || '-'}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-6">
-                            <strong>Jenis Pekerjaan:</strong><br>
-                            <span class="text-muted">${ticket.jenis_pekerjaan || '-'}</span>
-                        </div>
-                        <div class="col-6">
-                            <strong>Lokasi:</strong><br>
-                            <span class="text-muted">${ticket.lokasi || '-'}</span>
-                        </div>
-                    </div>
-                    
-                    ${ticket.catatan_tambahan ? `
-                                                        <div class="mb-3">
-                                                            <strong>Catatan Tambahan:</strong><br>
-                                                            <span class="text-muted">${ticket.catatan_tambahan}</span>
-                                                        </div>
-                                                        ` : ''}
-                </div>
-                
-                <div class="col-md-4">
-                    <div class="card bg-light">
-                        <div class="card-body text-center">
-                            <span class="status-badge status-${ticket.status.toLowerCase()}">${ticket.status}</span>
-                            
-                            <div class="mt-3">
-                                <i class="bi bi-flag-fill priority-${ticket.prioritas.toLowerCase()}"></i>
-                                <div><small>Prioritas ${ticket.prioritas}</small></div>
-                            </div>
-                            
-                            ${ticket.petugas ? `
-                                                                <div class="mt-3">
-                                                                    <div class="user-avatar mx-auto mb-2">${ticket.petugas.charAt(0)}</div>
-                                                                    <div><small>Petugas: ${ticket.petugas}</small></div>
-                                                                </div>
-                                                                ` : ''}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-            }
-        }
-
-        function updateStatus(ticketId, newStatus) {
-            if (confirm(`Ubah status tiket menjadi "${newStatus}"?`)) {
-                // In real app, this would be an AJAX call
-                showToast(`Status tiket berhasil diubah menjadi "${newStatus}"`, 'success');
-                setTimeout(() => location.reload(), 1000);
-            }
-        }
-
-        function assignTicket(ticketId) {
-            const modal = new bootstrap.Modal(document.getElementById('assignModal'));
-            modal.show();
-        }
-
-        function completeTicket(ticketId) {
-            const modal = new bootstrap.Modal(document.getElementById('completeModal'));
-            modal.show();
-        }
-
-        function rejectTicket(ticketId) {
-            const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
-            modal.show();
-        }
-
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `alert alert-${type} alert-dismissible position-fixed top-0 end-0 m-3`;
-            toast.style.zIndex = '9999';
-            toast.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
-        }
     </script>
 @endpush

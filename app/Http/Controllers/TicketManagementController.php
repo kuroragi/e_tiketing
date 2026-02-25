@@ -22,7 +22,7 @@ class TicketManagementController extends Controller
             ->orderByDesc('created_at')
             ->paginate(20);
 
-        $petugasList = User::where('role', 'petugas')
+        $petugasList = User::role('petugas')
             ->where('status', 'aktif')
             ->withCount(['assignedTickets as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
             ->orderBy('name')
@@ -35,7 +35,7 @@ class TicketManagementController extends Controller
 
     public function autoAssignment()
     {
-        $petugasList = User::where('role', 'petugas')
+        $petugasList = User::role('petugas')
             ->where('status', 'aktif')
             ->withCount(['assignedTickets as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
             ->orderBy('name')
@@ -92,7 +92,7 @@ class TicketManagementController extends Controller
             ->limit(10)
             ->get();
 
-        $petugasList = User::where('role', 'petugas')
+        $petugasList = User::role('petugas')
             ->where('status', 'aktif')
             ->withCount(['assignedTickets as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
             ->orderBy('aktif_count')
@@ -135,7 +135,7 @@ class TicketManagementController extends Controller
             $assignee = User::findOrFail($request->assignee_id);
         } else {
             // Cari petugas dengan beban terkecil
-            $assignee = User::where('role', 'petugas')
+            $assignee = User::role('petugas')
                 ->where('status', 'aktif')
                 ->withCount(['assignedTickets as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
                 ->orderBy('aktif_count')

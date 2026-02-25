@@ -29,24 +29,24 @@ Route::middleware(['auth'])->group(function () {
     // Tiket Routes
     Route::prefix('tiket')->group(function () {
         Route::get('daftar', [KominfoController::class, 'index'])
-            ->middleware('role:petugas,admin,pimpinan')
+            ->middleware('role:petugas|admin|pimpinan')
             ->name('tiket.index');
 
         Route::get('pengajuan', [KominfoController::class, 'create'])
-            ->middleware('role:skpd,admin')
+            ->middleware('role:skpd|admin')
             ->name('tiket.create');
         Route::post('pengajuan', [KominfoController::class, 'store'])
-            ->middleware('role:skpd,admin')
+            ->middleware('role:skpd|admin')
             ->name('tiket.store');
 
         Route::get('{id}', [KominfoController::class, 'show'])->name('tiket.show');
 
         Route::put('{id}/status', [KominfoController::class, 'updateStatus'])
-            ->middleware('role:petugas,admin')
+            ->middleware('role:petugas|admin')
             ->name('tiket.update-status');
 
         Route::put('{id}/assign', [KominfoController::class, 'assign'])
-            ->middleware('role:petugas,admin')
+            ->middleware('role:petugas|admin')
             ->name('tiket.assign');
 
         Route::post('{id}/komentar', [KominfoController::class, 'addComment'])->name('tiket.comment');
@@ -57,11 +57,11 @@ Route::middleware(['auth'])->group(function () {
 
     // Laporan
     Route::get('/laporan', [KominfoController::class, 'laporan'])
-        ->middleware('role:admin,petugas,pimpinan')
+        ->middleware('role:admin|petugas|pimpinan')
         ->name('laporan.index');
 
     Route::get('/laporan/export/csv', [KominfoController::class, 'exportCsv'])
-        ->middleware('role:admin,pimpinan')
+        ->middleware('role:admin|pimpinan')
         ->name('laporan.export.csv');
 
     // Static Pages
@@ -114,7 +114,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Ticket Management (Admin/Petugas)
-    Route::prefix('admin/ticket-management')->middleware('role:admin,petugas')->group(function () {
+    Route::prefix('admin/ticket-management')->middleware('role:admin|petugas')->group(function () {
         Route::get('/', [TicketManagementController::class, 'index'])->name('ticket.management.index');
         Route::get('auto-assignment', [TicketManagementController::class, 'autoAssignment'])->name('ticket.management.auto');
         Route::post('save-auto-config', [TicketManagementController::class, 'saveAutoAssignment'])->name('ticket.management.save-auto');
@@ -123,7 +123,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // API AJAX routes
-    Route::prefix('api/ticket')->middleware('role:admin,petugas')->group(function () {
+    Route::prefix('api/ticket')->middleware('role:admin|petugas')->group(function () {
         Route::post('auto-assign/{id}', [TicketManagementController::class, 'autoAssign'])->name('api.ticket.auto-assign');
         Route::post('manual-assign/{id}', [TicketManagementController::class, 'assignManual'])->name('api.ticket.manual-assign');
     });
