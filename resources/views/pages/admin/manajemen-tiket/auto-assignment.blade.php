@@ -77,7 +77,9 @@
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="mb-0">{{ $petugas->name }}</h6>
-                                    <span class="badge bg-{{ $petugas->aktif_count === 0 ? 'success' : ($petugas->aktif_count <= 3 ? 'info' : 'warning') }}">{{ $petugas->aktif_count }} tiket</span>
+                                    <span
+                                        class="badge bg-{{ $petugas->aktif_count === 0 ? 'success' : ($petugas->aktif_count <= 3 ? 'info' : 'warning') }}">{{ $petugas->aktif_count }}
+                                        tiket</span>
                                 </div>
                             </div>
                         </div>
@@ -267,12 +269,14 @@
                                     </thead>
                                     <tbody>
                                         @foreach ($bebanKerja ?? [] as $bk)
-                                        <tr>
-                                            <td><strong>{{ $bk['nama'] }}</strong></td>
-                                            <td>{{ $bk['aktif_count'] }}</td>
-                                            <td>{{ $bk['load_pct'] }}%</td>
-                                            <td><span class="badge bg-{{ $bk['aktif_count'] === 0 ? 'success' : ($bk['aktif_count'] <= 3 ? 'info' : ($bk['aktif_count'] <= 6 ? 'warning' : 'danger')) }}">{{ $bk['status'] }}</span></td>
-                                        </tr>
+                                            <tr>
+                                                <td><strong>{{ $bk['nama'] }}</strong></td>
+                                                <td>{{ $bk['aktif_count'] }}</td>
+                                                <td>{{ $bk['load_pct'] }}%</td>
+                                                <td><span
+                                                        class="badge bg-{{ $bk['aktif_count'] === 0 ? 'success' : ($bk['aktif_count'] <= 3 ? 'info' : ($bk['aktif_count'] <= 6 ? 'warning' : 'danger')) }}">{{ $bk['status'] }}</span>
+                                                </td>
+                                            </tr>
                                         @endforeach
                                     </tbody>
                                 </table>

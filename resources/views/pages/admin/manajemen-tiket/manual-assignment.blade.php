@@ -61,8 +61,10 @@
                                         </p>
                                         <div class="mb-2">
                                             <span class="badge bg-info">{{ $ticket->category->name ?? '-' }}</span>
-                                            <span class="badge bg-{{ ($ticket->priority->name ?? '') === 'Urgent' ? 'danger' : 'warning' }}">{{ $ticket->priority->name ?? '-' }}</span>
-                                            <span class="badge bg-secondary">{{ $ticket->created_at->diffForHumans() }}</span>
+                                            <span
+                                                class="badge bg-{{ ($ticket->priority->name ?? '') === 'Urgent' ? 'danger' : 'warning' }}">{{ $ticket->priority->name ?? '-' }}</span>
+                                            <span
+                                                class="badge bg-secondary">{{ $ticket->created_at->diffForHumans() }}</span>
                                         </div>
                                         <small class="text-muted">{{ Str::limit($ticket->description, 80) }}</small>
                                     </div>
@@ -114,7 +116,9 @@
                                                                     <label class="form-check-label w-100"
                                                                         for="petugas_{{ $ticket->id }}_{{ $petugas->id }}">
                                                                         <h6 class="mb-1">{{ $petugas->name }}</h6>
-                                                                        <span class="badge bg-{{ $petugas->aktif_count === 0 ? 'success' : ($petugas->aktif_count <= 3 ? 'info' : 'warning') }}">Load: {{ $petugas->aktif_count }} tiket</span>
+                                                                        <span
+                                                                            class="badge bg-{{ $petugas->aktif_count === 0 ? 'success' : ($petugas->aktif_count <= 3 ? 'info' : 'warning') }}">Load:
+                                                                            {{ $petugas->aktif_count }} tiket</span>
                                                                     </label>
                                                                 </div>
                                                             </div>
@@ -174,12 +178,14 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <h6 class="mb-0">{{ $petugas->name }}</h6>
-                                <span class="badge bg-{{ $petugas->aktif_count === 0 ? 'success' : ($petugas->aktif_count <= 3 ? 'info' : 'warning') }}">
+                                <span
+                                    class="badge bg-{{ $petugas->aktif_count === 0 ? 'success' : ($petugas->aktif_count <= 3 ? 'info' : 'warning') }}">
                                     {{ $petugas->aktif_count }} tiket
                                 </span>
                             </div>
                             <div class="progress" style="height: 5px;">
-                                <div class="progress-bar" style="width: {{ min(100, $petugas->aktif_count * 10) }}%;"></div>
+                                <div class="progress-bar" style="width: {{ min(100, $petugas->aktif_count * 10) }}%;">
+                                </div>
                             </div>
                         </div>
                     @endforeach

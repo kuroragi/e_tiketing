@@ -146,6 +146,42 @@ class KominfoController extends Controller
             ->with('success', "Tiket berhasil diajukan dengan nomor: {$ticket->number}");
     }
 
+    //  Tiket Saya (SKPD) 
+
+    public function myTickets(Request $request)
+    {
+        $user  = Auth::user();
+        $base  = Ticket::where('requester_id', $user->id); // unfiltered base for stats
+
+        $query = Ticket::with(['requester', 'department', 'category', 'priority', 'assignee'])
+            ->where('requester_id', $user->id);
+
+        if ($request->filled('status'))      $query->where('status', $request->status);
+        if ($request->filled('category_id')) $query->where('category_id', $request->category_id);
+        if ($request->filled('priority_id')) $query->where('priority_id', $request->priority_id);
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(fn($q) => $q->where('number', 'like', "%{$search}%")->orWhere('title', 'like', "%{$search}%"));
+        }
+
+        $tickets     = $query->orderByDesc('created_at')->paginate(20)->withQueryString();
+        $skpdList    = Department::aktif()->orderBy('name')->get();
+        $petugasList = collect();
+        $categories  = Category::aktif()->orderBy('name')->get();
+        $priorities  = Priority::ordered()->get();
+
+        $stats = [
+            'total'    => (clone $base)->count(),
+            'baru'     => (clone $base)->where('status', 'baru')->count(),
+            'diproses' => (clone $base)->where('status', 'diproses')->count(),
+            'selesai'  => (clone $base)->where('status', 'selesai')->count(),
+        ];
+
+        return view('kominfo.tiket-daftar', compact(
+            'tickets', 'skpdList', 'petugasList', 'categories', 'priorities', 'stats'
+        ));
+    }
+
     //  Daftar Tiket 
 
     public function index(Request $request)

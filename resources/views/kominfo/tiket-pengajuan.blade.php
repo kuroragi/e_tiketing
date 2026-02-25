@@ -38,13 +38,15 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">SKPD/Unit Kerja</label>
-                                <input type="text" class="form-control" value="{{ auth()->user()->department->name ?? 'Tidak terdaftar' }}" readonly>
+                                <input type="text" class="form-control"
+                                    value="{{ auth()->user()->department->name ?? 'Tidak terdaftar' }}" readonly>
                                 <div class="form-text">SKPD otomatis sesuai akun Anda</div>
                             </div>
                             <div class="col-md-6">
                                 <label for="contact_pic" class="form-label">Nama / No. Telepon PIC *</label>
                                 <input type="text" class="form-control @error('contact_pic') is-invalid @enderror"
-                                    name="contact_pic" id="contact_pic" value="{{ old('contact_pic', auth()->user()->name) }}" required
+                                    name="contact_pic" id="contact_pic"
+                                    value="{{ old('contact_pic', auth()->user()->name) }}" required
                                     placeholder="Nama dan nomor WA yang bisa dihubungi">
                                 @error('contact_pic')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -71,8 +73,8 @@
                             </div>
                             <div class="col-md-4">
                                 <label for="category_id" class="form-label">Jenis Pekerjaan *</label>
-                                <select class="form-select @error('category_id') is-invalid @enderror"
-                                    name="category_id" id="category_id" required>
+                                <select class="form-select @error('category_id') is-invalid @enderror" name="category_id"
+                                    id="category_id" required>
                                     <option value="">Pilih Jenis...</option>
                                     @foreach ($jenisKerjaan ?? [] as $jenis)
                                         <option value="{{ $jenis->id }}"
@@ -90,13 +92,14 @@
                         <div class="row mb-4">
                             <div class="col-12">
                                 <label for="description" class="form-label">Deskripsi Lengkap Pekerjaan *</label>
-                                <textarea class="form-control @error('description') is-invalid @enderror" name="description" id="description" rows="5"
-                                    required
+                                <textarea class="form-control @error('description') is-invalid @enderror" name="description" id="description"
+                                    rows="5" required
                                     placeholder="Jelaskan secara detail pekerjaan yang diminta, kondisi saat ini, dan hasil yang diharapkan...">{{ old('description') }}</textarea>
                                 @error('description')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                <div class="form-text">Jelaskan sedetail mungkin agar tim Kominfo dapat memahami kebutuhan Anda (min. 20 karakter)</div>
+                                <div class="form-text">Jelaskan sedetail mungkin agar tim Kominfo dapat memahami kebutuhan
+                                    Anda (min. 20 karakter)</div>
                             </div>
                         </div>
 
@@ -129,8 +132,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Lokasi Pekerjaan</label>
-                                <input type="text" class="form-control"
-                                    name="location" value="{{ old('location') }}"
+                                <input type="text" class="form-control" name="location" value="{{ old('location') }}"
                                     placeholder="Contoh: Ruang IT Lantai 2">
                             </div>
                         </div>
@@ -145,7 +147,8 @@
                             </div>
                             <div class="col-md-12">
                                 <label for="lampiran" class="form-label">Upload File (maks. 5 file)</label>
-                                <input type="file" class="form-control @error('lampiran') @error('lampiran.*') is-invalid @enderror @enderror"
+                                <input type="file"
+                                    class="form-control @error('lampiran') @error('lampiran.*') is-invalid @enderror @enderror"
                                     name="lampiran[]" id="lampiran" accept=".pdf,.jpg,.jpeg,.png" multiple>
                                 @error('lampiran')
                                     <div class="invalid-feedback">{{ $message }}</div>

@@ -31,12 +31,12 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('completeModal').addEventListener('show.bs.modal', function (e) {
-        var ticketId = e.relatedTarget ? e.relatedTarget.getAttribute('data-ticket-id') : null;
-        if (ticketId) {
-            document.getElementById('completeForm').action = '/tiket/' + ticketId + '/update-status';
-        }
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('completeModal').addEventListener('show.bs.modal', function(e) {
+            var ticketId = e.relatedTarget ? e.relatedTarget.getAttribute('data-ticket-id') : null;
+            if (ticketId) {
+                document.getElementById('completeForm').action = '/tiket/' + ticketId + '/status';
+            }
+        });
     });
-});
 </script>

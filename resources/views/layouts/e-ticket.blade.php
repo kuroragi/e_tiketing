@@ -243,7 +243,10 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li>
-                                <h6 class="dropdown-header">{{ auth()->user()->skpd ?? 'SKPD' }}</h6>
+                                <h6 class="dropdown-header">{{ auth()->user()->name }}</h6>
+                                <span class="dropdown-header text-muted" style="font-size:0.75rem;padding-top:0;">
+                                    {{ auth()->user()->department?->name ?? Str::ucfirst(auth()->user()->role ?? '') }}
+                                </span>
                             </li>
                             <li>
                                 <hr class="dropdown-divider">
@@ -255,8 +258,14 @@
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
-                            <li><a class="dropdown-item text-danger" href="#"><i
-                                        class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                            <li>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                    </button>
+                                </form>
+                            </li>
                         </ul>
                     </li>
                 </ul>
@@ -278,29 +287,37 @@
                                 <small class="text-muted d-block">Beranda dan ringkasan sistem</small>
                             </a>
 
-                            <a class="nav-link {{ request()->routeIs('tiket.pengajuan') ? 'active' : '' }}"
-                                href="/tiket/pengajuan">
+                            @if(auth()->user()->isSkpd() || auth()->user()->isAdmin())
+                            <a class="nav-link {{ request()->routeIs('tiket.create') ? 'active' : '' }}"
+                                href="{{ route('tiket.create') }}">
                                 <i class="bi bi-plus-circle me-2"></i>Ajukan Tiket
                                 <small class="text-muted d-block">Form pengajuan tiket baru</small>
                             </a>
+                            @endif
 
+                            @if(auth()->user()->isSkpd())
                             <a class="nav-link {{ request()->routeIs('tiket.saya') ? 'active' : '' }}"
-                                href="/tiket/saya">
+                                href="{{ route('tiket.saya') }}">
                                 <i class="bi bi-ticket me-2"></i>Tiket Saya
                                 <small class="text-muted d-block">Daftar tiket yang Anda ajukan</small>
                             </a>
+                            @endif
 
-                            <a class="nav-link {{ request()->routeIs('tiket.daftar') ? 'active' : '' }}"
-                                href="/tiket/daftar">
+                            @if(!auth()->user()->isSkpd())
+                            <a class="nav-link {{ request()->routeIs('tiket.index') ? 'active' : '' }}"
+                                href="{{ route('tiket.index') }}">
                                 <i class="bi bi-list-check me-2"></i>Daftar Tiket
                                 <small class="text-muted d-block">Daftar semua tiket</small>
                             </a>
+                            @endif
 
+                            @if(!auth()->user()->isSkpd())
                             <a class="nav-link {{ request()->routeIs('laporan.index') ? 'active' : '' }}"
-                                href="/laporan">
+                                href="{{ route('laporan.index') }}">
                                 <i class="bi bi-bar-chart me-2"></i>Laporan
                                 <small class="text-muted d-block">Grafik dan laporan ringkas</small>
                             </a>
+                            @endif
 
                             <h6 class="text-muted mb-3 mt-4">ADMINISTRASI</h6>
                             <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"

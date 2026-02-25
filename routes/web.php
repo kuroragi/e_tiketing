@@ -39,6 +39,8 @@ Route::middleware(['auth'])->group(function () {
             ->middleware('role:skpd|admin')
             ->name('tiket.store');
 
+        Route::get('saya', [KominfoController::class, 'myTickets'])->name('tiket.saya');
+
         Route::get('{id}', [KominfoController::class, 'show'])->name('tiket.show');
 
         Route::put('{id}/status', [KominfoController::class, 'updateStatus'])

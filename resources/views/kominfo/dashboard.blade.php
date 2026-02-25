@@ -77,31 +77,32 @@
                     @if (isset($recentTickets) && count($recentTickets) > 0)
                         @foreach ($recentTickets as $ticket)
                             <a href="{{ route('tiket.show', $ticket->id) }}" class="text-decoration-none text-dark">
-                            <div class="ticket-card p-3 border-bottom">
-                                <div class="row align-items-center">
-                                    <div class="col-md-1">
-                                        <div class="user-avatar">{{ substr($ticket->department->name ?? 'T', 0, 1) }}</div>
-                                    </div>
-                                    <div class="col-md-7">
-                                        <h6 class="mb-1">{{ $ticket->title }}</h6>
-                                        <small class="text-muted">
-                                            <i class="bi bi-building me-1"></i>{{ $ticket->department->name ?? '-' }}
-                                            <span class="ms-3"><i
-                                                    class="bi bi-calendar me-1"></i>{{ $ticket->created_at->format('d/m/Y') }}</span>
-                                        </small>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <span class="status-badge status-{{ strtolower($ticket->status) }}">
-                                            {{ ucfirst($ticket->status) }}
-                                        </span>
-                                    </div>
-                                    <div class="col-md-2 text-end">
-                                        <span class="priority-{{ strtolower($ticket->priority->name ?? 'rendah') }}">
-                                            <i class="bi bi-flag-fill"></i>
-                                        </span>
+                                <div class="ticket-card p-3 border-bottom">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-1">
+                                            <div class="user-avatar">{{ substr($ticket->department->name ?? 'T', 0, 1) }}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-7">
+                                            <h6 class="mb-1">{{ $ticket->title }}</h6>
+                                            <small class="text-muted">
+                                                <i class="bi bi-building me-1"></i>{{ $ticket->department->name ?? '-' }}
+                                                <span class="ms-3"><i
+                                                        class="bi bi-calendar me-1"></i>{{ $ticket->created_at->format('d/m/Y') }}</span>
+                                            </small>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <span class="status-badge status-{{ strtolower($ticket->status) }}">
+                                                {{ ucfirst($ticket->status) }}
+                                            </span>
+                                        </div>
+                                        <div class="col-md-2 text-end">
+                                            <span class="priority-{{ strtolower($ticket->priority->name ?? 'rendah') }}">
+                                                <i class="bi bi-flag-fill"></i>
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
                             </a>
                         @endforeach
                     @else

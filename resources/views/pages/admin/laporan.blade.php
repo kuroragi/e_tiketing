@@ -124,11 +124,12 @@
                                         <td class="text-center">{{ $item['tiket'] }}</td>
                                         <td class="text-center">{{ $item['selesai'] }}</td>
                                         @if ($item['tiket'] > 0)
-                                        <td class="text-center">
-                                            <span class="badge bg-success">{{ round(($item['selesai'] / $item['tiket']) * 100) }}%</span>
-                                        </td>
+                                            <td class="text-center">
+                                                <span
+                                                    class="badge bg-success">{{ round(($item['selesai'] / $item['tiket']) * 100) }}%</span>
+                                            </td>
                                         @else
-                                        <td class="text-center"><span class="badge bg-secondary">0%</span></td>
+                                            <td class="text-center"><span class="badge bg-secondary">0%</span></td>
                                         @endif
                                     </tr>
                                 @endforeach

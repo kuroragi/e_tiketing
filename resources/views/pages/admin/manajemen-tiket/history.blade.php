@@ -228,7 +228,7 @@
             </table>
         </div>
         <div class="card-footer d-flex justify-content-between align-items-center">
-                <small class="text-muted">Menampilkan {{ $history->count() }} dari
+            <small class="text-muted">Menampilkan {{ $history->count() }} dari
                 {{ $kpi['total_assignment'] ?? 0 }} records</small>
             <nav aria-label="Page navigation">
                 {{ $history->links() }}
@@ -282,7 +282,9 @@
             data: {
                 labels: ['Otomatis', 'Manual'],
                 datasets: [{
-                    data: [{{ $kpi['bulan_ini'] ?? 0 }}, {{ max(0, ($kpi['total_assignment'] ?? 0) - ($kpi['bulan_ini'] ?? 0)) }}],
+                    data: [{{ $kpi['bulan_ini'] ?? 0 }},
+                        {{ max(0, ($kpi['total_assignment'] ?? 0) - ($kpi['bulan_ini'] ?? 0)) }}
+                    ],
                     backgroundColor: ['#28a745', '#ffc107'],
                     borderColor: ['#fff', '#fff'],
                     borderWidth: 2

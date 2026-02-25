@@ -13,7 +13,8 @@
                 @method('PUT')
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="petugasSelect" class="form-label">Pilih Petugas <span class="text-danger">*</span></label>
+                        <label for="petugasSelect" class="form-label">Pilih Petugas <span
+                                class="text-danger">*</span></label>
                         <select class="form-select" name="assignee_id" id="petugasSelect" required>
                             <option value="">-- Pilih Petugas --</option>
                             @foreach ($petugasList ?? [] as $petugas)
@@ -38,12 +39,12 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('assignModal').addEventListener('show.bs.modal', function (e) {
-        var ticketId = e.relatedTarget ? e.relatedTarget.getAttribute('data-ticket-id') : null;
-        if (ticketId) {
-            document.getElementById('assignForm').action = '/tiket/' + ticketId + '/assign';
-        }
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('assignModal').addEventListener('show.bs.modal', function(e) {
+            var ticketId = e.relatedTarget ? e.relatedTarget.getAttribute('data-ticket-id') : null;
+            if (ticketId) {
+                document.getElementById('assignForm').action = '/tiket/' + ticketId + '/assign';
+            }
+        });
     });
-});
 </script>

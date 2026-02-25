@@ -14,9 +14,10 @@
                 <input type="hidden" name="status" value="ditolak">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="rejectReason" class="form-label">Alasan Penolakan <span class="text-danger">*</span></label>
-                        <textarea class="form-control" name="note" id="rejectReason" rows="3"
-                            placeholder="Tuliskan alasan penolakan" required></textarea>
+                        <label for="rejectReason" class="form-label">Alasan Penolakan <span
+                                class="text-danger">*</span></label>
+                        <textarea class="form-control" name="note" id="rejectReason" rows="3" placeholder="Tuliskan alasan penolakan"
+                            required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -31,12 +32,12 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('rejectModal').addEventListener('show.bs.modal', function (e) {
-        var ticketId = e.relatedTarget ? e.relatedTarget.getAttribute('data-ticket-id') : null;
-        if (ticketId) {
-            document.getElementById('rejectForm').action = '/tiket/' + ticketId + '/update-status';
-        }
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('rejectModal').addEventListener('show.bs.modal', function(e) {
+            var ticketId = e.relatedTarget ? e.relatedTarget.getAttribute('data-ticket-id') : null;
+            if (ticketId) {
+                document.getElementById('rejectForm').action = '/tiket/' + ticketId + '/status';
+            }
+        });
     });
-});
 </script>

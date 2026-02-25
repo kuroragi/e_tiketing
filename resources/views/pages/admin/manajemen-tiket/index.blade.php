@@ -80,7 +80,8 @@
                                 @forelse ($pendingTickets as $ticket)
                                     <tr>
                                         <td>
-                                            <a href="{{ route('tiket.show', $ticket->id) }}" class="fw-bold text-decoration-none">
+                                            <a href="{{ route('tiket.show', $ticket->id) }}"
+                                                class="fw-bold text-decoration-none">
                                                 {{ $ticket->number }}
                                             </a>
                                         </td>
@@ -94,7 +95,8 @@
                                         </td>
                                         <td>
                                             @php $prio = $ticket->priority->name ?? '-'; @endphp
-                                            <span class="badge bg-{{ $prio === 'Urgent' ? 'danger' : ($prio === 'Tinggi' ? 'warning' : 'success') }}">
+                                            <span
+                                                class="badge bg-{{ $prio === 'Urgent' ? 'danger' : ($prio === 'Tinggi' ? 'warning' : 'success') }}">
                                                 {{ $prio }}
                                             </span>
                                         </td>
@@ -122,242 +124,240 @@
                                         </td>
                                     </tr>
                                 @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                        {{ $pendingTickets->links() }}
                             </tbody>
                         </table>
                     </div>
+                    {{ $pendingTickets->links() }}
+                    </tbody>
+                    </table>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Auto Assignment -->
-        <div class="tab-pane fade" id="auto" role="tabpanel">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-lightning-fill text-warning me-2"></i>
-                        Konfigurasi Auto Assignment
-                    </h5>
+    <!-- Auto Assignment -->
+    <div class="tab-pane fade" id="auto" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightning-fill text-warning me-2"></i>
+                    Konfigurasi Auto Assignment
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Cara Kerja:</strong> Sistem akan otomatis menentukan petugas berdasarkan jenis pekerjaan,
+                    prioritas, dan keahlian petugas. Konfigurasi di bawah menunjukkan aturan assignment untuk setiap
+                    jenis pekerjaan.
                 </div>
-                <div class="card-body">
-                    <div class="alert alert-info mb-4" role="alert">
-                        <i class="bi bi-info-circle me-2"></i>
-                        <strong>Cara Kerja:</strong> Sistem akan otomatis menentukan petugas berdasarkan jenis pekerjaan,
-                        prioritas, dan keahlian petugas. Konfigurasi di bawah menunjukkan aturan assignment untuk setiap
-                        jenis pekerjaan.
-                    </div>
 
-                    <div class="accordion" id="autoAssignAccordion">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#collapse1">
-                                    <i class="bi bi-clipboard-data me-2"></i>
-                                    <strong>PIC Presensi</strong>
-                                    <span class="ms-auto"><span class="badge bg-primary">Aktif</span></span>
-                                </button>
-                            </h2>
-                            <div id="collapse1" class="accordion-collapse collapse show"
-                                data-bs-parent="#autoAssignAccordion">
-                                <div class="accordion-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-sm">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th>Kondisi</th>
-                                                    <th>Petugas Utama</th>
-                                                    <th>Petugas Backup</th>
-                                                    <th>Aksi</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td><span class="badge bg-danger">Urgent</span></td>
-                                                    <td><strong>Ahmad Fauzi (A)</strong> - 70%</td>
-                                                    <td><strong>Siti Aminah (B)</strong> - 30%</td>
-                                                    <td>
-                                                        <button class="btn btn-sm btn-outline-primary">Edit</button>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td><span class="badge bg-warning">Tinggi</span></td>
-                                                    <td><strong>Siti Aminah (B)</strong> - 60%</td>
-                                                    <td><strong>Ahmad Fauzi (A)</strong> - 40%</td>
-                                                    <td>
-                                                        <button class="btn btn-sm btn-outline-primary">Edit</button>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#collapse2">
-                                    <i class="bi bi-globe me-2"></i>
-                                    <strong>Perbaikan Portal</strong>
-                                    <span class="ms-auto"><span class="badge bg-primary">Aktif</span></span>
-                                </button>
-                            </h2>
-                            <div id="collapse2" class="accordion-collapse collapse"
-                                data-bs-parent="#autoAssignAccordion">
-                                <div class="accordion-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-sm">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th>Kondisi</th>
-                                                    <th>Petugas Utama</th>
-                                                    <th>Petugas Backup</th>
-                                                    <th>Aksi</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td><span class="badge bg-danger">Urgent</span></td>
-                                                    <td><strong>Siti Aminah (B)</strong> - 60%</td>
-                                                    <td><strong>Rizki Pratama (C)</strong> - 40%</td>
-                                                    <td>
-                                                        <button class="btn btn-sm btn-outline-primary">Edit</button>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td><span class="badge bg-warning">Tinggi</span></td>
-                                                    <td><strong>Rizki Pratama (C)</strong> - 70%</td>
-                                                    <td><strong>Siti Aminah (B)</strong> - 30%</td>
-                                                    <td>
-                                                        <button class="btn btn-sm btn-outline-primary">Edit</button>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#collapse3">
-                                    <i class="bi bi-tools me-2"></i>
-                                    <strong>Troubleshooting</strong>
-                                    <span class="ms-auto"><span class="badge bg-primary">Aktif</span></span>
-                                </button>
-                            </h2>
-                            <div id="collapse3" class="accordion-collapse collapse"
-                                data-bs-parent="#autoAssignAccordion">
-                                <div class="accordion-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-sm">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th>Kondisi</th>
-                                                    <th>Petugas Utama</th>
-                                                    <th>Petugas Backup</th>
-                                                    <th>Aksi</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td><span class="badge bg-danger">Urgent</span></td>
-                                                    <td><strong>Rizki Pratama (C)</strong> - 50%</td>
-                                                    <td><strong>Desi Marlina (D)</strong> - 50%</td>
-                                                    <td>
-                                                        <button class="btn btn-sm btn-outline-primary">Edit</button>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
+                <div class="accordion" id="autoAssignAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapse1">
+                                <i class="bi bi-clipboard-data me-2"></i>
+                                <strong>PIC Presensi</strong>
+                                <span class="ms-auto"><span class="badge bg-primary">Aktif</span></span>
+                            </button>
+                        </h2>
+                        <div id="collapse1" class="accordion-collapse collapse show" data-bs-parent="#autoAssignAccordion">
+                            <div class="accordion-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Kondisi</th>
+                                                <th>Petugas Utama</th>
+                                                <th>Petugas Backup</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><span class="badge bg-danger">Urgent</span></td>
+                                                <td><strong>Ahmad Fauzi (A)</strong> - 70%</td>
+                                                <td><strong>Siti Aminah (B)</strong> - 30%</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary">Edit</button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="badge bg-warning">Tinggi</span></td>
+                                                <td><strong>Siti Aminah (B)</strong> - 60%</td>
+                                                <td><strong>Ahmad Fauzi (A)</strong> - 40%</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary">Edit</button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mt-4">
-                        <button class="btn btn-primary">
-                            <i class="bi bi-check-circle me-2"></i>
-                            Simpan Konfigurasi
-                        </button>
-                        <button class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-clockwise me-2"></i>
-                            Reset ke Default
-                        </button>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapse2">
+                                <i class="bi bi-globe me-2"></i>
+                                <strong>Perbaikan Portal</strong>
+                                <span class="ms-auto"><span class="badge bg-primary">Aktif</span></span>
+                            </button>
+                        </h2>
+                        <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#autoAssignAccordion">
+                            <div class="accordion-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Kondisi</th>
+                                                <th>Petugas Utama</th>
+                                                <th>Petugas Backup</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><span class="badge bg-danger">Urgent</span></td>
+                                                <td><strong>Siti Aminah (B)</strong> - 60%</td>
+                                                <td><strong>Rizki Pratama (C)</strong> - 40%</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary">Edit</button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="badge bg-warning">Tinggi</span></td>
+                                                <td><strong>Rizki Pratama (C)</strong> - 70%</td>
+                                                <td><strong>Siti Aminah (B)</strong> - 30%</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary">Edit</button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapse3">
+                                <i class="bi bi-tools me-2"></i>
+                                <strong>Troubleshooting</strong>
+                                <span class="ms-auto"><span class="badge bg-primary">Aktif</span></span>
+                            </button>
+                        </h2>
+                        <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#autoAssignAccordion">
+                            <div class="accordion-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Kondisi</th>
+                                                <th>Petugas Utama</th>
+                                                <th>Petugas Backup</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><span class="badge bg-danger">Urgent</span></td>
+                                                <td><strong>Rizki Pratama (C)</strong> - 50%</td>
+                                                <td><strong>Desi Marlina (D)</strong> - 50%</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary">Edit</button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Simpan Konfigurasi
+                    </button>
+                    <button class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-clockwise me-2"></i>
+                        Reset ke Default
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Assignment -->
+    <div class="tab-pane fade" id="manual" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-hand-index me-2"></i>
+                    Manual Assignment
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">Admin dan pihak berwenang dapat memilih petugas secara manual sesuai
+                    keputusan.</p>
+
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <h6>Petugas Tersedia</h6>
+                        <div class="list-group">
+                            @forelse ($petugasList ?? [] as $p)
+                                <div class="list-group-item">
+                                    <h6 class="mb-1">{{ $p->name }}</h6>
+                                    <span
+                                        class="badge bg-{{ $p->aktif_count === 0 ? 'success' : ($p->aktif_count <= 3 ? 'info' : ($p->aktif_count <= 6 ? 'warning' : 'danger')) }} mt-1">
+                                        Load: {{ $p->aktif_count }} tiket
+                                    </span>
+                                </div>
+                            @empty
+                                <div class="list-group-item text-muted">Tidak ada petugas aktif.</div>
+                            @endforelse
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <h6>Catatan</h6>
+                        <div class="alert alert-info" role="alert">
+                            <p><i class="bi bi-info-circle me-2"></i><strong>Load Petugas:</strong> Menunjukkan jumlah
+                                tiket yang sedang dikerjakan oleh petugas.</p>
+                            <p class="mb-0"><i class="bi bi-info-circle me-2"></i><strong>Rekomendasi:</strong>
+                                Assign tiket ke petugas dengan load terendah untuk distribusi beban kerja yang lebih
+                                merata.</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Manual Assignment -->
-        <div class="tab-pane fade" id="manual" role="tabpanel">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-hand-index me-2"></i>
-                        Manual Assignment
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted mb-4">Admin dan pihak berwenang dapat memilih petugas secara manual sesuai
-                        keputusan.</p>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-4">
-                            <h6>Petugas Tersedia</h6>
-                            <div class="list-group">
-                                @forelse ($petugasList ?? [] as $p)
-                                    <div class="list-group-item">
-                                        <h6 class="mb-1">{{ $p->name }}</h6>
-                                        <span class="badge bg-{{ $p->aktif_count === 0 ? 'success' : ($p->aktif_count <= 3 ? 'info' : ($p->aktif_count <= 6 ? 'warning' : 'danger')) }} mt-1">
-                                            Load: {{ $p->aktif_count }} tiket
-                                        </span>
-                                    </div>
-                                @empty
-                                    <div class="list-group-item text-muted">Tidak ada petugas aktif.</div>
-                                @endforelse
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-4">
-                            <h6>Catatan</h6>
-                            <div class="alert alert-info" role="alert">
-                                <p><i class="bi bi-info-circle me-2"></i><strong>Load Petugas:</strong> Menunjukkan jumlah
-                                    tiket yang sedang dikerjakan oleh petugas.</p>
-                                <p class="mb-0"><i class="bi bi-info-circle me-2"></i><strong>Rekomendasi:</strong>
-                                    Assign tiket ke petugas dengan load terendah untuk distribusi beban kerja yang lebih
-                                    merata.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <!-- History Assignment -->
+    <div class="tab-pane fade" id="history" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history me-2"></i>
+                    History Assignment
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Lihat riwayat assignment tiket baik yang otomatis maupun manual.</p>
+                <a href="{{ route('ticket.management.history') }}" class="btn btn-primary">
+                    <i class="bi bi-eye me-2"></i>
+                    Lihat Detail History
+                </a>
             </div>
         </div>
-
-        <!-- History Assignment -->
-        <div class="tab-pane fade" id="history" role="tabpanel">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-clock-history me-2"></i>
-                        History Assignment
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted mb-3">Lihat riwayat assignment tiket baik yang otomatis maupun manual.</p>
-                    <a href="{{ route('ticket.management.history') }}" class="btn btn-primary">
-                        <i class="bi bi-eye me-2"></i>
-                        Lihat Detail History
-                    </a>
-                </div>
-            </div>
-        </div>
+    </div>
     </div>
 
     <!-- Unified Auto Assign Modal -->
@@ -415,7 +415,8 @@
                         <select class="form-select" id="petugasSelect">
                             <option value="" selected disabled>-- Pilih Petugas --</option>
                             @foreach ($petugasList ?? [] as $p)
-                                <option value="{{ $p->id }}">{{ $p->name }} — Load: {{ $p->aktif_count }} tiket</option>
+                                <option value="{{ $p->id }}">{{ $p->name }} — Load: {{ $p->aktif_count }}
+                                    tiket</option>
                             @endforeach
                         </select>
                     </div>

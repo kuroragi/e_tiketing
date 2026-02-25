@@ -46,8 +46,7 @@
                     <select class="form-select" name="category_id" id="category_id">
                         <option value="">Semua Kategori</option>
                         @foreach ($categories ?? [] as $cat)
-                            <option value="{{ $cat->id }}"
-                                {{ request('category_id') == $cat->id ? 'selected' : '' }}>
+                            <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>
                                 {{ $cat->name }}
                             </option>
                         @endforeach
@@ -371,7 +370,7 @@
         function exportReport() {
             const params = new URLSearchParams(window.location.search);
             params.set('export', 'true');
-            window.location.href = '{{ route("laporan.export") }}?' + params.toString();
+            window.location.href = '{{ route('laporan.export.csv') }}?' + params.toString();
         }
     </script>
 @endpush
