@@ -321,9 +321,9 @@
 
                             @if (auth()->user()->isAdmin())
                                 <h6 class="text-muted mb-3 mt-4">ADMINISTRASI</h6>
-                                <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
-                                    href="{{ route('admin.dashboard') }}">
-                                    <i class="bi bi-speedometer2 me-2"></i>Dashboard Admin
+                                <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"
+                                    href="{{ route('dashboard') }}">
+                                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
                                     <small class="text-muted d-block">Overview sistem</small>
                                 </a>
                                 <a class="nav-link {{ request()->routeIs('admin.pengguna') ? 'active' : '' }}"

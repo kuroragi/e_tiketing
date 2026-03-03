@@ -17,51 +17,126 @@ use Illuminate\Support\Facades\Storage;
 
 class KominfoController extends Controller
 {
-    //  Dashboard 
+    //  Dashboard (unified for all roles) 
 
     public function dashboard()
     {
-        $user = Auth::user();
+        $user  = Auth::user();
         $query = Ticket::query();
 
-        // SKPD hanya lihat tiket milik departemennya
+        // Scope berdasarkan peran
         if ($user->isSkpd()) {
             $query->where('department_id', $user->department_id);
+        } elseif ($user->isPetugas()) {
+            $query->whereHas('assignees', fn($q) => $q->where('users.id', $user->id));
         }
 
+        // --- Statistik tiket utama ---
         $stats = [
             'total'    => (clone $query)->count(),
             'baru'     => (clone $query)->where('status', 'baru')->count(),
             'diproses' => (clone $query)->where('status', 'diproses')->count(),
             'selesai'  => (clone $query)->where('status', 'selesai')->count(),
         ];
-
-        // Rata-rata waktu penyelesaian (dalam hari)
-        $selesai = (clone $query)->where('status', 'selesai')->whereNotNull('closed_at')->get();
-        $stats['rata_penyelesaian'] = $selesai->count()
-            ? round($selesai->avg(fn($t) => $t->created_at->diffInDays($t->closed_at)), 1)
+        $selesaiQuery = (clone $query)->where('status', 'selesai')->whereNotNull('closed_at')->get();
+        $stats['rata_penyelesaian'] = $selesaiQuery->count()
+            ? round($selesaiQuery->avg(fn($t) => $t->created_at->diffInDays($t->closed_at)), 1)
             : 0;
 
-        // 10 tiket terbaru
+        // --- 10 tiket terbaru (sesuai scope) ---
         $recentTickets = (clone $query)
-            ->with(['requester', 'department', 'category', 'priority', 'assignee', 'assignees'])
+            ->with(['requester', 'department', 'category', 'priority', 'assignees'])
             ->orderByDesc('created_at')
             ->limit(10)
             ->get();
 
-        // Quick actions berbasis peran
+        // --- Quick actions berbasis peran ---
         $quickActions = [];
         if ($user->isSkpd() || $user->isAdmin()) {
-            $quickActions[] = ['icon' => 'plus-circle', 'title' => 'Tiket Baru', 'description' => 'Ajukan permintaan baru', 'url' => route('tiket.create'), 'color' => 'primary'];
+            $quickActions[] = ['icon' => 'plus-circle',     'title' => 'Buat Tiket',      'url' => route('tiket.create'),               'color' => 'primary'];
+        }
+        if ($user->isSkpd()) {
+            $quickActions[] = ['icon' => 'ticket-perforated','title' => 'Tiket Saya',     'url' => route('tiket.saya'),                 'color' => 'info'];
         }
         if (! $user->isSkpd()) {
-            $quickActions[] = ['icon' => 'list-task', 'title' => 'Kelola Tiket', 'description' => 'Lihat semua tiket', 'url' => route('tiket.index'), 'color' => 'info'];
+            $quickActions[] = ['icon' => 'list-task',        'title' => 'Daftar Tiket',   'url' => route('tiket.index'),                'color' => 'info'];
         }
         if ($user->isAdmin() || $user->isPimpinan() || $user->isPetugas()) {
-            $quickActions[] = ['icon' => 'bar-chart', 'title' => 'Laporan', 'description' => 'Lihat laporan', 'url' => route('laporan.index'), 'color' => 'success'];
+            $quickActions[] = ['icon' => 'bar-chart',        'title' => 'Laporan',        'url' => route('laporan.index'),              'color' => 'success'];
+        }
+        if ($user->isAdmin() || $user->isPetugas()) {
+            $quickActions[] = ['icon' => 'people',           'title' => 'Manajemen Tiket','url' => route('ticket.management.index'),    'color' => 'warning'];
         }
 
-        return view('kominfo.dashboard', compact('stats', 'recentTickets', 'quickActions'));
+        // --- Data ekstra ADMIN ---
+        $adminStats        = null;
+        $recentActivities  = collect();
+        $petugasWorkload   = collect();
+        $skpdStats         = collect();
+
+        if ($user->isAdmin() || $user->isPimpinan()) {
+            $adminStats = [
+                ['label' => 'Total Pengguna',  'nilai' => User::count(),
+                 'icon' => 'bi-people',         'color' => 'primary',
+                 'sub'  => User::where('created_at', '>=', now()->subWeek())->count() . ' minggu ini'],
+                ['label' => 'Total SKPD Aktif','nilai' => Department::aktif()->count(),
+                 'icon' => 'bi-building',        'color' => 'info',
+                 'sub'  => 'departemen terdaftar'],
+                ['label' => 'Belum Ditugaskan','nilai' => Ticket::whereDoesntHave('assignees')->whereIn('status',['baru'])->count(),
+                 'icon' => 'bi-person-x',        'color' => 'danger',
+                 'sub'  => 'tiket menunggu petugas'],
+                ['label' => 'Selesai Bulan Ini','nilai' => Ticket::where('status','selesai')->whereMonth('updated_at', now()->month)->count(),
+                 'icon' => 'bi-check-circle',    'color' => 'success',
+                 'sub'  => 'bulan ' . now()->translatedFormat('F')],
+            ];
+
+            // Aktifitas audit terbaru
+            $recentActivities = AuditLog::with('user')
+                ->orderByDesc('created_at')
+                ->limit(8)
+                ->get()
+                ->map(fn($log) => [
+                    'user'   => $log->user->name ?? 'Sistem',
+                    'action' => $log->actionLabel(),
+                    'target' => $log->entity_name ?? '-',
+                    'waktu'  => $log->created_at->diffForHumans(),
+                    'icon'   => match($log->action) {
+                        'created'        => 'bi-plus-circle',
+                        'updated'        => 'bi-pencil',
+                        'status_changed' => 'bi-arrow-repeat',
+                        'assigned'       => 'bi-person-check',
+                        'login'          => 'bi-box-arrow-in-right',
+                        default          => 'bi-activity',
+                    },
+                    'color'  => match($log->action) {
+                        'created'  => 'success',
+                        'updated'  => 'info',
+                        'login'    => 'primary',
+                        'assigned' => 'warning',
+                        default    => 'secondary',
+                    },
+                ]);
+
+            // Statistik per SKPD
+            $skpdStats = Department::aktif()
+                ->withCount(['tickets as total_tiket', 'tickets as tiket_baru' => fn($q) => $q->where('status','baru')])
+                ->orderByDesc('total_tiket')
+                ->limit(6)
+                ->get();
+        }
+
+        if ($user->isAdmin() || $user->isPetugas()) {
+            // Beban kerja petugas
+            $petugasWorkload = User::role('petugas')
+                ->withCount(['assignedTicketsMulti as aktif_count' => fn($q) => $q->whereIn('status',['baru','diproses'])])
+                ->orderBy('aktif_count')
+                ->get();
+        }
+
+        return view('kominfo.dashboard', compact(
+            'stats', 'recentTickets', 'quickActions',
+            'adminStats', 'recentActivities', 'petugasWorkload', 'skpdStats'
+        ));
     }
 
     //  Form Pengajuan 

@@ -71,7 +71,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Admin Routes
     Route::prefix('admin')->middleware('role:admin')->group(function () {
-        Route::get('dashboard', [AdminPageController::class, 'dashboard'])->name('admin.dashboard');
+        Route::redirect('dashboard', '/dashboard')->name('admin.dashboard');
 
         Route::get('pengguna', [AdminPageController::class, 'pengguna'])->name('admin.pengguna');
         Route::post('pengguna', [AdminPageController::class, 'storeUser'])->name('admin.pengguna.store');
