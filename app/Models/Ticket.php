@@ -5,6 +5,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Ticket extends Model
@@ -63,6 +64,16 @@ class Ticket extends Model
         return $this->belongsTo(User::class, 'assignee_id');
     }
 
+    /**
+     * Semua petugas yang ditugaskan ke tiket ini (many-to-many).
+     */
+    public function assignees(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'ticket_assignees', 'ticket_id', 'user_id')
+            ->withPivot(['assigned_by_id', 'assigned_at'])
+            ->orderBy('name');
+    }
+
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
@@ -117,7 +128,7 @@ class Ticket extends Model
 
     public function scopeAssignedTo($query, int $userId)
     {
-        return $query->where('assignee_id', $userId);
+        return $query->whereHas('assignees', fn($q) => $q->where('users.id', $userId));
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────

@@ -109,10 +109,12 @@
                                                             onclick="selectPetugas(this, {{ $petugas->id }}, '{{ $ticket->id }}')">
                                                             <div class="card-body">
                                                                 <div class="form-check">
-                                                                    <input class="form-check-input petugas-radio"
-                                                                        type="radio" name="petugas_{{ $ticket->id }}"
+                                                                    <input class="form-check-input petugas-cb"
+                                                                        type="checkbox"
+                                                                        name="petugas_{{ $ticket->id }}[]"
                                                                         value="{{ $petugas->id }}"
-                                                                        id="petugas_{{ $ticket->id }}_{{ $petugas->id }}">
+                                                                        id="petugas_{{ $ticket->id }}_{{ $petugas->id }}"
+                                                                        onclick="event.stopPropagation()">
                                                                     <label class="form-check-label w-100"
                                                                         for="petugas_{{ $ticket->id }}_{{ $petugas->id }}">
                                                                         <h6 class="mb-1">{{ $petugas->name }}</h6>
@@ -223,21 +225,18 @@
 @push('scripts')
     <script>
         function selectPetugas(element, petugasId, ticketId) {
-            const radios = document.querySelectorAll(`input[name="petugas_${ticketId}"]`);
-            radios.forEach(radio => {
-                radio.parentElement.parentElement.parentElement.classList.remove('border-primary',
-                    'bg-primary-light');
-            });
-
-            element.classList.add('border', 'border-primary');
-            document.getElementById(`petugas_${ticketId}_${petugasId}`).checked = true;
+            const cb = document.getElementById(`petugas_${ticketId}_${petugasId}`);
+            cb.checked = !cb.checked;
+            element.classList.toggle('border', cb.checked);
+            element.classList.toggle('border-primary', cb.checked);
         }
 
         function confirmAssignment(ticketId) {
-            const selectedPetugas = document.querySelector(`input[name="petugas_${ticketId}"]:checked`);
+            const checked = document.querySelectorAll(`input[name="petugas_${ticketId}[]"]`);
+            const selected = Array.from(checked).filter(cb => cb.checked).map(cb => cb.value);
 
-            if (!selectedPetugas) {
-                showToast('Pilih petugas terlebih dahulu', 'warning');
+            if (selected.length === 0) {
+                showToast('Pilih minimal satu petugas terlebih dahulu', 'warning');
                 return;
             }
 
@@ -248,12 +247,13 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        assignee_id: selectedPetugas.value
+                        assignee_ids: selected
                     })
                 })
                 .then(response => response.json())
                 .then(data => {
-                    showToast('Tiket berhasil diassign!', 'success');
+                    showToast(`Tiket berhasil ditugaskan ke ${data.assignees?.length ?? selected.length} petugas!`,
+                        'success');
                     setTimeout(() => location.reload(), 1500);
                 });
         }

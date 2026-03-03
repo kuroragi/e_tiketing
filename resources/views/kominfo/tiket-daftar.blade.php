@@ -1,24 +1,54 @@
 @extends('layouts.e-ticket')
 
-@section('title', 'Daftar Tiket - Sistem Ticketing Kominfo')
+@php
+    $viewMode = $viewMode ?? 'semua';
+    $authUser = auth()->user();
+    $isSkpd = $authUser->isSkpd();
+    $isPetugas = $authUser->isPetugas();
+    $isAdmin = $authUser->isAdmin();
+    $isPimpinan = $authUser->isPimpinan();
+    $isKominfo = $isPetugas || $isAdmin || $isPimpinan;
+@endphp
+
+@section('title', $viewMode === 'saya' ? 'Tiket Saya - Sistem Ticketing Kominfo' : 'Daftar Tiket - Sistem Ticketing
+    Kominfo')
 
 @section('breadcrumb')
-    <li class="breadcrumb-item active">Daftar Tiket</li>
+    @if ($viewMode === 'saya')
+        <li class="breadcrumb-item active">Tiket Saya</li>
+    @else
+        <li class="breadcrumb-item active">Daftar Tiket</li>
+    @endif
 @endsection
 
 @section('page-header')
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h2 class="mb-1">
-                <i class="bi bi-list-check me-2"></i>
-                Daftar Tiket Pekerjaan
-            </h2>
-            <p class="mb-0">Kelola dan pantau semua tiket masuk dari SKPD</p>
+            @if ($viewMode === 'saya')
+                <h2 class="mb-1"><i class="bi bi-ticket-perforated me-2"></i>Tiket Saya</h2>
+                <p class="mb-0">Riwayat dan status pengajuan tiket dari departemen Anda</p>
+            @elseif ($isPetugas)
+                <h2 class="mb-1"><i class="bi bi-tools me-2"></i>Daftar Tiket Pekerjaan</h2>
+                <p class="mb-0">Kelola dan selesaikan tiket yang menjadi tanggung jawab Anda</p>
+            @elseif ($isPimpinan)
+                <h2 class="mb-1"><i class="bi bi-bar-chart-steps me-2"></i>Pantau Tiket</h2>
+                <p class="mb-0">Pantau seluruh tiket pekerjaan yang masuk dari semua SKPD</p>
+            @else
+                <h2 class="mb-1"><i class="bi bi-list-check me-2"></i>Daftar Tiket Pekerjaan</h2>
+                <p class="mb-0">Kelola dan pantau semua tiket masuk dari SKPD</p>
+            @endif
         </div>
-        <div>
-            <span class="badge bg-light text-dark fs-6">
-                Total: {{ $tickets->total() }} tiket
-            </span>
+        <div class="d-flex gap-2 align-items-center">
+            <span class="badge bg-light text-dark fs-6">Total: {{ $tickets->total() }} tiket</span>
+            @if ($viewMode === 'saya')
+                <a href="{{ route('tiket.create') }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-circle me-1"></i>Ajukan Tiket Baru
+                </a>
+            @elseif ($isAdmin)
+                <a href="{{ route('laporan.index') }}" class="btn btn-outline-success btn-sm">
+                    <i class="bi bi-bar-chart me-1"></i>Laporan
+                </a>
+            @endif
         </div>
     </div>
 @endsection
@@ -27,13 +57,16 @@
     <!-- Filter & Search -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ route('tiket.index') }}" class="row g-3">
+            @php
+                $filterRoute = $viewMode === 'saya' ? route('tiket.saya') : route('tiket.index');
+            @endphp
+            <form method="GET" action="{{ $filterRoute }}" class="row g-3">
                 <div class="col-md-3">
                     <label for="search" class="form-label">Pencarian</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" class="form-control" name="search" id="search" placeholder="Cari no/judul..."
-                            value="{{ request('search') }}">
+                        <input type="text" class="form-control" name="search" id="search"
+                            placeholder="Cari no/judul..." value="{{ request('search') }}">
                     </div>
                 </div>
                 <div class="col-md-2">
@@ -44,6 +77,10 @@
                         <option value="diproses" {{ request('status') === 'diproses' ? 'selected' : '' }}>Diproses</option>
                         <option value="selesai" {{ request('status') === 'selesai' ? 'selected' : '' }}>Selesai</option>
                         <option value="ditolak" {{ request('status') === 'ditolak' ? 'selected' : '' }}>Ditolak</option>
+                        @if ($viewMode === 'saya')
+                            <option value="dibatalkan" {{ request('status') === 'dibatalkan' ? 'selected' : '' }}>Dibatalkan
+                            </option>
+                        @endif
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -57,24 +94,57 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <label for="department_id" class="form-label">SKPD</label>
-                    <select class="form-select" name="department_id" id="department_id">
-                        <option value="">Semua SKPD</option>
-                        @foreach ($skpdList ?? [] as $skpd)
-                            <option value="{{ $skpd->id }}" {{ request('department_id') == $skpd->id ? 'selected' : '' }}>
-                                {{ $skpd->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+
+                {{-- Filter SKPD: hanya untuk Kominfo (semua mode) --}}
+                @if ($viewMode === 'semua' && !$isSkpd)
+                    <div class="col-md-2">
+                        <label for="department_id" class="form-label">SKPD</label>
+                        <select class="form-select" name="department_id" id="department_id">
+                            <option value="">Semua SKPD</option>
+                            @foreach ($skpdList ?? [] as $skpd)
+                                <option value="{{ $skpd->id }}"
+                                    {{ request('department_id') == $skpd->id ? 'selected' : '' }}>
+                                    {{ $skpd->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
+
+                {{-- Filter Petugas: hanya Admin di semua mode --}}
+                @if ($viewMode === 'semua' && $isAdmin && ($petugasList ?? collect())->count())
+                    <div class="col-md-2">
+                        <label for="assignee_id" class="form-label">Petugas</label>
+                        <select class="form-select" name="assignee_id" id="assignee_id">
+                            <option value="">Semua Petugas</option>
+                            @foreach ($petugasList as $p)
+                                <option value="{{ $p->id }}"
+                                    {{ request('assignee_id') == $p->id ? 'selected' : '' }}>
+                                    {{ $p->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
+
+                {{-- Tombol Filter Cepat untuk Petugas --}}
+                @if ($viewMode === 'semua' && $isPetugas)
+                    <div class="col-md-2">
+                        <label class="form-label">Tampilkan</label>
+                        <a href="{{ route('tiket.index', ['assignee_id' => $authUser->id]) }}"
+                            class="btn btn-outline-info btn-sm w-100 {{ request('assignee_id') == $authUser->id ? 'active' : '' }}">
+                            <i class="bi bi-person-check me-1"></i>Ditugaskan ke Saya
+                        </a>
+                    </div>
+                @endif
+
                 <div class="col-md-3">
                     <label class="form-label">&nbsp;</label>
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-funnel me-1"></i>Filter
                         </button>
-                        <a href="{{ route('tiket.index') }}" class="btn btn-outline-secondary">
+                        <a href="{{ $filterRoute }}" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-clockwise me-1"></i>Reset
                         </a>
                     </div>
@@ -89,7 +159,7 @@
             <div class="card card-warning">
                 <div class="card-body text-center">
                     <h4 class="text-warning">{{ $stats['baru'] ?? 0 }}</h4>
-                    <small class="text-muted">Tiket Baru</small>
+                    <small class="text-muted">{{ $viewMode === 'saya' ? 'Menunggu Proses' : 'Tiket Baru' }}</small>
                 </div>
             </div>
         </div>
@@ -122,7 +192,15 @@
     <!-- Tickets List -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Daftar Tiket</h5>
+            <h5 class="mb-0">
+                @if ($viewMode === 'saya')
+                    Tiket Saya
+                @elseif ($isPetugas && request('assignee_id') == $authUser->id)
+                    Tiket Ditugaskan ke Saya
+                @else
+                    Semua Tiket
+                @endif
+            </h5>
             <div class="d-flex gap-2">
                 <div class="btn-group" role="group">
                     <input type="radio" class="btn-check" name="view-mode" id="list-view" checked>
@@ -145,12 +223,16 @@
                             <thead class="table-light">
                                 <tr>
                                     <th width="8%">No. Tiket</th>
-                                    <th width="25%">Judul Pekerjaan</th>
-                                    <th width="15%">SKPD</th>
+                                    <th width="{{ $viewMode === 'saya' ? '35%' : '25%' }}">Judul Pekerjaan</th>
+                                    @if ($viewMode === 'semua')
+                                        <th width="15%">SKPD</th>
+                                    @endif
                                     <th width="10%">Prioritas</th>
                                     <th width="10%">Status</th>
                                     <th width="12%">Tanggal</th>
-                                    <th width="13%">Petugas</th>
+                                    @if ($viewMode === 'semua' || $isKominfo)
+                                        <th width="13%">Petugas</th>
+                                    @endif
                                     <th width="7%">Aksi</th>
                                 </tr>
                             </thead>
@@ -165,12 +247,18 @@
                                             <div class="fw-bold">{{ $ticket->title }}</div>
                                             <small class="text-muted">{{ Str::limit($ticket->description, 50) }}</small>
                                         </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="user-avatar me-2">{{ substr($ticket->department->name ?? 'T', 0, 1) }}</div>
-                                                <small>{{ $ticket->department->name ?? '-' }}</small>
-                                            </div>
-                                        </td>
+
+                                        {{-- Kolom SKPD hanya untuk tampilan semua (Kominfo) --}}
+                                        @if ($viewMode === 'semua')
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="user-avatar me-2">
+                                                        {{ substr($ticket->department->name ?? 'T', 0, 1) }}</div>
+                                                    <small>{{ $ticket->department->name ?? '-' }}</small>
+                                                </div>
+                                            </td>
+                                        @endif
+
                                         <td>
                                             <span class="priority-{{ strtolower($ticket->priority->name ?? 'rendah') }}">
                                                 <i class="bi bi-flag-fill"></i>
@@ -185,63 +273,127 @@
                                         <td>
                                             <div>{{ $ticket->created_at->format('d/m/Y') }}</div>
                                             @if ($ticket->target_date)
-                                                <small class="text-muted">Target: {{ \Carbon\Carbon::parse($ticket->target_date)->format('d/m/Y') }}</small>
+                                                <small class="text-muted">Target:
+                                                    {{ \Carbon\Carbon::parse($ticket->target_date)->format('d/m/Y') }}</small>
                                             @endif
                                         </td>
-                                        <td>
-                                            @if ($ticket->assignee)
-                                                <div class="d-flex align-items-center">
-                                                    <div class="user-avatar me-2">{{ substr($ticket->assignee->name, 0, 1) }}</div>
-                                                    <small>{{ $ticket->assignee->name }}</small>
-                                                </div>
-                                            @else
-                                                <small class="text-muted">Belum ditugaskan</small>
-                                            @endif
-                                        </td>
+
+                                        {{-- Kolom Petugas --}}
+                                        @if ($viewMode === 'semua' || $isKominfo)
+                                            <td>
+                                                @if ($ticket->assignees->count())
+                                                    @foreach ($ticket->assignees as $a)
+                                                        <div class="d-flex align-items-center mb-1">
+                                                            <div class="user-avatar me-2">{{ substr($a->name, 0, 1) }}
+                                                            </div>
+                                                            <small>{{ $a->name }}</small>
+                                                        </div>
+                                                    @endforeach
+                                                @elseif ($isAdmin)
+                                                    <button class="btn btn-xs btn-outline-warning btn-sm" type="button"
+                                                        data-bs-toggle="modal" data-bs-target="#assignModal"
+                                                        data-ticket-id="{{ $ticket->id }}"
+                                                        onclick="event.stopPropagation()">
+                                                        <i class="bi bi-person-plus me-1"></i>Tugaskan
+                                                    </button>
+                                                @else
+                                                    <small class="text-muted fst-italic">Belum ditugaskan</small>
+                                                @endif
+                                            </td>
+                                        @endif
+
                                         <td>
                                             <div class="dropdown" onclick="event.stopPropagation()">
                                                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
                                                     type="button" data-bs-toggle="dropdown">
                                                     <i class="bi bi-three-dots"></i>
                                                 </button>
-                                                <ul class="dropdown-menu">
-                                                    <li><a class="dropdown-item" href="{{ route('tiket.show', $ticket->id) }}">
-                                                        <i class="bi bi-eye me-2"></i>Lihat Detail
-                                                    </a></li>
-                                                    @if (in_array($ticket->status, ['baru', 'diproses']) && (auth()->user()->isAdmin() || auth()->user()->isPetugas()))
-                                                        <li><hr class="dropdown-divider"></li>
-                                                        @if ($ticket->status === 'baru')
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li><a class="dropdown-item"
+                                                            href="{{ route('tiket.show', $ticket->id) }}">
+                                                            <i class="bi bi-eye me-2"></i>Lihat Detail
+                                                        </a></li>
+
+                                                    {{-- Aksi SKPD: Batalkan tiket baru milik sendiri --}}
+                                                    @if ($viewMode === 'saya' && $ticket->status === 'baru' && $ticket->requester_id === $authUser->id)
+                                                        <li>
+                                                            <hr class="dropdown-divider">
+                                                        </li>
+                                                        <li>
+                                                            <form method="POST"
+                                                                action="{{ route('tiket.batalkan', $ticket->id) }}"
+                                                                onsubmit="return confirm('Yakin ingin membatalkan tiket ini?')">
+                                                                @csrf @method('PUT')
+                                                                <button type="submit" class="dropdown-item text-danger">
+                                                                    <i class="bi bi-x-octagon me-2"></i>Batalkan Tiket
+                                                                </button>
+                                                            </form>
+                                                        </li>
+                                                    @endif
+
+                                                    {{-- Aksi Petugas / Admin --}}
+                                                    @if (in_array($ticket->status, ['baru', 'diproses']) && ($isAdmin || $isPetugas))
+                                                        <li>
+                                                            <hr class="dropdown-divider">
+                                                        </li>
+                                                        @if ($isAdmin && $ticket->assignees->isEmpty())
                                                             <li>
-                                                                <form method="POST" action="{{ route('tiket.update-status', $ticket->id) }}">
+                                                                <button type="button" class="dropdown-item"
+                                                                    data-bs-toggle="modal" data-bs-target="#assignModal"
+                                                                    data-ticket-id="{{ $ticket->id }}">
+                                                                    <i class="bi bi-person-plus me-2"></i>Tugaskan Petugas
+                                                                </button>
+                                                            </li>
+                                                        @elseif ($isAdmin)
+                                                            <li>
+                                                                <button type="button" class="dropdown-item"
+                                                                    data-bs-toggle="modal" data-bs-target="#assignModal"
+                                                                    data-ticket-id="{{ $ticket->id }}">
+                                                                    <i class="bi bi-person-gear me-2"></i>Ubah Penugasan
+                                                                </button>
+                                                            </li>
+                                                        @endif
+                                                        @if ($ticket->status === 'baru' && ($isAdmin || ($isPetugas && $ticket->assignees->contains('id', $authUser->id))))
+                                                            <li>
+                                                                <form method="POST"
+                                                                    action="{{ route('tiket.update-status', $ticket->id) }}">
                                                                     @csrf @method('PUT')
-                                                                    <input type="hidden" name="status" value="diproses">
+                                                                    <input type="hidden" name="status"
+                                                                        value="diproses">
                                                                     <button type="submit" class="dropdown-item">
-                                                                        <i class="bi bi-play-circle me-2"></i>Mulai Kerjakan
+                                                                        <i class="bi bi-play-circle me-2"></i>Mulai
+                                                                        Kerjakan
                                                                     </button>
                                                                 </form>
                                                             </li>
                                                         @endif
-                                                        @if ($ticket->status === 'diproses')
+                                                        @if ($ticket->status === 'diproses' && ($isAdmin || ($isPetugas && $ticket->assignees->contains('id', $authUser->id))))
                                                             <li>
-                                                                <form method="POST" action="{{ route('tiket.update-status', $ticket->id) }}">
+                                                                <form method="POST"
+                                                                    action="{{ route('tiket.update-status', $ticket->id) }}">
                                                                     @csrf @method('PUT')
                                                                     <input type="hidden" name="status" value="selesai">
-                                                                    <button type="submit" class="dropdown-item text-success">
+                                                                    <button type="submit"
+                                                                        class="dropdown-item text-success">
                                                                         <i class="bi bi-check-circle me-2"></i>Selesaikan
                                                                     </button>
                                                                 </form>
                                                             </li>
                                                         @endif
-                                                        <li>
-                                                            <form method="POST" action="{{ route('tiket.update-status', $ticket->id) }}">
-                                                                @csrf @method('PUT')
-                                                                <input type="hidden" name="status" value="ditolak">
-                                                                <button type="submit" class="dropdown-item text-danger"
-                                                                    onclick="return confirm('Yakin tolak tiket ini?')">
-                                                                    <i class="bi bi-x-circle me-2"></i>Tolak
-                                                                </button>
-                                                            </form>
-                                                        </li>
+                                                        @if ($isAdmin)
+                                                            <li>
+                                                                <form method="POST"
+                                                                    action="{{ route('tiket.update-status', $ticket->id) }}"
+                                                                    onsubmit="return confirm('Yakin tolak tiket ini?')">
+                                                                    @csrf @method('PUT')
+                                                                    <input type="hidden" name="status" value="ditolak">
+                                                                    <button type="submit"
+                                                                        class="dropdown-item text-danger">
+                                                                        <i class="bi bi-x-circle me-2"></i>Tolak Tiket
+                                                                    </button>
+                                                                </form>
+                                                            </li>
+                                                        @endif
                                                     @endif
                                                 </ul>
                                             </div>
@@ -259,31 +411,65 @@
                         @foreach ($tickets as $ticket)
                             <div class="col-md-6 col-lg-4 mb-3">
                                 <a href="{{ route('tiket.show', $ticket->id) }}" class="text-decoration-none">
-                                <div class="card ticket-card h-100">
-                                    <div class="card-header d-flex justify-content-between align-items-center py-2">
-                                        <small class="fw-bold text-primary">{{ $ticket->number }}</small>
-                                        <span class="status-badge status-{{ strtolower($ticket->status) }}">
-                                            {{ ucfirst($ticket->status) }}
-                                        </span>
-                                    </div>
-                                    <div class="card-body">
-                                        <h6 class="card-title text-dark">{{ Str::limit($ticket->title, 50) }}</h6>
-                                        <p class="card-text small text-muted">
-                                            {{ Str::limit($ticket->description, 70) }}</p>
-
-                                        <div class="d-flex align-items-center mb-2">
-                                            <div class="user-avatar me-2">{{ substr($ticket->department->name ?? 'T', 0, 1) }}</div>
-                                            <small class="text-muted">{{ $ticket->department->name ?? '-' }}</small>
-                                        </div>
-
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span class="priority-{{ strtolower($ticket->priority->name ?? 'rendah') }}">
-                                                <i class="bi bi-flag-fill"></i> {{ ucfirst($ticket->priority->name ?? 'Rendah') }}
+                                    <div class="card ticket-card h-100">
+                                        <div class="card-header d-flex justify-content-between align-items-center py-2">
+                                            <small class="fw-bold text-primary">{{ $ticket->number }}</small>
+                                            <span class="status-badge status-{{ strtolower($ticket->status) }}">
+                                                {{ ucfirst($ticket->status) }}
                                             </span>
-                                            <small class="text-muted">{{ $ticket->created_at->format('d/m/Y') }}</small>
+                                        </div>
+                                        <div class="card-body">
+                                            <h6 class="card-title text-dark">{{ Str::limit($ticket->title, 50) }}</h6>
+                                            <p class="card-text small text-muted">
+                                                {{ Str::limit($ticket->description, 70) }}</p>
+
+                                            @if ($viewMode === 'semua')
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <div class="user-avatar me-2">
+                                                        {{ substr($ticket->department->name ?? 'T', 0, 1) }}</div>
+                                                    <small
+                                                        class="text-muted">{{ $ticket->department->name ?? '-' }}</small>
+                                                </div>
+                                            @endif
+
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span
+                                                    class="priority-{{ strtolower($ticket->priority->name ?? 'rendah') }}">
+                                                    <i class="bi bi-flag-fill"></i>
+                                                    {{ ucfirst($ticket->priority->name ?? 'Rendah') }}
+                                                </span>
+                                                <small
+                                                    class="text-muted">{{ $ticket->created_at->format('d/m/Y') }}</small>
+                                            </div>
+
+                                            @if ($viewMode === 'saya' && $ticket->status === 'baru' && $ticket->requester_id === $authUser->id)
+                                                <div class="mt-2">
+                                                    <form method="POST"
+                                                        action="{{ route('tiket.batalkan', $ticket->id) }}"
+                                                        onsubmit="return confirm('Yakin ingin membatalkan tiket ini?')">
+                                                        @csrf @method('PUT')
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100"
+                                                            onclick="event.stopPropagation(); event.preventDefault(); if(confirm('Yakin?')) this.form.submit();">
+                                                            <i class="bi bi-x-octagon me-1"></i>Batalkan
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            @endif
+
+                                            @if ($viewMode === 'semua' && $ticket->assignees->count())
+                                                @foreach ($ticket->assignees as $a)
+                                                    <div class="mt-1 d-flex align-items-center">
+                                                        <div class="user-avatar me-2"
+                                                            style="width:24px;height:24px;font-size:10px">
+                                                            {{ substr($a->name, 0, 1) }}</div>
+                                                        <small class="text-muted">{{ $a->name }}</small>
+                                                    </div>
+                                                @endforeach
+                                            @elseif ($viewMode === 'semua')
+                                                <small class="text-muted fst-italic mt-1 d-block">Belum ditugaskan</small>
+                                            @endif
                                         </div>
                                     </div>
-                                </div>
                                 </a>
                             </div>
                         @endforeach
@@ -297,14 +483,25 @@
             @else
                 <div class="text-center py-5">
                     <i class="bi bi-inbox display-1 text-muted mb-3"></i>
-                    <h5 class="text-muted">Tidak ada tiket ditemukan</h5>
-                    <p class="text-muted">Coba ubah filter atau kriteria pencarian Anda</p>
+                    @if ($viewMode === 'saya')
+                        <h5 class="text-muted">Belum ada tiket yang diajukan</h5>
+                        <p class="text-muted">Anda belum pernah mengajukan tiket atau tidak ada tiket yang sesuai filter.
+                        </p>
+                        <a href="{{ route('tiket.create') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>Ajukan Tiket Baru
+                        </a>
+                    @else
+                        <h5 class="text-muted">Tidak ada tiket ditemukan</h5>
+                        <p class="text-muted">Coba ubah filter atau kriteria pencarian Anda</p>
+                    @endif
                 </div>
             @endif
         </div>
     </div>
 
-    @include('kominfo.partials.assign-modal')
+    @if ($isAdmin)
+        @include('kominfo.partials.assign-modal')
+    @endif
 @endsection
 
 @push('scripts')
@@ -333,7 +530,9 @@
             // Auto-submit form on filter change
             ['status', 'priority_id', 'department_id'].forEach(function(id) {
                 const el = document.getElementById(id);
-                if (el) el.addEventListener('change', function() { this.form.submit(); });
+                if (el) el.addEventListener('change', function() {
+                    this.form.submit();
+                });
             });
         });
     </script>

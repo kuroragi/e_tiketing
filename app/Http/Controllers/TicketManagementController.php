@@ -16,6 +16,9 @@ class TicketManagementController extends Controller
 
     public function index()
     {
+        $user = Auth::user();
+        abort_unless($user->isAdmin() || $user->isPetugas(), 403, 'Akses ditolak.');
+
         $pendingTickets = Ticket::with(['department', 'category', 'priority', 'requester'])
             ->where('status', 'baru')
             ->whereNull('assignee_id')
@@ -24,7 +27,7 @@ class TicketManagementController extends Controller
 
         $petugasList = User::role('petugas')
             ->where('status', 'aktif')
-            ->withCount(['assignedTickets as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
+            ->withCount(['assignedTicketsMulti as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
             ->orderBy('name')
             ->get();
 
@@ -35,9 +38,11 @@ class TicketManagementController extends Controller
 
     public function autoAssignment()
     {
+        abort_unless(Auth::user()->isAdmin() || Auth::user()->isPetugas(), 403, 'Akses ditolak.');
+
         $petugasList = User::role('petugas')
             ->where('status', 'aktif')
-            ->withCount(['assignedTickets as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
+            ->withCount(['assignedTicketsMulti as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
             ->orderBy('name')
             ->get();
 
@@ -60,6 +65,8 @@ class TicketManagementController extends Controller
 
     public function saveAutoAssignment(Request $request)
     {
+        abort_unless(Auth::user()->isAdmin(), 403, 'Akses ditolak.');
+
         // Konfigurasi auto-assignment disimpan di settings sebagai JSON
         $config = $request->input('config', []);
         \App\Models\Setting::set('auto_assignment_config', $config, 'json');
@@ -82,6 +89,8 @@ class TicketManagementController extends Controller
 
     public function manualAssignment()
     {
+        abort_unless(Auth::user()->isAdmin() || Auth::user()->isPetugas(), 403, 'Akses ditolak.');
+
         $pendingTickets = Ticket::with(['department', 'category', 'priority'])
             ->whereIn('status', ['baru'])
             ->whereNull('assignee_id')
@@ -94,7 +103,7 @@ class TicketManagementController extends Controller
 
         $petugasList = User::role('petugas')
             ->where('status', 'aktif')
-            ->withCount(['assignedTickets as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
+            ->withCount(['assignedTicketsMulti as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
             ->orderBy('aktif_count')
             ->get();
 
@@ -105,6 +114,8 @@ class TicketManagementController extends Controller
 
     public function history(Request $request)
     {
+        abort_unless(Auth::user()->isAdmin() || Auth::user()->isPetugas(), 403, 'Akses ditolak.');
+
         $query = AuditLog::with('user')
             ->where('action', 'assigned')
             ->where('entity_type', 'Ticket')
@@ -127,6 +138,8 @@ class TicketManagementController extends Controller
 
     public function autoAssign(Request $request, $id)
     {
+        abort_unless(Auth::user()->isAdmin() || Auth::user()->isPetugas(), 403, 'Akses ditolak.');
+
         $ticket  = Ticket::with(['category', 'priority'])->findOrFail($id);
         $request->validate(['assignee_id' => 'nullable|exists:users,id']);
 
@@ -151,6 +164,11 @@ class TicketManagementController extends Controller
             'assigned_at' => now(),
             'status'      => 'diproses',
             'started_at'  => now(),
+        ]);
+
+        // Sync pivot table
+        $ticket->assignees()->sync([
+            $assignee->id => ['assigned_by_id' => Auth::id(), 'assigned_at' => now()]
         ]);
 
         TicketComment::create([
@@ -183,24 +201,36 @@ class TicketManagementController extends Controller
 
     public function assignManual(Request $request, $id)
     {
+        $user = Auth::user();
+        abort_unless($user->isAdmin() || $user->isPetugas(), 403, 'Akses ditolak.');
+
         $ticket = Ticket::findOrFail($id);
 
         $request->validate([
-            'assignee_id' => 'required|exists:users,id',
-            'catatan'     => 'nullable|string|max:500',
+            'assignee_ids'   => 'required|array|min:1',
+            'assignee_ids.*' => 'exists:users,id',
+            'catatan'        => 'nullable|string|max:500',
         ]);
 
-        $assignee = User::findOrFail($request->assignee_id);
-        $user     = Auth::user();
+        $ids       = $request->input('assignee_ids');
+        $assignees = User::whereIn('id', $ids)->get();
+        $names     = $assignees->pluck('name')->join(', ');
+        $leadId    = $assignees->first()->id;
+
+        // Sync pivot table
+        $pivotData = $assignees->mapWithKeys(fn($p) => [
+            $p->id => ['assigned_by_id' => $user->id, 'assigned_at' => now()]
+        ])->toArray();
+        $ticket->assignees()->sync($pivotData);
 
         $ticket->update([
-            'assignee_id' => $assignee->id,
+            'assignee_id' => $leadId,
             'assigned_at' => now(),
             'status'      => 'diproses',
             'started_at'  => $ticket->started_at ?? now(),
         ]);
 
-        $body = "Tiket di-assign secara manual ke **{$assignee->name}**";
+        $body = "Tiket di-assign secara manual ke **{$names}**";
         if ($request->filled('catatan')) {
             $body .= "\n\nCatatan: " . $request->catatan;
         }
@@ -218,16 +248,16 @@ class TicketManagementController extends Controller
             'entity_type' => 'Ticket',
             'entity_id'   => $ticket->id,
             'entity_name' => $ticket->number,
-            'new_value'   => ['assignee_id' => $assignee->id, 'assignee_name' => $assignee->name, 'method' => 'manual', 'notes' => $request->catatan],
-            'description' => "Tiket {$ticket->number} di-assign manual ke {$assignee->name}",
+            'new_value'   => ['assignee_ids' => $ids, 'assignee_names' => $names, 'method' => 'manual', 'notes' => $request->catatan],
+            'description' => "Tiket {$ticket->number} di-assign manual ke {$names}",
             'ip_address'  => $request->ip(),
             'user_agent'  => $request->userAgent(),
         ]);
 
         return response()->json([
-            'success'  => true,
-            'message'  => "Tiket berhasil di-assign ke {$assignee->name}",
-            'assignee' => ['id' => $assignee->id, 'name' => $assignee->name],
+            'success'   => true,
+            'message'   => "Tiket berhasil di-assign ke {$names}",
+            'assignees' => $assignees->map(fn($p) => ['id' => $p->id, 'name' => $p->name])->values(),
         ]);
     }
 }

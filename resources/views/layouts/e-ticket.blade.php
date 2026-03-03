@@ -287,89 +287,91 @@
                                 <small class="text-muted d-block">Beranda dan ringkasan sistem</small>
                             </a>
 
-                            @if(auth()->user()->isSkpd() || auth()->user()->isAdmin())
-                            <a class="nav-link {{ request()->routeIs('tiket.create') ? 'active' : '' }}"
-                                href="{{ route('tiket.create') }}">
-                                <i class="bi bi-plus-circle me-2"></i>Ajukan Tiket
-                                <small class="text-muted d-block">Form pengajuan tiket baru</small>
-                            </a>
+                            @if (auth()->user()->isSkpd() || auth()->user()->isAdmin())
+                                <a class="nav-link {{ request()->routeIs('tiket.create') ? 'active' : '' }}"
+                                    href="{{ route('tiket.create') }}">
+                                    <i class="bi bi-plus-circle me-2"></i>Ajukan Tiket
+                                    <small class="text-muted d-block">Form pengajuan tiket baru</small>
+                                </a>
                             @endif
 
-                            @if(auth()->user()->isSkpd())
-                            <a class="nav-link {{ request()->routeIs('tiket.saya') ? 'active' : '' }}"
-                                href="{{ route('tiket.saya') }}">
-                                <i class="bi bi-ticket me-2"></i>Tiket Saya
-                                <small class="text-muted d-block">Daftar tiket yang Anda ajukan</small>
-                            </a>
+                            @if (auth()->user()->isSkpd())
+                                <a class="nav-link {{ request()->routeIs('tiket.saya') ? 'active' : '' }}"
+                                    href="{{ route('tiket.saya') }}">
+                                    <i class="bi bi-ticket me-2"></i>Tiket Saya
+                                    <small class="text-muted d-block">Daftar tiket yang Anda ajukan</small>
+                                </a>
                             @endif
 
-                            @if(!auth()->user()->isSkpd())
-                            <a class="nav-link {{ request()->routeIs('tiket.index') ? 'active' : '' }}"
-                                href="{{ route('tiket.index') }}">
-                                <i class="bi bi-list-check me-2"></i>Daftar Tiket
-                                <small class="text-muted d-block">Daftar semua tiket</small>
-                            </a>
+                            @if (!auth()->user()->isSkpd())
+                                <a class="nav-link {{ request()->routeIs('tiket.index') ? 'active' : '' }}"
+                                    href="{{ route('tiket.index') }}">
+                                    <i class="bi bi-list-check me-2"></i>Daftar Tiket
+                                    <small class="text-muted d-block">Daftar semua tiket</small>
+                                </a>
                             @endif
 
-                            @if(!auth()->user()->isSkpd())
-                            <a class="nav-link {{ request()->routeIs('laporan.index') ? 'active' : '' }}"
-                                href="{{ route('laporan.index') }}">
-                                <i class="bi bi-bar-chart me-2"></i>Laporan
-                                <small class="text-muted d-block">Grafik dan laporan ringkas</small>
-                            </a>
+                            @if (!auth()->user()->isSkpd())
+                                <a class="nav-link {{ request()->routeIs('laporan.index') ? 'active' : '' }}"
+                                    href="{{ route('laporan.index') }}">
+                                    <i class="bi bi-bar-chart me-2"></i>Laporan
+                                    <small class="text-muted d-block">Grafik dan laporan ringkas</small>
+                                </a>
                             @endif
 
-                            <h6 class="text-muted mb-3 mt-4">ADMINISTRASI</h6>
-                            <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
-                                href="{{ route('admin.dashboard') }}">
-                                <i class="bi bi-speedometer2 me-2"></i>Dashboard Admin
-                                <small class="text-muted d-block">Overview sistem</small>
-                            </a>
-                            <a class="nav-link {{ request()->routeIs('admin.pengguna') ? 'active' : '' }}"
-                                href="{{ route('admin.pengguna') }}">
-                                <i class="bi bi-people me-2"></i>Pengguna
-                                <small class="text-muted d-block">Kelola data pengguna</small>
-                            </a>
-                            <a class="nav-link {{ request()->routeIs('admin.skpd') ? 'active' : '' }}"
-                                href="{{ route('admin.skpd') }}">
-                                <i class="bi bi-building me-2"></i>Data SKPD
-                                <small class="text-muted d-block">Kelola data SKPD</small>
-                            </a>
-                            <a class="nav-link {{ request()->routeIs('admin.jenis-pekerjaan') ? 'active' : '' }}"
-                                href="{{ route('admin.jenis-pekerjaan') }}">
-                                <i class="bi bi-tags me-2"></i>Jenis Pekerjaan
-                                <small class="text-muted d-block">Kelola kategori pekerjaan</small>
-                            </a>
-                            <a class="nav-link {{ request()->routeIs('admin.pengaturan') ? 'active' : '' }}"
-                                href="{{ route('admin.pengaturan') }}">
-                                <i class="bi bi-gear me-2"></i>Pengaturan
-                                <small class="text-muted d-block">Konfigurasi sistem</small>
-                            </a>
-                            <a class="nav-link {{ request()->routeIs('admin.log-aktivitas') ? 'active' : '' }}"
-                                href="{{ route('admin.log-aktivitas') }}">
-                                <i class="bi bi-clock-history me-2"></i>Log Aktivitas
-                                <small class="text-muted d-block">Monitor aktivitas sistem</small>
-                            </a>
-                            <a class="nav-link {{ request()->routeIs('admin.laporan') ? 'active' : '' }}"
-                                href="{{ route('admin.laporan') }}">
-                                <i class="bi bi-bar-chart me-2"></i>Laporan Admin
-                                <small class="text-muted d-block">Laporan komprehensif</small>
-                            </a>
-                            <a class="nav-link {{ request()->routeIs('ticket.management.*') ? 'active' : '' }}"
-                                href="{{ route('ticket.management.index') }}">
-                                <i class="bi bi-shuffle me-2"></i>Manajemen Tiket
-                                <small class="text-muted d-block">Auto & manual assignment</small>
-                            </a>
-                            <a class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}"
-                                href="{{ route('admin.roles.index') }}">
-                                <i class="bi bi-shield-lock me-2"></i>Manajemen Role
-                                <small class="text-muted d-block">Kelola role pengguna</small>
-                            </a>
-                            <a class="nav-link {{ request()->routeIs('admin.permissions.*') ? 'active' : '' }}"
-                                href="{{ route('admin.permissions.index') }}">
-                                <i class="bi bi-key me-2"></i>Manajemen Permission
-                                <small class="text-muted d-block">Kelola hak akses sistem</small>
-                            </a>
+                            @if (auth()->user()->isAdmin())
+                                <h6 class="text-muted mb-3 mt-4">ADMINISTRASI</h6>
+                                <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
+                                    href="{{ route('admin.dashboard') }}">
+                                    <i class="bi bi-speedometer2 me-2"></i>Dashboard Admin
+                                    <small class="text-muted d-block">Overview sistem</small>
+                                </a>
+                                <a class="nav-link {{ request()->routeIs('admin.pengguna') ? 'active' : '' }}"
+                                    href="{{ route('admin.pengguna') }}">
+                                    <i class="bi bi-people me-2"></i>Pengguna
+                                    <small class="text-muted d-block">Kelola data pengguna</small>
+                                </a>
+                                <a class="nav-link {{ request()->routeIs('admin.skpd') ? 'active' : '' }}"
+                                    href="{{ route('admin.skpd') }}">
+                                    <i class="bi bi-building me-2"></i>Data SKPD
+                                    <small class="text-muted d-block">Kelola data SKPD</small>
+                                </a>
+                                <a class="nav-link {{ request()->routeIs('admin.jenis-pekerjaan') ? 'active' : '' }}"
+                                    href="{{ route('admin.jenis-pekerjaan') }}">
+                                    <i class="bi bi-tags me-2"></i>Jenis Pekerjaan
+                                    <small class="text-muted d-block">Kelola kategori pekerjaan</small>
+                                </a>
+                                <a class="nav-link {{ request()->routeIs('admin.pengaturan') ? 'active' : '' }}"
+                                    href="{{ route('admin.pengaturan') }}">
+                                    <i class="bi bi-gear me-2"></i>Pengaturan
+                                    <small class="text-muted d-block">Konfigurasi sistem</small>
+                                </a>
+                                <a class="nav-link {{ request()->routeIs('admin.log-aktivitas') ? 'active' : '' }}"
+                                    href="{{ route('admin.log-aktivitas') }}">
+                                    <i class="bi bi-clock-history me-2"></i>Log Aktivitas
+                                    <small class="text-muted d-block">Monitor aktivitas sistem</small>
+                                </a>
+                                <a class="nav-link {{ request()->routeIs('admin.laporan') ? 'active' : '' }}"
+                                    href="{{ route('admin.laporan') }}">
+                                    <i class="bi bi-bar-chart me-2"></i>Laporan Admin
+                                    <small class="text-muted d-block">Laporan komprehensif</small>
+                                </a>
+                                <a class="nav-link {{ request()->routeIs('ticket.management.*') ? 'active' : '' }}"
+                                    href="{{ route('ticket.management.index') }}">
+                                    <i class="bi bi-shuffle me-2"></i>Manajemen Tiket
+                                    <small class="text-muted d-block">Auto & manual assignment</small>
+                                </a>
+                                <a class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}"
+                                    href="{{ route('admin.roles.index') }}">
+                                    <i class="bi bi-shield-lock me-2"></i>Manajemen Role
+                                    <small class="text-muted d-block">Kelola role pengguna</small>
+                                </a>
+                                <a class="nav-link {{ request()->routeIs('admin.permissions.*') ? 'active' : '' }}"
+                                    href="{{ route('admin.permissions.index') }}">
+                                    <i class="bi bi-key me-2"></i>Manajemen Permission
+                                    <small class="text-muted d-block">Kelola hak akses sistem</small>
+                                </a>
+                            @endif
 
                             <h6 class="text-muted mb-3 mt-4">INFORMASI</h6>
                             <a class="nav-link {{ request()->routeIs('panduan') ? 'active' : '' }}"

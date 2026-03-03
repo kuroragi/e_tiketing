@@ -44,7 +44,7 @@ class KominfoController extends Controller
 
         // 10 tiket terbaru
         $recentTickets = (clone $query)
-            ->with(['requester', 'department', 'category', 'priority', 'assignee'])
+            ->with(['requester', 'department', 'category', 'priority', 'assignee', 'assignees'])
             ->orderByDesc('created_at')
             ->limit(10)
             ->get();
@@ -68,6 +68,9 @@ class KominfoController extends Controller
 
     public function create()
     {
+        $user = Auth::user();
+        abort_unless($user->isSkpd() || $user->isAdmin(), 403, 'Akses ditolak.');
+
         $skpdList      = Department::aktif()->orderBy('name')->get();
         $jenisKerjaan  = Category::aktif()->orderBy('name')->get();
         $prioritasList = Priority::ordered()->get();
@@ -79,6 +82,9 @@ class KominfoController extends Controller
 
     public function store(Request $request)
     {
+        $user = Auth::user();
+        abort_unless($user->isSkpd() || $user->isAdmin(), 403, 'Akses ditolak.');
+
         $validated = $request->validate([
             'title'       => 'required|string|max:255',
             'description' => 'required|string|min:20',
@@ -96,8 +102,6 @@ class KominfoController extends Controller
             'priority_id.required' => 'Prioritas harus dipilih.',
             'contact_pic.required' => 'Kontak/PIC harus diisi.',
         ]);
-
-        $user = Auth::user();
 
         $ticket = Ticket::create([
             'number'       => Ticket::generateNumber(),
@@ -153,7 +157,7 @@ class KominfoController extends Controller
         $user  = Auth::user();
         $base  = Ticket::where('requester_id', $user->id); // unfiltered base for stats
 
-        $query = Ticket::with(['requester', 'department', 'category', 'priority', 'assignee'])
+        $query = Ticket::with(['requester', 'department', 'category', 'priority', 'assignee', 'assignees'])
             ->where('requester_id', $user->id);
 
         if ($request->filled('status'))      $query->where('status', $request->status);
@@ -169,6 +173,7 @@ class KominfoController extends Controller
         $petugasList = collect();
         $categories  = Category::aktif()->orderBy('name')->get();
         $priorities  = Priority::ordered()->get();
+        $viewMode    = 'saya';
 
         $stats = [
             'total'    => (clone $base)->count(),
@@ -178,7 +183,7 @@ class KominfoController extends Controller
         ];
 
         return view('kominfo.tiket-daftar', compact(
-            'tickets', 'skpdList', 'petugasList', 'categories', 'priorities', 'stats'
+            'tickets', 'skpdList', 'petugasList', 'categories', 'priorities', 'stats', 'viewMode'
         ));
     }
 
@@ -187,12 +192,9 @@ class KominfoController extends Controller
     public function index(Request $request)
     {
         $user  = Auth::user();
-        $query = Ticket::with(['requester', 'department', 'category', 'priority', 'assignee']);
+        abort_unless($user->isAdmin() || $user->isPetugas() || $user->isPimpinan(), 403, 'Akses ditolak.');
 
-        // Filter akses per peran
-        if ($user->isSkpd()) {
-            $query->where('department_id', $user->department_id);
-        }
+        $query = Ticket::with(['requester', 'department', 'category', 'priority', 'assignee', 'assignees']);
 
         // Terapkan filter
         if ($request->filled('status')) {
@@ -208,7 +210,7 @@ class KominfoController extends Controller
             $query->where('department_id', $request->department_id);
         }
         if ($request->filled('assignee_id')) {
-            $query->where('assignee_id', $request->assignee_id);
+            $query->whereHas('assignees', fn($q) => $q->where('users.id', $request->assignee_id));
         }
         if ($request->filled('search')) {
             $search = $request->search;
@@ -236,9 +238,12 @@ class KominfoController extends Controller
 
         $tickets      = $query->paginate(20)->withQueryString();
         $skpdList     = Department::aktif()->orderBy('name')->get();
-        $petugasList  = User::role('petugas')->where('status', 'aktif')->orderBy('name')->get();
+        $petugasList  = User::role('petugas')->where('status', 'aktif')
+            ->withCount(['assignedTicketsMulti as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
+            ->orderBy('name')->get();
         $categories   = Category::aktif()->orderBy('name')->get();
         $priorities   = Priority::ordered()->get();
+        $viewMode     = 'semua';
 
         $stats = [
             'total'     => Ticket::when($user->isSkpd(), fn($q) => $q->where('department_id', $user->department_id))->count(),
@@ -248,7 +253,7 @@ class KominfoController extends Controller
         ];
 
         return view('kominfo.tiket-daftar', compact(
-            'tickets', 'skpdList', 'petugasList', 'categories', 'priorities', 'stats'
+            'tickets', 'skpdList', 'petugasList', 'categories', 'priorities', 'stats', 'viewMode'
         ));
     }
 
@@ -257,7 +262,7 @@ class KominfoController extends Controller
     public function show($id)
     {
         $ticket = Ticket::with([
-            'requester', 'department', 'category', 'priority', 'assignee',
+            'requester', 'department', 'category', 'priority', 'assignee', 'assignees',
             'comments.user', 'attachments.uploader',
         ])->findOrFail($id);
 
@@ -268,7 +273,9 @@ class KominfoController extends Controller
             abort(403);
         }
 
-        $petugasList = User::role('petugas')->where('status', 'aktif')->orderBy('name')->get();
+        $petugasList = User::role('petugas')->where('status', 'aktif')
+            ->withCount(['assignedTicketsMulti as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
+            ->orderBy('name')->get();
 
         return view('kominfo.tiket-detail', compact('ticket', 'petugasList'));
     }
@@ -277,6 +284,9 @@ class KominfoController extends Controller
 
     public function updateStatus(Request $request, $id)
     {
+        $user = Auth::user();
+        abort_unless($user->isAdmin() || $user->isPetugas(), 403, 'Akses ditolak.');
+
         $ticket = Ticket::findOrFail($id);
 
         $request->validate([
@@ -287,7 +297,6 @@ class KominfoController extends Controller
 
         $oldStatus = $ticket->status;
         $newStatus = $request->status;
-        $user      = Auth::user();
 
         $updateData = ['status' => $newStatus];
 
@@ -332,35 +341,51 @@ class KominfoController extends Controller
         ]);
 
         $statusLabel = ['baru' => 'Baru', 'diproses' => 'Diproses', 'selesai' => 'Selesai', 'ditolak' => 'Ditolak', 'dibatalkan' => 'Dibatalkan'];
+        $msg = 'Status tiket berhasil diubah ke ' . ($statusLabel[$newStatus] ?? $newStatus);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Status tiket berhasil diubah ke ' . ($statusLabel[$newStatus] ?? $newStatus),
-        ]);
+        return $request->expectsJson()
+            ? response()->json(['success' => true, 'message' => $msg])
+            : redirect()->route('tiket.show', $ticket->id)->with('success', $msg);
     }
 
     //  Assign Tiket 
 
     public function assign(Request $request, $id)
     {
+        $user = Auth::user();
+        abort_unless($user->isAdmin() || $user->isPetugas(), 403, 'Akses ditolak.');
+
         $ticket = Ticket::findOrFail($id);
 
         $request->validate([
-            'assignee_id' => 'required|exists:users,id',
-            'catatan'     => 'nullable|string|max:500',
+            'assignee_ids'   => 'required|array|min:1',
+            'assignee_ids.*' => 'exists:users,id',
+            'catatan'        => 'nullable|string|max:500',
         ]);
 
-        $assignee = User::findOrFail($request->assignee_id);
-        $user     = Auth::user();
+        $assigneeIds = $request->input('assignee_ids');
+        $assignees   = User::whereIn('id', $assigneeIds)->get();
 
+        // Sync pivot table
+        $syncData = [];
+        foreach ($assigneeIds as $uid) {
+            $syncData[$uid] = [
+                'assigned_by_id' => $user->id,
+                'assigned_at'    => now(),
+            ];
+        }
+        $ticket->assignees()->sync($syncData);
+
+        // Keep assignee_id (lead) as first selected for backward compat
         $ticket->update([
-            'assignee_id' => $assignee->id,
+            'assignee_id' => $assigneeIds[0],
             'assigned_at' => now(),
             'status'      => $ticket->status === 'baru' ? 'diproses' : $ticket->status,
             'started_at'  => $ticket->started_at ?? now(),
         ]);
 
-        $body = "Tiket ditugaskan ke **{$assignee->name}**";
+        $names = $assignees->pluck('name')->join(', ');
+        $body  = "Tiket ditugaskan ke **{$names}**";
         if ($request->filled('catatan')) {
             $body .= "\n\n" . $request->catatan;
         }
@@ -378,20 +403,21 @@ class KominfoController extends Controller
             'entity_type' => 'Ticket',
             'entity_id'   => $ticket->id,
             'entity_name' => $ticket->number,
-            'new_value'   => ['assignee_id' => $assignee->id, 'assignee_name' => $assignee->name],
-            'description' => "Tiket {$ticket->number} ditugaskan ke {$assignee->name}",
+            'new_value'   => ['assignee_ids' => $assigneeIds, 'assignee_names' => $names],
+            'description' => "Tiket {$ticket->number} ditugaskan ke {$names}",
             'ip_address'  => $request->ip(),
             'user_agent'  => $request->userAgent(),
         ]);
 
-        return response()->json([
-            'success'  => true,
-            'message'  => "Tiket berhasil ditugaskan ke {$assignee->name}",
-            'assignee' => ['id' => $assignee->id, 'name' => $assignee->name],
-        ]);
+        return $request->expectsJson()
+            ? response()->json([
+                'success'  => true,
+                'message'  => "Tiket berhasil ditugaskan ke {$names}",
+                'assignees' => $assignees->map(fn($a) => ['id' => $a->id, 'name' => $a->name]),
+            ])
+            : redirect()->route('tiket.show', $ticket->id)
+                ->with('success', "Tiket berhasil ditugaskan ke {$names}");
     }
-
-    //  Komentar 
 
     public function addComment(Request $request, $id)
     {
@@ -425,17 +451,69 @@ class KominfoController extends Controller
             'user_agent'  => $request->userAgent(),
         ]);
 
-        return response()->json([
-            'success' => true,
-            'comment' => [
-                'id'         => $comment->id,
-                'body'       => $comment->body,
-                'user_name'  => $user->name,
-                'user_role'  => $user->role,
-                'type'       => $comment->type,
-                'created_at' => $comment->created_at->format('d M Y H:i'),
-            ],
+        return $request->expectsJson()
+            ? response()->json([
+                'success' => true,
+                'comment' => [
+                    'id'         => $comment->id,
+                    'body'       => $comment->body,
+                    'user_name'  => $user->name,
+                    'user_role'  => $user->role,
+                    'type'       => $comment->type,
+                    'created_at' => $comment->created_at->format('d M Y H:i'),
+                ],
+            ])
+            : redirect()->route('tiket.show', $ticket->id)
+                ->with('success', 'Komentar berhasil ditambahkan.');
+    }
+
+    //  Batalkan Tiket (SKPD) 
+
+    public function cancelTicket(Request $request, $id)
+    {
+        $ticket = Ticket::findOrFail($id);
+        $user   = Auth::user();
+
+        // Hanya pemilik tiket (atau admin) yang boleh membatalkan
+        if (! $user->isAdmin() && $ticket->requester_id !== $user->id) {
+            abort(403, 'Anda tidak berhak membatalkan tiket ini.');
+        }
+
+        // Hanya tiket berstatus baru yang bisa dibatalkan
+        if ($ticket->status !== 'baru') {
+            return back()->with('error', 'Tiket hanya bisa dibatalkan jika masih berstatus Baru.');
+        }
+
+        $oldStatus = $ticket->status;
+        $ticket->update([
+            'status'    => 'dibatalkan',
+            'closed_at' => now(),
         ]);
+
+        $catatan = $request->input('catatan', 'Tiket dibatalkan oleh pengaju.');
+
+        TicketComment::create([
+            'ticket_id' => $ticket->id,
+            'user_id'   => $user->id,
+            'body'      => "Status diubah dari **{$oldStatus}** ke **dibatalkan**\n\n{$catatan}",
+            'type'      => 'status_change',
+        ]);
+
+        AuditLog::create([
+            'user_id'     => $user->id,
+            'action'      => 'status_changed',
+            'entity_type' => 'Ticket',
+            'entity_id'   => $ticket->id,
+            'entity_name' => $ticket->number,
+            'old_value'   => ['status' => $oldStatus],
+            'new_value'   => ['status' => 'dibatalkan'],
+            'description' => "Tiket {$ticket->number} dibatalkan oleh pengaju.",
+            'ip_address'  => $request->ip(),
+            'user_agent'  => $request->userAgent(),
+        ]);
+
+        return redirect()->route('tiket.saya')
+            ->with('success', "Tiket {$ticket->number} berhasil dibatalkan.");
     }
 
     //  Upload Lampiran 
@@ -512,6 +590,9 @@ class KominfoController extends Controller
 
     public function laporan(Request $request)
     {
+        $user = Auth::user();
+        abort_unless($user->isAdmin() || $user->isPetugas() || $user->isPimpinan(), 403, 'Akses ditolak.');
+
         $dari    = $request->filled('dari')    ? Carbon::parse($request->dari)->startOfDay()    : now()->startOfMonth();
         $sampai  = $request->filled('sampai')  ? Carbon::parse($request->sampai)->endOfDay()    : now()->endOfMonth();
         $deptId  = $request->get('department_id');
@@ -577,6 +658,9 @@ class KominfoController extends Controller
 
     public function exportCsv(Request $request)
     {
+        $user = Auth::user();
+        abort_unless($user->isAdmin() || $user->isPimpinan(), 403, 'Akses ditolak.');
+
         $dari   = $request->filled('dari')   ? Carbon::parse($request->dari)->startOfDay()  : now()->startOfMonth();
         $sampai = $request->filled('sampai') ? Carbon::parse($request->sampai)->endOfDay()  : now()->endOfMonth();
 
