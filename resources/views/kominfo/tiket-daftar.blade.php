@@ -10,7 +10,10 @@
     $isKominfo = $isPetugas || $isAdmin || $isPimpinan;
 @endphp
 
-@section('title', $viewMode === 'saya' ? 'Tiket Saya - Sistem Ticketing Kominfo' : 'Daftar Tiket - Sistem Ticketing
+@section('title',
+    $viewMode === 'saya'
+    ? 'Tiket Saya - Sistem Ticketing Kominfo'
+    : 'Daftar Tiket - Sistem Ticketing
     Kominfo')
 
 @section('breadcrumb')
@@ -202,6 +205,8 @@
                 @endif
             </h5>
             <div class="d-flex gap-2">
+                <a href="{{ route('tiket.create') }}">
+                    <button class="btn btn-sm btn-primary">Tambah Tiket</button></a>
                 <div class="btn-group" role="group">
                     <input type="radio" class="btn-check" name="view-mode" id="list-view" checked>
                     <label class="btn btn-outline-primary btn-sm" for="list-view">

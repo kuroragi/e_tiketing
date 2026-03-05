@@ -287,14 +287,6 @@
                                 <small class="text-muted d-block">Beranda dan ringkasan sistem</small>
                             </a>
 
-                            @if (auth()->user()->isSkpd() || auth()->user()->isAdmin())
-                                <a class="nav-link {{ request()->routeIs('tiket.create') ? 'active' : '' }}"
-                                    href="{{ route('tiket.create') }}">
-                                    <i class="bi bi-plus-circle me-2"></i>Ajukan Tiket
-                                    <small class="text-muted d-block">Form pengajuan tiket baru</small>
-                                </a>
-                            @endif
-
                             @if (auth()->user()->isSkpd())
                                 <a class="nav-link {{ request()->routeIs('tiket.saya') ? 'active' : '' }}"
                                     href="{{ route('tiket.saya') }}">
