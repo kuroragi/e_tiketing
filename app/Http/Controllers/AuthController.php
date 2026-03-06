@@ -61,9 +61,17 @@ class AuthController extends Controller
                 'user_agent' => $request->userAgent(),
             ]);
 
+            // Jika intended URL adalah halaman admin tapi user bukan admin, abaikan intended URL
+            $user = Auth::user();
+            $intended = $request->session()->get('url.intended', '');
+            $intendedPath = parse_url($intended, PHP_URL_PATH) ?? '';
+            if (!$user->isAdmin() && str_starts_with($intendedPath, '/admin')) {
+                $request->session()->forget('url.intended');
+            }
+
             // Redirect ke intended page atau dashboard
             return redirect()->intended(route('dashboard'))
-                ->with('status', 'Selamat datang ' . Auth::user()->name . '!');
+                ->with('status', 'Selamat datang ' . $user->name . '!');
         }
 
         // Login gagal

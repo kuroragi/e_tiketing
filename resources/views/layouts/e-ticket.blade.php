@@ -313,11 +313,6 @@
 
                             @if (auth()->user()->isAdmin())
                                 <h6 class="text-muted mb-3 mt-4">ADMINISTRASI</h6>
-                                <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"
-                                    href="{{ route('dashboard') }}">
-                                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
-                                    <small class="text-muted d-block">Overview sistem</small>
-                                </a>
                                 <a class="nav-link {{ request()->routeIs('admin.pengguna') ? 'active' : '' }}"
                                     href="{{ route('admin.pengguna') }}">
                                     <i class="bi bi-people me-2"></i>Pengguna
@@ -487,6 +482,35 @@
         </div>
     </footer>
 
+    <!-- Modal: Akses Ditolak -->
+    @if (session('forbidden'))
+        <div class="modal fade" id="forbiddenModal" tabindex="-1" aria-labelledby="forbiddenModalLabel"
+            aria-modal="true" role="dialog">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="forbiddenModalLabel">
+                            <i class="bi bi-shield-exclamation me-2"></i>Akses Ditolak
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Tutup"></button>
+                    </div>
+                    <div class="modal-body text-center py-4">
+                        <div class="mb-3">
+                            <i class="bi bi-lock-fill text-danger" style="font-size: 3rem;"></i>
+                        </div>
+                        <p class="mb-0">{{ session('forbidden') }}</p>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-danger px-4" data-bs-dismiss="modal">
+                            <i class="bi bi-check2 me-1"></i>Mengerti
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -508,6 +532,14 @@
         tooltipTriggerList.map(function(tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
+
+        // Tampilkan modal akses ditolak (403)
+        @if (session('forbidden'))
+            (function() {
+                var modal = new bootstrap.Modal(document.getElementById('forbiddenModal'));
+                modal.show();
+            })();
+        @endif
     </script>
 
     @stack('scripts')
