@@ -139,53 +139,49 @@ class PageController extends Controller
      */
     public function hubungi()
     {
+        // Informasi kontak dari settings (dengan fallback default)
         $kontakInfo = [
             [
-                'icon' => 'bi-telephone',
+                'icon'  => 'bi-telephone',
                 'label' => 'Telepon',
-                'nilai' => '(0752) 123-4567'
+                'nilai' => \App\Models\Setting::get('contact_phone', '(0752) 123-4567'),
             ],
             [
-                'icon' => 'bi-envelope',
+                'icon'  => 'bi-envelope',
                 'label' => 'Email',
-                'nilai' => 'kominfo@bukittinggi.go.id'
+                'nilai' => \App\Models\Setting::get('contact_email', 'kominfo@bukittinggi.go.id'),
             ],
             [
-                'icon' => 'bi-geo-alt',
+                'icon'  => 'bi-geo-alt',
                 'label' => 'Alamat',
-                'nilai' => 'Jl. Panglima Nyak Arief No. 45, Bukittinggi, Sumatera Barat'
+                'nilai' => \App\Models\Setting::get('contact_address', 'Jl. Panglima Nyak Arief No. 45, Bukittinggi, Sumatera Barat'),
             ],
             [
-                'icon' => 'bi-clock',
+                'icon'  => 'bi-clock',
                 'label' => 'Jam Operasional',
-                'nilai' => 'Senin - Jumat, 08:00 - 17:00 WIB'
-            ]
+                'nilai' => \App\Models\Setting::get('contact_hours', 'Senin - Jumat, 08:00 - 17:00 WIB'),
+            ],
         ];
 
-        $departments = [
-            [
-                'nama' => 'Bagian Website dan Portal',
-                'email' => 'website@kominfo.bukittinggi.go.id',
-                'fungsi' => 'Menangani perbaikan dan update website resmi SKPD'
-            ],
-            [
-                'nama' => 'Bagian Infrastructure dan Server',
-                'email' => 'infrastructure@kominfo.bukittinggi.go.id',
-                'fungsi' => 'Menangani maintenance server, database, dan jaringan'
-            ],
-            [
-                'nama' => 'Bagian Software dan Aplikasi',
-                'email' => 'software@kominfo.bukittinggi.go.id',
-                'fungsi' => 'Menangani pengembangan aplikasi dan software baru'
-            ],
-            [
-                'nama' => 'Bagian Support dan Troubleshooting',
-                'email' => 'support@kominfo.bukittinggi.go.id',
-                'fungsi' => 'Menangani keluhan teknis dan support end-user'
-            ]
+        $socialMedia = [
+            'facebook'  => \App\Models\Setting::get('contact_social_facebook', '#'),
+            'twitter'   => \App\Models\Setting::get('contact_social_twitter', '#'),
+            'instagram' => \App\Models\Setting::get('contact_social_instagram', '#'),
+            'youtube'   => \App\Models\Setting::get('contact_social_youtube', '#'),
         ];
 
-        return view('pages.hubungi', compact('kontakInfo', 'departments'));
+        // Departemen dari settings, fallback ke default hardcode
+        $deptFromSettings = \App\Models\Setting::get('contact_departments');
+        $departments = (is_array($deptFromSettings) && count($deptFromSettings))
+            ? $deptFromSettings
+            : [
+                ['nama' => 'Bagian Website dan Portal',          'email' => 'website@kominfo.bukittinggi.go.id',        'fungsi' => 'Menangani perbaikan dan update website resmi SKPD'],
+                ['nama' => 'Bagian Infrastructure dan Server',   'email' => 'infrastructure@kominfo.bukittinggi.go.id',  'fungsi' => 'Menangani maintenance server, database, dan jaringan'],
+                ['nama' => 'Bagian Software dan Aplikasi',       'email' => 'software@kominfo.bukittinggi.go.id',        'fungsi' => 'Menangani pengembangan aplikasi dan software baru'],
+                ['nama' => 'Bagian Support dan Troubleshooting', 'email' => 'support@kominfo.bukittinggi.go.id',         'fungsi' => 'Menangani keluhan teknis dan support end-user'],
+            ];
+
+        return view('pages.hubungi', compact('kontakInfo', 'departments', 'socialMedia'));
     }
 
     /**

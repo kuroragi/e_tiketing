@@ -13,7 +13,8 @@
             <h4 class="mb-0">{{ $ticket->title }}</h4>
             <small class="text-white-50">{{ $ticket->number }} &bull; {{ $ticket->department->name ?? '-' }}</small>
         </div>
-        <span class="status-badge status-{{ strtolower($ticket->status) }}">{{ ucfirst($ticket->status) }}</span>
+        <span
+            class="status-badge status-{{ strtolower($ticket->status) }}">{{ $ticket->status === 'menunggu_verifikasi' ? 'Menunggu Verifikasi' : ucfirst($ticket->status) }}</span>
     </div>
 @endsection
 
@@ -101,17 +102,107 @@
                 </div>
             @endif
 
-            <!-- Komentar -->
+            <!-- Progress Pekerjaan -->
+            @php
+                $authUser = auth()->user();
+                $isAssignedPetugas = $authUser->isPetugas() && $ticket->assignees->contains('id', $authUser->id);
+            @endphp
+            @if ($authUser->isPetugas() || $authUser->isAdmin() || $authUser->isPimpinan())
+                <div class="card mb-4" id="progressCard">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clipboard2-pulse text-warning me-2"></i>Progress Pekerjaan
+                            <span class="badge bg-warning text-dark ms-1"
+                                id="progressCount">{{ $progressList->count() }}</span>
+                        </h5>
+                        @if ($isAssignedPetugas && in_array($ticket->status, ['diproses', 'baru']))
+                            <button class="btn btn-sm btn-warning" type="button" onclick="toggleProgressForm()">
+                                <i class="bi bi-plus-circle me-1"></i>Tambah Progress
+                            </button>
+                        @endif
+                    </div>
+                    <div class="card-body">
+
+                        {{-- Form Tambah Progress (petugas yang ditugaskan, tiket aktif) --}}
+                        @if ($isAssignedPetugas && in_array($ticket->status, ['diproses', 'baru']))
+                            <div id="progressForm" class="mb-4" style="display:none">
+                                <form action="{{ route('tiket.progress', $ticket->id) }}" method="POST" id="formProgress">
+                                    @csrf
+                                    <div class="mb-2">
+                                        <label class="form-label fw-semibold">Rincian Progress</label>
+                                        <textarea class="form-control @error('body') is-invalid @enderror" name="body" id="progressBody" rows="3"
+                                            placeholder="Contoh: Sudah berhasil menginstall driver, saat ini sedang konfigurasi jaringan..." required>{{ old('body') }}</textarea>
+                                        @error('body')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <div class="form-text">Minimal 5 karakter. Bisa ditambahkan berkali-kali.</div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-warning btn-sm">
+                                            <i class="bi bi-save me-1"></i>Simpan Progress
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            onclick="toggleProgressForm()">Batal</button>
+                                    </div>
+                                </form>
+                            </div>
+                        @endif
+
+                        {{-- Timeline Progress --}}
+                        <div id="progressTimeline">
+                            @forelse ($progressList as $i => $prog)
+                                <div class="progress-entry d-flex gap-3 mb-3" data-id="{{ $prog->id }}">
+                                    <div class="flex-shrink-0 d-flex flex-column align-items-center">
+                                        <div class="user-avatar bg-warning text-dark">
+                                            {{ strtoupper(substr($prog->user->name ?? '?', 0, 1)) }}</div>
+                                        @if (!$loop->last)
+                                            <div
+                                                style="width:2px;flex:1;background:#fde68a;min-height:16px;margin-top:2px;">
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="flex-grow-1 pb-2">
+                                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-1">
+                                            <div>
+                                                <span class="fw-semibold">{{ $prog->user->name ?? '?' }}</span>
+                                                <span class="badge bg-warning text-dark ms-1"
+                                                    style="font-size:.65rem">Petugas</span>
+                                            </div>
+                                            <small class="text-muted">
+                                                <i
+                                                    class="bi bi-clock me-1"></i>{{ $prog->created_at->format('d M Y, H:i') }}
+                                            </small>
+                                        </div>
+                                        <div class="bg-light rounded p-2 text-dark"
+                                            style="white-space:pre-line;font-size:.9rem;">{{ $prog->body }}</div>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="text-center py-4 text-muted" id="emptyProgress">
+                                    <i class="bi bi-clipboard2 fs-3 d-block mb-2 opacity-50"></i>
+                                    Belum ada catatan progress pekerjaan.
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Komentar & Diskusi -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-chat-dots text-success me-2"></i>Komentar & Catatan</h5>
+                    <h5 class="mb-0"><i class="bi bi-chat-dots text-success me-2"></i>Komentar & Diskusi</h5>
                 </div>
                 <div class="card-body">
-                    @forelse($ticket->comments as $comment)
+                    @forelse($commentList as $comment)
                         <div class="d-flex gap-3 mb-3">
                             <div class="user-avatar flex-shrink-0">{{ substr($comment->user->name ?? '?', 0, 1) }}</div>
                             <div class="flex-grow-1">
                                 <div class="fw-bold">{{ $comment->user->name ?? 'Unknown' }}
+                                    @if ($comment->type !== 'comment')
+                                        <span class="badge bg-secondary ms-1"
+                                            style="font-size:.65rem">{{ $comment->typeLabel() }}</span>
+                                    @endif
                                     <small
                                         class="text-muted fw-normal ms-2">{{ $comment->created_at->format('d M Y H:i') }}</small>
                                 </div>
@@ -124,19 +215,38 @@
 
                     <!-- Form Komentar -->
                     <hr class="my-3">
-                    <form action="{{ route('tiket.comment', $ticket->id) }}" method="POST">
-                        @csrf
-                        <div class="mb-2">
-                            <textarea class="form-control @error('body') is-invalid @enderror" name="body" rows="3"
-                                placeholder="Tulis komentar atau catatan pengerjaan..." required>{{ old('body') }}</textarea>
-                            @error('body')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                    @if (in_array($ticket->status, ['selesai', 'ditolak']))
+                        <div class="alert alert-secondary d-flex align-items-start gap-3 mb-0 border-0 rounded-3"
+                            style="background:#f1f5f9;">
+                            <i class="bi bi-lock-fill text-secondary mt-1 fs-5 flex-shrink-0"></i>
+                            <div>
+                                <div class="fw-semibold text-secondary mb-1">Tiket ini telah ditutup</div>
+                                <p class="mb-0 small text-muted">
+                                    Komentar tidak dapat ditambahkan karena tiket sudah berstatus
+                                    <strong>{{ ucfirst($ticket->status) }}</strong>.
+                                    Jika masih ada yang perlu ditindaklanjuti, silakan
+                                    <a href="{{ route('tiket.create') }}" class="text-primary fw-semibold">buka tiket
+                                        baru</a>
+                                    atau hubungi kami melalui menu
+                                    <a href="{{ route('hubungi') }}" class="text-primary fw-semibold">Hubungi Kami</a>.
+                                </p>
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="bi bi-send me-1"></i>Kirim Komentar
-                        </button>
-                    </form>
+                    @else
+                        <form action="{{ route('tiket.comment', $ticket->id) }}" method="POST">
+                            @csrf
+                            <div class="mb-2">
+                                <textarea class="form-control @error('body') is-invalid @enderror" name="body" rows="3"
+                                    placeholder="Tulis komentar atau catatan pengerjaan..." required>{{ old('body') }}</textarea>
+                                @error('body')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="bi bi-send me-1"></i>Kirim Komentar
+                            </button>
+                        </form>
+                    @endif
                 </div>
             </div>
         </div>
@@ -151,11 +261,13 @@
                 <div class="card-body">
                     <div class="text-center mb-3">
                         <span
-                            class="status-badge status-{{ strtolower($ticket->status) }} fs-6">{{ ucfirst($ticket->status) }}</span>
+                            class="status-badge status-{{ strtolower($ticket->status) }} fs-6">{{ $ticket->status === 'menunggu_verifikasi' ? 'Menunggu Verifikasi' : ucfirst($ticket->status) }}</span>
                     </div>
                     <div class="text-center mb-3">
-                        <i class="bi bi-flag-fill priority-{{ strtolower($ticket->priority->name ?? 'rendah') }} fs-4"></i>
-                        <div><small class="text-muted">Prioritas {{ ucfirst($ticket->priority->name ?? 'Rendah') }}</small>
+                        <i
+                            class="bi bi-flag-fill priority-{{ strtolower($ticket->priority->name ?? 'rendah') }} fs-4"></i>
+                        <div><small class="text-muted">Prioritas
+                                {{ ucfirst($ticket->priority->name ?? 'Rendah') }}</small>
                         </div>
                     </div>
 
@@ -186,7 +298,10 @@
                         <i class="bi bi-arrow-left me-2"></i>Kembali ke Daftar
                     </a>
 
-                    @if (auth()->user()->isAdmin() || auth()->user()->isPetugas())
+                    @php $authUser = auth()->user(); @endphp
+
+                    {{-- ── Aksi PETUGAS: mulai & selesaikan pekerjaan ── --}}
+                    @if ($authUser->isPetugas())
                         @if ($ticket->status === 'baru')
                             <form method="POST" action="{{ route('tiket.update-status', $ticket->id) }}">
                                 @csrf @method('PUT')
@@ -195,14 +310,23 @@
                                     <i class="bi bi-play-circle me-2"></i>Mulai Kerjakan
                                 </button>
                             </form>
-                        @elseif($ticket->status === 'diproses')
+                        @elseif ($ticket->status === 'diproses')
                             <form method="POST" action="{{ route('tiket.update-status', $ticket->id) }}">
                                 @csrf @method('PUT')
-                                <input type="hidden" name="status" value="selesai">
-                                <button type="submit" class="btn btn-success w-100">
-                                    <i class="bi bi-check-circle me-2"></i>Tandai Selesai
+                                <input type="hidden" name="status" value="menunggu_verifikasi">
+                                <div class="mb-2">
+                                    <textarea class="form-control form-control-sm" name="summary" rows="2"
+                                        placeholder="Ringkasan hasil pekerjaan (opsional)"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-warning w-100">
+                                    <i class="bi bi-hourglass-split me-2"></i>Selesai – Minta Verifikasi
                                 </button>
                             </form>
+                        @elseif ($ticket->status === 'menunggu_verifikasi')
+                            <div class="alert alert-warning py-2 mb-0 text-center small">
+                                <i class="bi bi-hourglass-split me-1"></i>
+                                Menunggu verifikasi dari Admin.
+                            </div>
                         @endif
 
                         @if (in_array($ticket->status, ['baru', 'diproses']))
@@ -215,9 +339,37 @@
                                 </button>
                             </form>
                         @endif
+                    @endif
 
-                        <!-- Tugaskan Petugas -->
-                        @if ($ticket->status !== 'selesai')
+                    {{-- ── Aksi ADMIN: verifikasi & pengelolaan ── --}}
+                    @if ($authUser->isAdmin())
+                        @if ($ticket->status === 'menunggu_verifikasi')
+                            <form method="POST" action="{{ route('tiket.update-status', $ticket->id) }}">
+                                @csrf @method('PUT')
+                                <input type="hidden" name="status" value="selesai">
+                                <div class="mb-2">
+                                    <textarea class="form-control form-control-sm" name="catatan" rows="2"
+                                        placeholder="Catatan verifikasi (opsional)"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="bi bi-patch-check me-2"></i>Verifikasi Selesai
+                                </button>
+                            </form>
+                        @endif
+
+                        @if (in_array($ticket->status, ['baru', 'diproses', 'menunggu_verifikasi']))
+                            <form method="POST" action="{{ route('tiket.update-status', $ticket->id) }}">
+                                @csrf @method('PUT')
+                                <input type="hidden" name="status" value="ditolak">
+                                <button type="submit" class="btn btn-outline-danger w-100"
+                                    onclick="return confirm('Yakin ingin menolak tiket ini?')">
+                                    <i class="bi bi-x-circle me-2"></i>Tolak Tiket
+                                </button>
+                            </form>
+                        @endif
+
+                        {{-- Tugaskan Petugas: hanya Admin --}}
+                        @if (!in_array($ticket->status, ['selesai', 'ditolak', 'dibatalkan']))
                             <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
                                 data-bs-target="#assignModal" data-ticket-id="{{ $ticket->id }}">
                                 <i
@@ -237,7 +389,7 @@
     </div>
 
     <!-- Modal Assign Petugas -->
-    @if (auth()->user()->isAdmin() || auth()->user()->isPetugas())
+    @if (auth()->user()->isAdmin())
         @php $currentAssigneeIds = $ticket->assignees->pluck('id')->toArray(); @endphp
         <div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
@@ -331,6 +483,95 @@
             cb.checked = !cb.checked;
             card.classList.toggle('border-primary', cb.checked);
             card.classList.toggle('bg-primary-subtle', cb.checked);
+        }
+
+        // ── Progress Form Toggle ──────────────────────────────────────────────
+        function toggleProgressForm() {
+            var frm = document.getElementById('progressForm');
+            if (!frm) return;
+            frm.style.display = frm.style.display === 'none' ? 'block' : 'none';
+            if (frm.style.display === 'block') {
+                document.getElementById('progressBody').focus();
+            }
+        }
+
+        // ── Progress AJAX Submit ──────────────────────────────────────────────
+        var formProgress = document.getElementById('formProgress');
+        if (formProgress) {
+            formProgress.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var btn = formProgress.querySelector('button[type=submit]');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Menyimpan...';
+
+                fetch(formProgress.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content ||
+                                '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                        },
+                        body: new FormData(formProgress),
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            var p = data.progress;
+                            var empty = document.getElementById('emptyProgress');
+                            if (empty) empty.remove();
+
+                            // Remove connector line from last existing entry
+                            var entries = document.querySelectorAll('#progressTimeline .progress-entry');
+                            // (connectors are only between items, new entry becomes last)
+
+                            // Add connector to previous last entry
+                            if (entries.length > 0) {
+                                var lastEntry = entries[entries.length - 1];
+                                var col = lastEntry.querySelector('.flex-column');
+                                if (col && !col.querySelector('.connector-line')) {
+                                    var line = document.createElement('div');
+                                    line.className = 'connector-line';
+                                    line.style.cssText =
+                                        'width:2px;flex:1;background:#fde68a;min-height:16px;margin-top:2px;';
+                                    col.appendChild(line);
+                                }
+                            }
+
+                            var html = `
+                        <div class="progress-entry d-flex gap-3 mb-3" data-id="${p.id}">
+                            <div class="flex-shrink-0 d-flex flex-column align-items-center">
+                                <div class="user-avatar bg-warning text-dark">${p.user_init}</div>
+                            </div>
+                            <div class="flex-grow-1 pb-2">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-1">
+                                    <div>
+                                        <span class="fw-semibold">${p.user_name}</span>
+                                        <span class="badge bg-warning text-dark ms-1" style="font-size:.65rem">Petugas</span>
+                                    </div>
+                                    <small class="text-muted"><i class="bi bi-clock me-1"></i>${p.created_at}</small>
+                                </div>
+                                <div class="bg-light rounded p-2 text-dark" style="white-space:pre-line;font-size:.9rem;">${p.body}</div>
+                            </div>
+                        </div>`;
+                            document.getElementById('progressTimeline').insertAdjacentHTML('beforeend', html);
+
+                            // Update counter badge
+                            var cnt = document.getElementById('progressCount');
+                            if (cnt) cnt.textContent = parseInt(cnt.textContent || '0') + 1;
+
+                            // Reset form
+                            document.getElementById('progressBody').value = '';
+                            document.getElementById('progressForm').style.display = 'none';
+                        } else {
+                            alert(data.message || 'Gagal menyimpan progress.');
+                        }
+                    })
+                    .catch(() => alert('Terjadi kesalahan jaringan. Silakan coba lagi.'))
+                    .finally(() => {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-save me-1"></i>Simpan Progress';
+                    });
+            });
         }
     </script>
 @endpush

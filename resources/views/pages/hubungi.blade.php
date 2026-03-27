@@ -41,18 +41,42 @@
                 </div>
                 <div class="card-body">
                     <div class="d-flex gap-2">
+                        @if(!empty($socialMedia['facebook']) && $socialMedia['facebook'] !== '#')
+                        <a href="{{ $socialMedia['facebook'] }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-facebook"></i>
+                        </a>
+                        @else
                         <a href="#" class="btn btn-outline-primary btn-sm">
                             <i class="bi bi-facebook"></i>
                         </a>
+                        @endif
+                        @if(!empty($socialMedia['twitter']) && $socialMedia['twitter'] !== '#')
+                        <a href="{{ $socialMedia['twitter'] }}" target="_blank" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-twitter"></i>
+                        </a>
+                        @else
                         <a href="#" class="btn btn-outline-info btn-sm">
                             <i class="bi bi-twitter"></i>
                         </a>
+                        @endif
+                        @if(!empty($socialMedia['instagram']) && $socialMedia['instagram'] !== '#')
+                        <a href="{{ $socialMedia['instagram'] }}" target="_blank" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-instagram"></i>
+                        </a>
+                        @else
                         <a href="#" class="btn btn-outline-danger btn-sm">
                             <i class="bi bi-instagram"></i>
                         </a>
+                        @endif
+                        @if(!empty($socialMedia['youtube']) && $socialMedia['youtube'] !== '#')
+                        <a href="{{ $socialMedia['youtube'] }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-youtube"></i>
+                        </a>
+                        @else
                         <a href="#" class="btn btn-outline-secondary btn-sm">
                             <i class="bi bi-youtube"></i>
                         </a>
+                        @endif
                     </div>
                 </div>
             </div>

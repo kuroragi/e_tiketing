@@ -50,6 +50,7 @@ Route::middleware(['auth'])->group(function () {
             ->name('tiket.assign');
 
         Route::post('{id}/komentar', [KominfoController::class, 'addComment'])->name('tiket.comment');
+        Route::post('{id}/progress', [KominfoController::class, 'addProgress'])->name('tiket.progress');
         Route::post('{id}/lampiran', [KominfoController::class, 'uploadAttachment'])->name('tiket.attachment');
         Route::get('lampiran/{attachmentId}/download', [KominfoController::class, 'downloadAttachment'])
             ->name('tiket.attachment.download');

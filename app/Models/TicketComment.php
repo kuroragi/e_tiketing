@@ -38,7 +38,20 @@ class TicketComment extends Model
             'note'          => 'Catatan Teknis',
             'status_change' => 'Perubahan Status',
             'assignment'    => 'Penugasan',
+            'progress'      => 'Progress Pekerjaan',
             default         => ucfirst($this->type),
         };
+    }
+
+    // ─── Scopes ───────────────────────────────────────────────────────────────
+
+    public function scopeProgress($query)
+    {
+        return $query->where('type', 'progress');
+    }
+
+    public function scopePublic($query)
+    {
+        return $query->whereIn('type', ['comment', 'status_change', 'assignment']);
     }
 }

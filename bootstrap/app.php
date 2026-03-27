@@ -13,14 +13,20 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Spatie permission middleware
         $middleware->alias([
-            'role'              => \Spatie\Permission\Middleware\RoleMiddleware::class,
-            'permission'        => \Spatie\Permission\Middleware\PermissionMiddleware::class,
-            'role_or_permission'=> \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
-            'active'            => \App\Http\Middleware\CheckUserActive::class,
+            'role'               => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission'         => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'active'             => \App\Http\Middleware\CheckUserActive::class,
         ]);
 
-        // Terapkan CheckUserActive pada semua request web
+        // Security headers pada semua response web
+        $middleware->appendToGroup('web', \App\Http\Middleware\SecurityHeaders::class);
+
+        // Paksa aktif: cek status user
         $middleware->appendToGroup('web', \App\Http\Middleware\CheckUserActive::class);
+
+        // Session timeout 60 menit idle (setelah auth)
+        $middleware->appendToGroup('web', \App\Http\Middleware\SessionTimeout::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Redirect semua HTTP 403 (termasuk Spatie UnauthorizedException dan abort(403)) ke dashboard

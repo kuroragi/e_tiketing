@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 use Spatie\Permission\Models\Role;
 
 class AdminPageController extends Controller
@@ -73,18 +74,25 @@ class AdminPageController extends Controller
         $validated = $request->validate([
             'name'          => 'required|string|max:255',
             'email'         => 'required|email|unique:users,email',
-            'password'      => 'required|string|min:8|confirmed',
+            'password'      => ['required', 'confirmed', Password::min(8)->letters()->numbers()->mixedCase()],
             'role'          => 'required|string|exists:roles,name',
             'department_id' => 'nullable|exists:departments,id',
             'status'        => 'required|in:aktif,nonaktif',
         ]);
+
+        // Petugas dan Pimpinan selalu tergabung dalam departemen Kominfo
+        $departmentId = $validated['department_id'] ?? null;
+        if (in_array($validated['role'], ['petugas', 'pimpinan'])) {
+            $kominfoDept  = Department::where('code', 'KOMINFO')->first();
+            $departmentId = $kominfoDept?->id;
+        }
 
         $user = User::create([
             'name'          => $validated['name'],
             'email'         => $validated['email'],
             'password'      => Hash::make($validated['password']),
             'role'          => $validated['role'],
-            'department_id' => $validated['department_id'] ?? null,
+            'department_id' => $departmentId,
             'status'        => $validated['status'],
         ]);
 
@@ -115,14 +123,21 @@ class AdminPageController extends Controller
             'role'          => 'required|string|exists:roles,name',
             'department_id' => 'nullable|exists:departments,id',
             'status'        => 'required|in:aktif,nonaktif',
-            'password'      => 'nullable|string|min:8|confirmed',
+            'password'      => ['nullable', 'confirmed', Password::min(8)->letters()->numbers()->mixedCase()],
         ]);
+
+        // Petugas dan Pimpinan selalu tergabung dalam departemen Kominfo
+        $departmentId = $validated['department_id'] ?? null;
+        if (in_array($validated['role'], ['petugas', 'pimpinan'])) {
+            $kominfoDept  = Department::where('code', 'KOMINFO')->first();
+            $departmentId = $kominfoDept?->id;
+        }
 
         $updateData = [
             'name'          => $validated['name'],
             'email'         => $validated['email'],
             'role'          => $validated['role'],
-            'department_id' => $validated['department_id'] ?? null,
+            'department_id' => $departmentId,
             'status'        => $validated['status'],
         ];
 
@@ -317,12 +332,27 @@ class AdminPageController extends Controller
 
     public function savePengaturan(Request $request)
     {
-        $allowed = ['app_name', 'app_description', 'app_institution', 'max_upload_size', 'allowed_mimetypes', 'mail_from_name', 'mail_from_address', 'smtp_host', 'smtp_port'];
+        $allowed = [
+            'app_name', 'app_description', 'app_institution',
+            'max_upload_size', 'allowed_mimetypes',
+            'mail_from_name', 'mail_from_address', 'smtp_host', 'smtp_port',
+            // Hubungi Kami
+            'contact_phone', 'contact_email', 'contact_address', 'contact_hours',
+            'contact_social_facebook', 'contact_social_twitter',
+            'contact_social_instagram', 'contact_social_youtube',
+        ];
 
         foreach ($allowed as $key) {
             if ($request->has($key)) {
                 Setting::set($key, $request->get($key));
             }
+        }
+
+        // Simpan daftar departemen sebagai JSON
+        if ($request->has('contact_departments')) {
+            $raw  = $request->input('contact_departments');
+            $data = is_string($raw) ? json_decode($raw, true) : $raw;
+            Setting::set('contact_departments', is_array($data) ? json_encode($data) : '[]', 'json');
         }
 
         AuditLog::create([

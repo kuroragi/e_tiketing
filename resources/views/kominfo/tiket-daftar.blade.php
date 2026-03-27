@@ -78,10 +78,13 @@
                         <option value="">Semua Status</option>
                         <option value="baru" {{ request('status') === 'baru' ? 'selected' : '' }}>Baru</option>
                         <option value="diproses" {{ request('status') === 'diproses' ? 'selected' : '' }}>Diproses</option>
+                        <option value="menunggu_verifikasi"
+                            {{ request('status') === 'menunggu_verifikasi' ? 'selected' : '' }}>Menunggu Verifikasi</option>
                         <option value="selesai" {{ request('status') === 'selesai' ? 'selected' : '' }}>Selesai</option>
                         <option value="ditolak" {{ request('status') === 'ditolak' ? 'selected' : '' }}>Ditolak</option>
                         @if ($viewMode === 'saya')
-                            <option value="dibatalkan" {{ request('status') === 'dibatalkan' ? 'selected' : '' }}>Dibatalkan
+                            <option value="dibatalkan" {{ request('status') === 'dibatalkan' ? 'selected' : '' }}>
+                                Dibatalkan
                             </option>
                         @endif
                     </select>
@@ -130,16 +133,7 @@
                     </div>
                 @endif
 
-                {{-- Tombol Filter Cepat untuk Petugas --}}
-                @if ($viewMode === 'semua' && $isPetugas)
-                    <div class="col-md-2">
-                        <label class="form-label">Tampilkan</label>
-                        <a href="{{ route('tiket.index', ['assignee_id' => $authUser->id]) }}"
-                            class="btn btn-outline-info btn-sm w-100 {{ request('assignee_id') == $authUser->id ? 'active' : '' }}">
-                            <i class="bi bi-person-check me-1"></i>Ditugaskan ke Saya
-                        </a>
-                    </div>
-                @endif
+                {{-- Tombol Filter Cepat untuk Petugas dihapus: petugas otomatis melihat tiket mereka sendiri --}}
 
                 <div class="col-md-3">
                     <label class="form-label">&nbsp;</label>
@@ -182,14 +176,25 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card card-primary">
-                <div class="card-body text-center">
-                    <h4 class="text-primary">{{ $stats['total'] ?? 0 }}</h4>
-                    <small class="text-muted">Total Tiket</small>
+        @if ($viewMode === 'semua')
+            <div class="col-md-3">
+                <div class="card" style="border-top:3px solid #ea580c;">
+                    <div class="card-body text-center">
+                        <h4 style="color:#ea580c;">{{ $stats['menunggu_verifikasi'] ?? 0 }}</h4>
+                        <small class="text-muted">Menunggu Verifikasi</small>
+                    </div>
                 </div>
             </div>
-        </div>
+        @else
+            <div class="col-md-3">
+                <div class="card card-primary">
+                    <div class="card-body text-center">
+                        <h4 class="text-primary">{{ $stats['total'] ?? 0 }}</h4>
+                        <small class="text-muted">Total Tiket</small>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 
     <!-- Tickets List -->
@@ -198,15 +203,17 @@
             <h5 class="mb-0">
                 @if ($viewMode === 'saya')
                     Tiket Saya
-                @elseif ($isPetugas && request('assignee_id') == $authUser->id)
-                    Tiket Ditugaskan ke Saya
+                @elseif ($isPetugas)
+                    Tiket Pekerjaan Saya
                 @else
                     Semua Tiket
                 @endif
             </h5>
             <div class="d-flex gap-2">
-                <a href="{{ route('tiket.create') }}">
-                    <button class="btn btn-sm btn-primary">Tambah Tiket</button></a>
+                @if (!$isPetugas)
+                    <a href="{{ route('tiket.create') }}">
+                        <button class="btn btn-sm btn-primary">Tambah Tiket</button></a>
+                @endif
                 <div class="btn-group" role="group">
                     <input type="radio" class="btn-check" name="view-mode" id="list-view" checked>
                     <label class="btn btn-outline-primary btn-sm" for="list-view">
@@ -272,14 +279,25 @@
                                         </td>
                                         <td>
                                             <span class="status-badge status-{{ strtolower($ticket->status) }}">
-                                                {{ ucfirst($ticket->status) }}
+                                                {{ $ticket->status === 'menunggu_verifikasi' ? 'Menunggu Verifikasi' : ucfirst($ticket->status) }}
                                             </span>
                                         </td>
                                         <td>
                                             <div>{{ $ticket->created_at->format('d/m/Y') }}</div>
-                                            @if ($ticket->target_date)
-                                                <small class="text-muted">Target:
-                                                    {{ \Carbon\Carbon::parse($ticket->target_date)->format('d/m/Y') }}</small>
+                                            @if($ticket->target_date)
+                                                @php
+                                                    $td = \Carbon\Carbon::parse($ticket->target_date);
+                                                    $isOverdue = $td->isPast() && $ticket->isOpen();
+                                                    $overdueDays = $isOverdue ? now()->diffInDays($td) : 0;
+                                                    $remaining = !$isOverdue && $ticket->isOpen() ? now()->diffInDays($td, false) : null;
+                                                @endphp
+                                                @if($isOverdue)
+                                                    <div class="badge-overdue mt-1">⚠ {{ $overdueDays }}h terlambat</div>
+                                                @elseif($remaining !== null && $remaining <= 3)
+                                                    <small style="color:var(--warning);font-weight:600;">⏳ {{ $remaining }}h lagi</small>
+                                                @else
+                                                    <small class="text-muted">Target: {{ $td->format('d/m/Y') }}</small>
+                                                @endif
                                             @endif
                                         </td>
 
@@ -337,11 +355,11 @@
                                                     @endif
 
                                                     {{-- Aksi Petugas / Admin --}}
-                                                    @if (in_array($ticket->status, ['baru', 'diproses']) && ($isAdmin || $isPetugas))
+                                                    @if (in_array($ticket->status, ['baru', 'diproses', 'menunggu_verifikasi']) && ($isAdmin || $isPetugas))
                                                         <li>
                                                             <hr class="dropdown-divider">
                                                         </li>
-                                                        @if ($isAdmin && $ticket->assignees->isEmpty())
+                                                        @if ($isAdmin && in_array($ticket->status, ['baru', 'diproses']) && $ticket->assignees->isEmpty())
                                                             <li>
                                                                 <button type="button" class="dropdown-item"
                                                                     data-bs-toggle="modal" data-bs-target="#assignModal"
@@ -349,7 +367,7 @@
                                                                     <i class="bi bi-person-plus me-2"></i>Tugaskan Petugas
                                                                 </button>
                                                             </li>
-                                                        @elseif ($isAdmin)
+                                                        @elseif ($isAdmin && in_array($ticket->status, ['baru', 'diproses']))
                                                             <li>
                                                                 <button type="button" class="dropdown-item"
                                                                     data-bs-toggle="modal" data-bs-target="#assignModal"
@@ -358,7 +376,8 @@
                                                                 </button>
                                                             </li>
                                                         @endif
-                                                        @if ($ticket->status === 'baru' && ($isAdmin || ($isPetugas && $ticket->assignees->contains('id', $authUser->id))))
+                                                        {{-- Mulai Kerjakan: hanya petugas yang ditugaskan --}}
+                                                        @if ($ticket->status === 'baru' && $isPetugas && $ticket->assignees->contains('id', $authUser->id))
                                                             <li>
                                                                 <form method="POST"
                                                                     action="{{ route('tiket.update-status', $ticket->id) }}">
@@ -372,7 +391,24 @@
                                                                 </form>
                                                             </li>
                                                         @endif
-                                                        @if ($ticket->status === 'diproses' && ($isAdmin || ($isPetugas && $ticket->assignees->contains('id', $authUser->id))))
+                                                        {{-- Minta Verifikasi: petugas menandai pekerjaan selesai --}}
+                                                        @if ($ticket->status === 'diproses' && $isPetugas && $ticket->assignees->contains('id', $authUser->id))
+                                                            <li>
+                                                                <form method="POST"
+                                                                    action="{{ route('tiket.update-status', $ticket->id) }}">
+                                                                    @csrf @method('PUT')
+                                                                    <input type="hidden" name="status"
+                                                                        value="menunggu_verifikasi">
+                                                                    <button type="submit"
+                                                                        class="dropdown-item text-warning">
+                                                                        <i class="bi bi-hourglass-split me-2"></i>Minta
+                                                                        Verifikasi
+                                                                    </button>
+                                                                </form>
+                                                            </li>
+                                                        @endif
+                                                        {{-- Verifikasi Selesai: hanya admin --}}
+                                                        @if ($ticket->status === 'menunggu_verifikasi' && $isAdmin)
                                                             <li>
                                                                 <form method="POST"
                                                                     action="{{ route('tiket.update-status', $ticket->id) }}">
@@ -380,7 +416,8 @@
                                                                     <input type="hidden" name="status" value="selesai">
                                                                     <button type="submit"
                                                                         class="dropdown-item text-success">
-                                                                        <i class="bi bi-check-circle me-2"></i>Selesaikan
+                                                                        <i class="bi bi-patch-check me-2"></i>Verifikasi
+                                                                        Selesai
                                                                     </button>
                                                                 </form>
                                                             </li>
@@ -420,7 +457,7 @@
                                         <div class="card-header d-flex justify-content-between align-items-center py-2">
                                             <small class="fw-bold text-primary">{{ $ticket->number }}</small>
                                             <span class="status-badge status-{{ strtolower($ticket->status) }}">
-                                                {{ ucfirst($ticket->status) }}
+                                                {{ $ticket->status === 'menunggu_verifikasi' ? 'Menunggu Verifikasi' : ucfirst($ticket->status) }}
                                             </span>
                                         </div>
                                         <div class="card-body">
@@ -438,14 +475,21 @@
                                             @endif
 
                                             <div class="d-flex justify-content-between align-items-center">
-                                                <span
-                                                    class="priority-{{ strtolower($ticket->priority->name ?? 'rendah') }}">
+                                                <span class="priority-{{ strtolower($ticket->priority->name ?? 'rendah') }}">
                                                     <i class="bi bi-flag-fill"></i>
                                                     {{ ucfirst($ticket->priority->name ?? 'Rendah') }}
                                                 </span>
-                                                <small
-                                                    class="text-muted">{{ $ticket->created_at->format('d/m/Y') }}</small>
+                                                <small class="text-muted">{{ $ticket->created_at->format('d/m/Y') }}</small>
                                             </div>
+                                            @if($ticket->target_date)
+                                                @php
+                                                    $tdCard = \Carbon\Carbon::parse($ticket->target_date);
+                                                    $isOverdueCard = $tdCard->isPast() && $ticket->isOpen();
+                                                @endphp
+                                                @if($isOverdueCard)
+                                                    <div class="badge-overdue mt-2">⚠ Terlambat {{ now()->diffInDays($tdCard) }} hari</div>
+                                                @endif
+                                            @endif
 
                                             @if ($viewMode === 'saya' && $ticket->status === 'baru' && $ticket->requester_id === $authUser->id)
                                                 <div class="mt-2">

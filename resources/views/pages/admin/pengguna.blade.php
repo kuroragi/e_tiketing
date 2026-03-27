@@ -247,14 +247,15 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
-                                <select name="role" class="form-select" required>
+                                <select name="role" id="addRole" class="form-select" required
+                                    onchange="toggleDeptByRole(this.value,'addDeptGroup','addKominfoInfo')">
                                     <option value="">-- Pilih Role --</option>
                                     @foreach ($roles as $role)
                                         <option value="{{ $role->name }}">{{ Str::ucfirst($role->name) }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-4" id="addDeptGroup">
                                 <label class="form-label fw-semibold">Departemen / SKPD</label>
                                 <select name="department_id" class="form-select">
                                     <option value="">-- Tidak ada --</option>
@@ -262,6 +263,14 @@
                                         <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+                            <div class="col-md-4 d-none" id="addKominfoInfo">
+                                <label class="form-label fw-semibold">Departemen / SKPD</label>
+                                <div class="form-control bg-light text-muted d-flex align-items-center gap-1"
+                                    style="cursor:default">
+                                    <i class="bi bi-building-fill text-primary"></i>
+                                    <span>Dinas Kominfo <em>(otomatis)</em></span>
+                                </div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
@@ -344,7 +353,8 @@
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
                                 <select name="role" id="editRole"
-                                    class="form-select @error('role') is-invalid @enderror" required>
+                                    class="form-select @error('role') is-invalid @enderror" required
+                                    onchange="toggleDeptByRole(this.value,'editDeptGroup','editKominfoInfo')">
                                     @foreach ($roles as $role)
                                         <option value="{{ $role->name }}"
                                             {{ old('role') == $role->name ? 'selected' : '' }}>
@@ -355,7 +365,7 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-4" id="editDeptGroup">
                                 <label class="form-label fw-semibold">Departemen / SKPD</label>
                                 <select name="department_id" id="editDept" class="form-select">
                                     <option value="">-- Tidak ada --</option>
@@ -365,6 +375,14 @@
                                         </option>
                                     @endforeach
                                 </select>
+                            </div>
+                            <div class="col-md-4 d-none" id="editKominfoInfo">
+                                <label class="form-label fw-semibold">Departemen / SKPD</label>
+                                <div class="form-control bg-light text-muted d-flex align-items-center gap-1"
+                                    style="cursor:default">
+                                    <i class="bi bi-building-fill text-primary"></i>
+                                    <span>Dinas Kominfo <em>(otomatis)</em></span>
+                                </div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
@@ -423,6 +441,15 @@
 
 @push('scripts')
     <script>
+        // Toggle SKPD field: hide for petugas/pimpinan (mereka otomatis Kominfo)
+        const internalRoles = ['petugas', 'pimpinan'];
+
+        function toggleDeptByRole(roleValue, deptGroupId, kominfoInfoId) {
+            const isInternal = internalRoles.includes(roleValue);
+            document.getElementById(deptGroupId).classList.toggle('d-none', isInternal);
+            document.getElementById(kominfoInfoId).classList.toggle('d-none', !isInternal);
+        }
+
         // Toggle password visibility
         function togglePwd(inputId, iconId) {
             const input = document.getElementById(inputId);
@@ -451,6 +478,8 @@
             document.getElementById('editPwdC').value = '';
             document.getElementById('editUserId').value = btn.dataset.id;
             document.getElementById('formEditUser').action = `/admin/pengguna/${btn.dataset.id}`;
+            // Trigger dept field toggle based on role
+            toggleDeptByRole(btn.dataset.role, 'editDeptGroup', 'editKominfoInfo');
         });
 
         // Hapus modal  populate name and action
