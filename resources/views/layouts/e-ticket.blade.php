@@ -529,10 +529,13 @@
                                     href="{{ route('tiket.index') }}">
                                     <i class="bi bi-list-check"></i><span class="link-label">Daftar Tiket</span>
                                 </a>
+                                @if(auth()->user()->isAdmin() || auth()->user()->isPimpinan() || auth()->user()->isPetugas())
                                 <a class="nav-link {{ request()->routeIs('laporan.index') ? 'active' : '' }}"
-                                    href="{{ route('laporan.index') }}">
+                                    href="{{ route('laporan.index') }}"
+                                    id="sidebar-analitik-link">
                                     <i class="bi bi-bar-chart-line"></i><span class="link-label">Laporan</span>
                                 </a>
+                                @endif
                             @endif
 
                             @if(auth()->user()->isAdmin() || auth()->user()->isPetugas())

@@ -20,7 +20,7 @@ class KominfoController extends Controller
 {
     //  Dashboard (unified for all roles) 
 
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         $user  = Auth::user();
         $query = Ticket::query();
@@ -44,60 +44,58 @@ class KominfoController extends Controller
             ? round($selesaiQuery->avg(fn($t) => $t->created_at->diffInDays($t->closed_at)), 1)
             : 0;
 
-        // --- 10 tiket terbaru (sesuai scope) ---
+        // --- 10 tiket terbaru ---
         $recentTickets = (clone $query)
             ->with(['requester', 'department', 'category', 'priority', 'assignees'])
             ->orderByDesc('created_at')
             ->limit(10)
             ->get();
 
-        // --- Quick actions berbasis peran ---
+        // --- Quick actions ---
         $quickActions = [];
         if ($user->isSkpd() || $user->isAdmin()) {
-            $quickActions[] = ['icon' => 'plus-circle',     'title' => 'Buat Tiket',      'url' => route('tiket.create'),               'color' => 'primary'];
+            $quickActions[] = ['icon' => 'plus-circle',      'title' => 'Buat Tiket',       'url' => route('tiket.create'),             'color' => 'primary'];
         }
         if ($user->isSkpd()) {
-            $quickActions[] = ['icon' => 'ticket-perforated','title' => 'Tiket Saya',     'url' => route('tiket.saya'),                 'color' => 'info'];
+            $quickActions[] = ['icon' => 'ticket-perforated','title' => 'Tiket Saya',       'url' => route('tiket.saya'),               'color' => 'info'];
         }
         if (! $user->isSkpd()) {
-            $quickActions[] = ['icon' => 'list-task',        'title' => 'Daftar Tiket',   'url' => route('tiket.index'),                'color' => 'info'];
-        }
-        if ($user->isAdmin() || $user->isPimpinan() || $user->isPetugas()) {
-            $quickActions[] = ['icon' => 'bar-chart',        'title' => 'Laporan',        'url' => route('laporan.index'),              'color' => 'success'];
+            $quickActions[] = ['icon' => 'list-task',        'title' => 'Daftar Tiket',     'url' => route('tiket.index'),              'color' => 'info'];
         }
         if ($user->isAdmin() || $user->isPetugas()) {
-            $quickActions[] = ['icon' => 'people',           'title' => 'Manajemen Tiket','url' => route('ticket.management.index'),    'color' => 'warning'];
+            $quickActions[] = ['icon' => 'people',           'title' => 'Manajemen Tiket',  'url' => route('ticket.management.index'),  'color' => 'warning'];
+        }
+        if ($user->isAdmin() || $user->isPimpinan() || $user->isPetugas()) {
+            $quickActions[] = ['icon' => 'bar-chart-line',   'title' => 'Laporan',          'url' => route('laporan.index'),            'color' => 'success'];
         }
 
-        // --- Data ekstra ADMIN ---
-        $adminStats        = null;
-        $pimpinanStats     = null;
-        $recentActivities  = collect();
-        $petugasWorkload   = collect();
-        $skpdStats         = collect();
-        $chartData         = null;
+        // --- Data ekstra per peran ---
+        $adminStats       = null;
+        $pimpinanStats    = null;
+        $recentActivities = collect();
+        $petugasWorkload  = collect();
+        $skpdStats        = collect();
+        $chartData        = null;
 
+        // ── ADMIN ──────────────────────────────────────────────────────────────
         if ($user->isAdmin()) {
             $adminStats = [
-                ['label' => 'Total Pengguna',  'nilai' => User::count(),
-                 'icon' => 'bi-people',         'color' => 'primary',
-                 'sub'  => User::where('created_at', '>=', now()->subWeek())->count() . ' minggu ini'],
-                ['label' => 'Total SKPD Aktif','nilai' => Department::aktif()->count(),
-                 'icon' => 'bi-building',        'color' => 'info',
-                 'sub'  => 'departemen terdaftar'],
-                ['label' => 'Belum Ditugaskan','nilai' => Ticket::whereDoesntHave('assignees')->whereIn('status',['baru'])->count(),
-                 'icon' => 'bi-person-x',        'color' => 'danger',
-                 'sub'  => 'tiket menunggu petugas'],
-                ['label' => 'Selesai Bulan Ini','nilai' => Ticket::where('status','selesai')->whereMonth('updated_at', now()->month)->count(),
-                 'icon' => 'bi-check-circle',    'color' => 'success',
-                 'sub'  => 'bulan ' . now()->translatedFormat('F')],
+                ['label' => 'Total Pengguna',   'nilai' => User::count(),
+                 'icon'  => 'bi-people',          'color' => 'primary',
+                 'sub'   => User::where('created_at', '>=', now()->subWeek())->count() . ' minggu ini'],
+                ['label' => 'Total SKPD Aktif', 'nilai' => Department::aktif()->count(),
+                 'icon'  => 'bi-building',         'color' => 'info',
+                 'sub'   => 'departemen terdaftar'],
+                ['label' => 'Belum Ditugaskan', 'nilai' => Ticket::whereDoesntHave('assignees')->whereIn('status', ['baru'])->count(),
+                 'icon'  => 'bi-person-x',         'color' => 'danger',
+                 'sub'   => 'tiket menunggu petugas'],
+                ['label' => 'Selesai Bulan Ini','nilai' => Ticket::where('status', 'selesai')->whereMonth('updated_at', now()->month)->count(),
+                 'icon'  => 'bi-check-circle',     'color' => 'success',
+                 'sub'   => 'bulan ' . now()->translatedFormat('F')],
             ];
 
-            // Aktifitas audit terbaru (admin only)
             $recentActivities = AuditLog::with('user')
-                ->orderByDesc('created_at')
-                ->limit(8)
-                ->get()
+                ->orderByDesc('created_at')->limit(8)->get()
                 ->map(fn($log) => [
                     'user'   => $log->user->name ?? 'Sistem',
                     'action' => $log->actionLabel(),
@@ -120,78 +118,152 @@ class KominfoController extends Controller
                     },
                 ]);
 
-            // Statistik per SKPD
             $skpdStats = Department::aktif()
-                ->withCount(['tickets as total_tiket', 'tickets as tiket_baru' => fn($q) => $q->where('status','baru')])
-                ->orderByDesc('total_tiket')
-                ->limit(6)
-                ->get();
+                ->withCount(['tickets as total_tiket', 'tickets as tiket_baru' => fn($q) => $q->where('status', 'baru')])
+                ->orderByDesc('total_tiket')->limit(6)->get();
         }
 
+        // ── PIMPINAN ───────────────────────────────────────────────────────────
         if ($user->isPimpinan()) {
-            // Kartu ringkas pimpinan
-            $sedangBerjalan = Ticket::whereIn('status', ['baru','diproses','menunggu_verifikasi'])->count();
-            $selesaiBulanIni = Ticket::where('status','selesai')
+            $sedangBerjalan  = Ticket::whereIn('status', ['baru', 'diproses', 'menunggu_verifikasi'])->count();
+            $selesaiBulanIni = Ticket::where('status', 'selesai')
                 ->whereMonth('closed_at', now()->month)->whereYear('closed_at', now()->year)->count();
-            $selesaiAll = Ticket::where('status','selesai')->whereNotNull('closed_at')->get();
-            $rataHari  = $selesaiAll->count()
-                ? round($selesaiAll->avg(fn($t) => $t->created_at->diffInDays($t->closed_at)), 1)
-                : 0;
+            $selesaiAll = Ticket::where('status', 'selesai')->whereNotNull('closed_at')->get();
+            $rataHari   = $selesaiAll->count()
+                ? round($selesaiAll->avg(fn($t) => $t->created_at->diffInDays($t->closed_at)), 1) : 0;
 
             $pimpinanStats = [
-                ['label' => 'Total Tiket',        'nilai' => Ticket::count(),      'icon' => 'bi-ticket-perforated', 'color' => 'primary'],
-                ['label' => 'Sedang Dikerjakan',  'nilai' => $sedangBerjalan,      'icon' => 'bi-hourglass-split',   'color' => 'warning'],
-                ['label' => 'Selesai Bulan Ini',  'nilai' => $selesaiBulanIni,     'icon' => 'bi-check2-circle',     'color' => 'success'],
-                ['label' => 'Rata-rata Selesai',  'nilai' => $rataHari . ' hari',  'icon' => 'bi-stopwatch',         'color' => 'info'],
+                ['label' => 'Total Tiket',       'nilai' => Ticket::count(),     'icon' => 'bi-ticket-perforated', 'color' => 'primary'],
+                ['label' => 'Sedang Dikerjakan', 'nilai' => $sedangBerjalan,     'icon' => 'bi-hourglass-split',   'color' => 'warning'],
+                ['label' => 'Selesai Bulan Ini', 'nilai' => $selesaiBulanIni,    'icon' => 'bi-check2-circle',     'color' => 'success'],
+                ['label' => 'Rata-rata Selesai', 'nilai' => $rataHari . ' hari', 'icon' => 'bi-stopwatch',         'color' => 'info'],
             ];
 
-            // Data chart: tren 6 bulan (masuk vs selesai)
+            $skpdStats = Department::aktif()
+                ->withCount(['tickets as total_tiket', 'tickets as tiket_baru' => fn($q) => $q->where('status', 'baru')])
+                ->orderByDesc('total_tiket')->limit(8)->get();
+        }
+
+        // ── CHART DATA (Admin + Pimpinan) ──────────────────────────────────────
+        if ($user->isAdmin() || $user->isPimpinan()) {
             $chartMonthly = [];
             for ($i = 5; $i >= 0; $i--) {
                 $m = now()->subMonths($i);
                 $chartMonthly[] = [
                     'label'   => $m->translatedFormat('M Y'),
                     'masuk'   => Ticket::whereYear('created_at', $m->year)->whereMonth('created_at', $m->month)->count(),
-                    'selesai' => Ticket::where('status','selesai')
+                    'selesai' => Ticket::where('status', 'selesai')
                         ->whereYear('closed_at', $m->year)->whereMonth('closed_at', $m->month)->count(),
                 ];
             }
 
-            // Data chart: distribusi status
             $chartStatus = [
                 'labels' => ['Baru', 'Diproses', 'Menunggu Verifikasi', 'Selesai', 'Ditolak/Batal'],
                 'data'   => [
-                    Ticket::where('status','baru')->count(),
-                    Ticket::where('status','diproses')->count(),
-                    Ticket::where('status','menunggu_verifikasi')->count(),
-                    Ticket::where('status','selesai')->count(),
-                    Ticket::whereIn('status',['ditolak','dibatalkan'])->count(),
+                    Ticket::where('status', 'baru')->count(),
+                    Ticket::where('status', 'diproses')->count(),
+                    Ticket::where('status', 'menunggu_verifikasi')->count(),
+                    Ticket::where('status', 'selesai')->count(),
+                    Ticket::whereIn('status', ['ditolak', 'dibatalkan'])->count(),
                 ],
-                'colors' => ['#eab308','#3b82f6','#f97316','#22c55e','#ef4444'],
+                'colors' => ['#eab308', '#3b82f6', '#f97316', '#22c55e', '#ef4444'],
             ];
 
             $chartData = compact('chartMonthly', 'chartStatus');
-
-            // SKPD breakdown untuk pimpinan
-            $skpdStats = Department::aktif()
-                ->withCount(['tickets as total_tiket', 'tickets as tiket_baru' => fn($q) => $q->where('status','baru')])
-                ->orderByDesc('total_tiket')
-                ->limit(8)
-                ->get();
         }
 
+        // ── WORKLOAD (Admin + Petugas) ─────────────────────────────────────────
         if ($user->isAdmin() || $user->isPetugas()) {
-            // Beban kerja petugas
             $petugasWorkload = User::role('petugas')
-                ->withCount(['assignedTicketsMulti as aktif_count' => fn($q) => $q->whereIn('status',['baru','diproses'])])
-                ->orderBy('aktif_count')
-                ->get();
+                ->withCount(['assignedTicketsMulti as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
+                ->orderBy('aktif_count')->get();
         }
+
+        // ══════════════════════════════════════════════════════════════════════
+        //  TAB ANALITIK — data laporan (hanya Admin, Petugas, Pimpinan)
+        // ══════════════════════════════════════════════════════════════════════
+        $analyticsData = null;
+
+        if ($user->isAdmin() || $user->isPetugas() || $user->isPimpinan()) {
+            // Periode default: bulan ini; bisa dioverride via query string
+            $dari   = $request->filled('dari')   ? Carbon::parse($request->dari)->startOfDay()   : now()->startOfMonth();
+            $sampai = $request->filled('sampai') ? Carbon::parse($request->sampai)->endOfDay()   : now()->endOfMonth();
+            $deptId = $request->get('analytics_dept');
+            $catId  = $request->get('analytics_cat');
+
+            $base = Ticket::whereBetween('created_at', [$dari, $sampai]);
+            if ($deptId) $base->where('department_id', $deptId);
+            if ($catId)  $base->where('category_id', $catId);
+
+            $totalA   = (clone $base)->count();
+            $selesaiA = (clone $base)->where('status', 'selesai')->count();
+            $avgA     = (clone $base)->where('status', 'selesai')->whereNotNull('closed_at')->get()
+                ->avg(fn($t) => $t->created_at->diffInDays($t->closed_at));
+
+            $summary = [
+                'total_tiket'        => $totalA,
+                'tiket_selesai'      => $selesaiA,
+                'persentase_selesai' => $totalA ? round($selesaiA / $totalA * 100) : 0,
+                'rata_waktu'         => round($avgA ?? 0, 1),
+                'backlog'            => (clone $base)->whereIn('status', ['baru', 'diproses'])->count(),
+            ];
+
+            $statusDist = [
+                'baru'       => (clone $base)->where('status', 'baru')->count(),
+                'diproses'   => (clone $base)->where('status', 'diproses')->count(),
+                'selesai'    => $selesaiA,
+                'ditolak'    => (clone $base)->where('status', 'ditolak')->count(),
+                'dibatalkan' => (clone $base)->where('status', 'dibatalkan')->count(),
+            ];
+
+            // Tren bulanan 6 bulan terakhir (untuk tab analitik)
+            $trendMonthly = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $m = now()->subMonths($i);
+                $trendMonthly[] = [
+                    'label'   => $m->translatedFormat('M Y'),
+                    'masuk'   => Ticket::whereYear('created_at', $m->year)->whereMonth('created_at', $m->month)->count(),
+                    'selesai' => Ticket::where('status', 'selesai')
+                        ->whereYear('closed_at', $m->year)->whereMonth('closed_at', $m->month)->count(),
+                ];
+            }
+
+            // Rekap per SKPD (dengan filter periode)
+            $skpdReport = Department::withCount([
+                'tickets as total'   => fn($q) => $q->whereBetween('created_at', [$dari, $sampai]),
+                'tickets as selesai' => fn($q) => $q->whereBetween('created_at', [$dari, $sampai])->where('status', 'selesai'),
+            ])->having('total', '>', 0)->orderByDesc('total')->get()
+                ->map(fn($d) => [
+                    'nama'       => $d->name,
+                    'total'      => $d->total,
+                    'selesai'    => $d->selesai,
+                    'persentase' => $d->total ? round($d->selesai / $d->total * 100) : 0,
+                ])->toArray();
+
+            // Rekap per kategori
+            $jenisReport = Category::withCount([
+                'tickets as jumlah' => fn($q) => $q->whereBetween('created_at', [$dari, $sampai]),
+            ])->having('jumlah', '>', 0)->orderByDesc('jumlah')->get()
+                ->map(fn($c) => [
+                    'nama'       => $c->name,
+                    'jumlah'     => $c->jumlah,
+                    'persentase' => $totalA ? round($c->jumlah / $totalA * 100) : 0,
+                ])->toArray();
+
+            $analyticsData = compact(
+                'summary', 'statusDist', 'trendMonthly', 'skpdReport', 'jenisReport',
+                'dari', 'sampai', 'deptId', 'catId'
+            );
+        }
+
+        $skpdList   = Department::aktif()->orderBy('name')->get();
+        $categories = Category::aktif()->orderBy('name')->get();
 
         return view('kominfo.dashboard', compact(
             'stats', 'recentTickets', 'quickActions',
             'adminStats', 'pimpinanStats', 'recentActivities',
-            'petugasWorkload', 'skpdStats', 'chartData'
+            'petugasWorkload', 'skpdStats', 'chartData',
+            'analyticsData', 'skpdList', 'categories'
         ));
     }
 
