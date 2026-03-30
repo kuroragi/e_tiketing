@@ -16,34 +16,38 @@
 @endsection
 
 @section('content')
-    <!-- Navigation Tabs -->
+    {{-- ═══ NAVIGATION TABS ═══ --}}
     <div class="nav-tabs-container mb-4">
         <ul class="nav nav-tabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending"
-                    type="button" role="tab">
+                <button class="nav-link active" id="pending-tab"
+                    data-bs-toggle="tab" data-bs-target="#pending"
+                    type="button" role="tab" aria-controls="pending" aria-selected="true">
                     <i class="bi bi-hourglass-bottom me-2"></i>
                     Tiket Pending
                     <span class="badge bg-warning ms-2">{{ $pendingTickets->total() }}</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="auto-tab" data-bs-toggle="tab" data-bs-target="#auto" type="button"
-                    role="tab">
+                <button class="nav-link" id="auto-tab"
+                    data-bs-toggle="tab" data-bs-target="#auto"
+                    type="button" role="tab" aria-controls="auto" aria-selected="false">
                     <i class="bi bi-lightning-fill me-2"></i>
                     Auto Assignment
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual" type="button"
-                    role="tab">
+                <button class="nav-link" id="manual-tab"
+                    data-bs-toggle="tab" data-bs-target="#manual"
+                    type="button" role="tab" aria-controls="manual" aria-selected="false">
                     <i class="bi bi-hand-index me-2"></i>
                     Manual Assignment
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button"
-                    role="tab">
+                <button class="nav-link" id="history-tab"
+                    data-bs-toggle="tab" data-bs-target="#history"
+                    type="button" role="tab" aria-controls="history" aria-selected="false">
                     <i class="bi bi-clock-history me-2"></i>
                     History Assignment
                 </button>
@@ -51,10 +55,11 @@
         </ul>
     </div>
 
-    <!-- Tab Content -->
-    <div class="tab-content">
-        <!-- Tiket Pending -->
-        <div class="tab-pane fade show active" id="pending" role="tabpanel">
+    {{-- ═══ TAB CONTENT ═══ --}}
+    <div class="tab-content" id="manajemenTabContent">
+
+        {{-- ── TAB 1: TIKET PENDING ── --}}
+        <div class="tab-pane fade show active" id="pending" role="tabpanel" aria-labelledby="pending-tab">
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
@@ -95,8 +100,7 @@
                                         </td>
                                         <td>
                                             @php $prio = $ticket->priority->name ?? '-'; @endphp
-                                            <span
-                                                class="badge bg-{{ $prio === 'Urgent' ? 'danger' : ($prio === 'Tinggi' ? 'warning' : 'success') }}">
+                                            <span class="badge bg-{{ $prio === 'Urgent' ? 'danger' : ($prio === 'Tinggi' ? 'warning' : 'success') }}">
                                                 {{ $prio }}
                                             </span>
                                         </td>
@@ -128,251 +132,253 @@
                         </table>
                     </div>
                     {{ $pendingTickets->links() }}
-                    </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+                </div>{{-- /.card-body --}}
+            </div>{{-- /.card --}}
+        </div>{{-- /#pending --}}
 
-    <!-- Auto Assignment -->
-    <div class="tab-pane fade" id="auto" role="tabpanel">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="bi bi-lightning-fill text-warning me-2"></i>
-                    Konfigurasi Auto Assignment
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="alert alert-info mb-4" role="alert">
-                    <i class="bi bi-info-circle me-2"></i>
-                    <strong>Cara Kerja:</strong> Sistem akan otomatis menentukan petugas berdasarkan jenis pekerjaan,
-                    prioritas, dan keahlian petugas. Konfigurasi di bawah menunjukkan aturan assignment untuk setiap
-                    jenis pekerjaan.
+        {{-- ── TAB 2: AUTO ASSIGNMENT ── --}}
+        <div class="tab-pane fade" id="auto" role="tabpanel" aria-labelledby="auto-tab">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning-fill text-warning me-2"></i>
+                        Konfigurasi Auto Assignment
+                    </h5>
                 </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Cara Kerja:</strong> Sistem akan otomatis menentukan petugas berdasarkan jenis pekerjaan,
+                        prioritas, dan keahlian petugas. Konfigurasi di bawah menunjukkan aturan assignment untuk setiap
+                        jenis pekerjaan.
+                    </div>
 
-                <div class="accordion" id="autoAssignAccordion">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#collapse1">
-                                <i class="bi bi-clipboard-data me-2"></i>
-                                <strong>PIC Presensi</strong>
-                                <span class="ms-auto"><span class="badge bg-primary">Aktif</span></span>
-                            </button>
-                        </h2>
-                        <div id="collapse1" class="accordion-collapse collapse show" data-bs-parent="#autoAssignAccordion">
-                            <div class="accordion-body">
-                                <div class="table-responsive">
-                                    <table class="table table-sm">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Kondisi</th>
-                                                <th>Petugas Utama</th>
-                                                <th>Petugas Backup</th>
-                                                <th>Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td><span class="badge bg-danger">Urgent</span></td>
-                                                <td><strong>Ahmad Fauzi (A)</strong> - 70%</td>
-                                                <td><strong>Siti Aminah (B)</strong> - 30%</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-outline-primary">Edit</button>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td><span class="badge bg-warning">Tinggi</span></td>
-                                                <td><strong>Siti Aminah (B)</strong> - 60%</td>
-                                                <td><strong>Ahmad Fauzi (A)</strong> - 40%</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-outline-primary">Edit</button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                    <div class="accordion" id="autoAssignAccordion">
+
+                        {{-- Accordion Item 1 --}}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapse1"
+                                    aria-expanded="true" aria-controls="collapse1">
+                                    <i class="bi bi-clipboard-data me-2"></i>
+                                    <strong>PIC Presensi</strong>
+                                    <span class="ms-auto"><span class="badge bg-primary">Aktif</span></span>
+                                </button>
+                            </h2>
+                            <div id="collapse1" class="accordion-collapse collapse show"
+                                data-bs-parent="#autoAssignAccordion">
+                                <div class="accordion-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Kondisi</th>
+                                                    <th>Petugas Utama</th>
+                                                    <th>Petugas Backup</th>
+                                                    <th>Aksi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><span class="badge bg-danger">Urgent</span></td>
+                                                    <td><strong>Ahmad Fauzi (A)</strong> - 70%</td>
+                                                    <td><strong>Siti Aminah (B)</strong> - 30%</td>
+                                                    <td><button class="btn btn-sm btn-outline-primary">Edit</button></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><span class="badge bg-warning">Tinggi</span></td>
+                                                    <td><strong>Siti Aminah (B)</strong> - 60%</td>
+                                                    <td><strong>Ahmad Fauzi (A)</strong> - 40%</td>
+                                                    <td><button class="btn btn-sm btn-outline-primary">Edit</button></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
+                            </div>
+                        </div>{{-- /.accordion-item --}}
+
+                        {{-- Accordion Item 2 --}}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapse2"
+                                    aria-expanded="false" aria-controls="collapse2">
+                                    <i class="bi bi-globe me-2"></i>
+                                    <strong>Perbaikan Portal</strong>
+                                    <span class="ms-auto"><span class="badge bg-primary">Aktif</span></span>
+                                </button>
+                            </h2>
+                            <div id="collapse2" class="accordion-collapse collapse"
+                                data-bs-parent="#autoAssignAccordion">
+                                <div class="accordion-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Kondisi</th>
+                                                    <th>Petugas Utama</th>
+                                                    <th>Petugas Backup</th>
+                                                    <th>Aksi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><span class="badge bg-danger">Urgent</span></td>
+                                                    <td><strong>Siti Aminah (B)</strong> - 60%</td>
+                                                    <td><strong>Rizki Pratama (C)</strong> - 40%</td>
+                                                    <td><button class="btn btn-sm btn-outline-primary">Edit</button></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><span class="badge bg-warning">Tinggi</span></td>
+                                                    <td><strong>Rizki Pratama (C)</strong> - 70%</td>
+                                                    <td><strong>Siti Aminah (B)</strong> - 30%</td>
+                                                    <td><button class="btn btn-sm btn-outline-primary">Edit</button></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>{{-- /.accordion-item --}}
+
+                        {{-- Accordion Item 3 --}}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapse3"
+                                    aria-expanded="false" aria-controls="collapse3">
+                                    <i class="bi bi-tools me-2"></i>
+                                    <strong>Troubleshooting</strong>
+                                    <span class="ms-auto"><span class="badge bg-primary">Aktif</span></span>
+                                </button>
+                            </h2>
+                            <div id="collapse3" class="accordion-collapse collapse"
+                                data-bs-parent="#autoAssignAccordion">
+                                <div class="accordion-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Kondisi</th>
+                                                    <th>Petugas Utama</th>
+                                                    <th>Petugas Backup</th>
+                                                    <th>Aksi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><span class="badge bg-danger">Urgent</span></td>
+                                                    <td><strong>Rizki Pratama (C)</strong> - 50%</td>
+                                                    <td><strong>Desi Marlina (D)</strong> - 50%</td>
+                                                    <td><button class="btn btn-sm btn-outline-primary">Edit</button></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>{{-- /.accordion-item --}}
+
+                    </div>{{-- /#autoAssignAccordion --}}
+
+                    <div class="mt-4">
+                        <button class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>Simpan Konfigurasi
+                        </button>
+                        <button class="btn btn-outline-secondary ms-2">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Reset ke Default
+                        </button>
+                    </div>
+                </div>{{-- /.card-body --}}
+            </div>{{-- /.card --}}
+        </div>{{-- /#auto --}}
+
+        {{-- ── TAB 3: MANUAL ASSIGNMENT ── --}}
+        <div class="tab-pane fade" id="manual" role="tabpanel" aria-labelledby="manual-tab">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-hand-index me-2"></i>
+                        Manual Assignment
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        Admin dan pihak berwenang dapat memilih petugas secara manual sesuai keputusan.
+                    </p>
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <h6>Petugas Tersedia</h6>
+                            <div class="list-group">
+                                @forelse ($petugasList ?? [] as $p)
+                                    <div class="list-group-item">
+                                        <h6 class="mb-1">{{ $p->name }}</h6>
+                                        <span class="badge bg-{{ $p->aktif_count === 0 ? 'success' : ($p->aktif_count <= 3 ? 'info' : ($p->aktif_count <= 6 ? 'warning' : 'danger')) }} mt-1">
+                                            Load: {{ $p->aktif_count }} tiket
+                                        </span>
+                                    </div>
+                                @empty
+                                    <div class="list-group-item text-muted">Tidak ada petugas aktif.</div>
+                                @endforelse
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <h6>Catatan</h6>
+                            <div class="alert alert-info" role="alert">
+                                <p>
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Load Petugas:</strong> Menunjukkan jumlah tiket yang sedang dikerjakan.
+                                </p>
+                                <p class="mb-0">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Rekomendasi:</strong> Assign ke petugas dengan load terendah untuk distribusi beban yang merata.
+                                </p>
                             </div>
                         </div>
                     </div>
+                </div>{{-- /.card-body --}}
+            </div>{{-- /.card --}}
+        </div>{{-- /#manual --}}
 
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#collapse2">
-                                <i class="bi bi-globe me-2"></i>
-                                <strong>Perbaikan Portal</strong>
-                                <span class="ms-auto"><span class="badge bg-primary">Aktif</span></span>
-                            </button>
-                        </h2>
-                        <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#autoAssignAccordion">
-                            <div class="accordion-body">
-                                <div class="table-responsive">
-                                    <table class="table table-sm">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Kondisi</th>
-                                                <th>Petugas Utama</th>
-                                                <th>Petugas Backup</th>
-                                                <th>Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td><span class="badge bg-danger">Urgent</span></td>
-                                                <td><strong>Siti Aminah (B)</strong> - 60%</td>
-                                                <td><strong>Rizki Pratama (C)</strong> - 40%</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-outline-primary">Edit</button>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td><span class="badge bg-warning">Tinggi</span></td>
-                                                <td><strong>Rizki Pratama (C)</strong> - 70%</td>
-                                                <td><strong>Siti Aminah (B)</strong> - 30%</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-outline-primary">Edit</button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#collapse3">
-                                <i class="bi bi-tools me-2"></i>
-                                <strong>Troubleshooting</strong>
-                                <span class="ms-auto"><span class="badge bg-primary">Aktif</span></span>
-                            </button>
-                        </h2>
-                        <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#autoAssignAccordion">
-                            <div class="accordion-body">
-                                <div class="table-responsive">
-                                    <table class="table table-sm">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Kondisi</th>
-                                                <th>Petugas Utama</th>
-                                                <th>Petugas Backup</th>
-                                                <th>Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td><span class="badge bg-danger">Urgent</span></td>
-                                                <td><strong>Rizki Pratama (C)</strong> - 50%</td>
-                                                <td><strong>Desi Marlina (D)</strong> - 50%</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-outline-primary">Edit</button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        {{-- ── TAB 4: HISTORY ASSIGNMENT ── --}}
+        <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>
+                        History Assignment
+                    </h5>
                 </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        Lihat riwayat assignment tiket baik yang otomatis maupun manual.
+                    </p>
+                    <a href="{{ route('ticket.management.history') }}" class="btn btn-primary">
+                        <i class="bi bi-eye me-2"></i>Lihat Detail History
+                    </a>
+                </div>{{-- /.card-body --}}
+            </div>{{-- /.card --}}
+        </div>{{-- /#history --}}
 
-                <div class="mt-4">
-                    <button class="btn btn-primary">
-                        <i class="bi bi-check-circle me-2"></i>
-                        Simpan Konfigurasi
-                    </button>
-                    <button class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-clockwise me-2"></i>
-                        Reset ke Default
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    </div>{{-- /.tab-content --}}
 
-    <!-- Manual Assignment -->
-    <div class="tab-pane fade" id="manual" role="tabpanel">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="bi bi-hand-index me-2"></i>
-                    Manual Assignment
-                </h5>
-            </div>
-            <div class="card-body">
-                <p class="text-muted mb-4">Admin dan pihak berwenang dapat memilih petugas secara manual sesuai
-                    keputusan.</p>
-
-                <div class="row">
-                    <div class="col-md-6 mb-4">
-                        <h6>Petugas Tersedia</h6>
-                        <div class="list-group">
-                            @forelse ($petugasList ?? [] as $p)
-                                <div class="list-group-item">
-                                    <h6 class="mb-1">{{ $p->name }}</h6>
-                                    <span
-                                        class="badge bg-{{ $p->aktif_count === 0 ? 'success' : ($p->aktif_count <= 3 ? 'info' : ($p->aktif_count <= 6 ? 'warning' : 'danger')) }} mt-1">
-                                        Load: {{ $p->aktif_count }} tiket
-                                    </span>
-                                </div>
-                            @empty
-                                <div class="list-group-item text-muted">Tidak ada petugas aktif.</div>
-                            @endforelse
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-4">
-                        <h6>Catatan</h6>
-                        <div class="alert alert-info" role="alert">
-                            <p><i class="bi bi-info-circle me-2"></i><strong>Load Petugas:</strong> Menunjukkan jumlah
-                                tiket yang sedang dikerjakan oleh petugas.</p>
-                            <p class="mb-0"><i class="bi bi-info-circle me-2"></i><strong>Rekomendasi:</strong>
-                                Assign tiket ke petugas dengan load terendah untuk distribusi beban kerja yang lebih
-                                merata.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- History Assignment -->
-    <div class="tab-pane fade" id="history" role="tabpanel">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="bi bi-clock-history me-2"></i>
-                    History Assignment
-                </h5>
-            </div>
-            <div class="card-body">
-                <p class="text-muted mb-3">Lihat riwayat assignment tiket baik yang otomatis maupun manual.</p>
-                <a href="{{ route('ticket.management.history') }}" class="btn btn-primary">
-                    <i class="bi bi-eye me-2"></i>
-                    Lihat Detail History
-                </a>
-            </div>
-        </div>
-    </div>
-    </div>
-
-    <!-- Unified Auto Assign Modal -->
-    <div class="modal fade" id="autoAssignModal" tabindex="-1">
+    {{-- ═══ MODAL: AUTO ASSIGN ═══ --}}
+    <div class="modal fade" id="autoAssignModal" tabindex="-1"
+        aria-labelledby="autoAssignModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Auto Assignment - <span id="autoTicketId"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="autoAssignModalLabel">
+                        Auto Assignment - <span id="autoTicketId"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info mb-3" role="alert">
                         <i class="bi bi-info-circle me-2"></i>
-                        Sistem akan secara otomatis memilih petugas berdasarkan konfigurasi assignment dan beban kerja saat
-                        ini.
+                        Sistem akan secara otomatis memilih petugas berdasarkan konfigurasi assignment dan beban kerja saat ini.
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -399,15 +405,18 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div>{{-- /#autoAssignModal --}}
 
-    <!-- Unified Manual Assign Modal -->
-    <div class="modal fade" id="manualAssignModal" tabindex="-1">
+    {{-- ═══ MODAL: MANUAL ASSIGN ═══ --}}
+    <div class="modal fade" id="manualAssignModal" tabindex="-1"
+        aria-labelledby="manualAssignModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Manual Assignment - <span id="manualTicketId"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="manualAssignModalLabel">
+                        Manual Assignment - <span id="manualTicketId"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
@@ -415,14 +424,14 @@
                         <select class="form-select" id="petugasSelect">
                             <option value="" selected disabled>-- Pilih Petugas --</option>
                             @foreach ($petugasList ?? [] as $p)
-                                <option value="{{ $p->id }}">{{ $p->name }} — Load: {{ $p->aktif_count }}
-                                    tiket</option>
+                                <option value="{{ $p->id }}">{{ $p->name }} — Load: {{ $p->aktif_count }} tiket</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Catatan untuk Petugas (Opsional)</label>
-                        <textarea class="form-control" id="catatanText" rows="3" placeholder="Tambahkan catatan khusus jika ada..."></textarea>
+                        <textarea class="form-control" id="catatanText" rows="3"
+                            placeholder="Tambahkan catatan khusus jika ada..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -434,145 +443,121 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div>{{-- /#manualAssignModal --}}
+
 @endsection
 
 @push('scripts')
-    <script>
-        let currentTicketId = null;
-        let autoAssignModal = null;
-        let manualAssignModal = null;
+<script>
+    let currentTicketId = null;
+    let autoAssignModal  = null;
+    let manualAssignModal = null;
 
-        // Initialize modals only once on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            autoAssignModal = new bootstrap.Modal(document.getElementById('autoAssignModal'), {
-                backdrop: 'static',
-                keyboard: false
-            });
-
-            manualAssignModal = new bootstrap.Modal(document.getElementById('manualAssignModal'), {
-                backdrop: 'static',
-                keyboard: false
-            });
+    document.addEventListener('DOMContentLoaded', function () {
+        // Init Bootstrap modals
+        autoAssignModal = new bootstrap.Modal(document.getElementById('autoAssignModal'), {
+            backdrop: 'static', keyboard: false
+        });
+        manualAssignModal = new bootstrap.Modal(document.getElementById('manualAssignModal'), {
+            backdrop: 'static', keyboard: false
         });
 
-        // Show Auto Assign Modal
-        function showAutoAssignModal(ticketId, jenisPekerjaan, prioritas) {
-            currentTicketId = ticketId;
-            document.getElementById('autoTicketId').textContent = ticketId;
-            document.getElementById('autoJenisPekerjaan').textContent = jenisPekerjaan;
-            document.getElementById('autoPrioritas').textContent = prioritas;
+        // Scroll ke atas setiap kali tab berpindah
+        document.querySelectorAll('[data-bs-toggle="tab"]').forEach(function (btn) {
+            btn.addEventListener('shown.bs.tab', function () {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+    });
 
-            autoAssignModal.show();
-        }
+    function showAutoAssignModal(ticketId, jenisPekerjaan, prioritas) {
+        currentTicketId = ticketId;
+        document.getElementById('autoTicketId').textContent      = ticketId;
+        document.getElementById('autoJenisPekerjaan').textContent = jenisPekerjaan;
+        document.getElementById('autoPrioritas').textContent      = prioritas;
+        autoAssignModal.show();
+    }
 
-        // Show Manual Assign Modal
-        function showManualAssignModal(ticketId) {
-            currentTicketId = ticketId;
-            document.getElementById('manualTicketId').textContent = ticketId;
-            document.getElementById('petugasSelect').value = '';
-            document.getElementById('catatanText').value = '';
+    function showManualAssignModal(ticketId) {
+        currentTicketId = ticketId;
+        document.getElementById('manualTicketId').textContent = ticketId;
+        document.getElementById('petugasSelect').value        = '';
+        document.getElementById('catatanText').value          = '';
+        manualAssignModal.show();
+    }
 
-            manualAssignModal.show();
-        }
+    function confirmAutoAssign(ticketId) {
+        if (!ticketId) { showToast('ID Tiket tidak valid', 'danger'); return; }
 
-        function confirmAutoAssign(ticketId) {
-            if (!ticketId) {
-                showToast('ID Tiket tidak valid', 'danger');
-                return;
+        const btn = document.getElementById('autoAssignBtn');
+        const orig = btn.innerHTML;
+        btn.disabled  = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+
+        fetch(`/api/ticket/auto-assign/${ticketId}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Content-Type': 'application/json'
             }
+        })
+        .then(r => { if (!r.ok) throw new Error('Network error'); return r.json(); })
+        .then(() => {
+            autoAssignModal.hide();
+            showToast('Tiket berhasil diassign secara otomatis!', 'success');
+            setTimeout(() => location.reload(), 1500);
+        })
+        .catch(() => {
+            showToast('Gagal mengassign tiket. Silakan coba lagi.', 'danger');
+            btn.disabled  = false;
+            btn.innerHTML = orig;
+        });
+    }
 
-            const btn = document.getElementById('autoAssignBtn');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+    function confirmManualAssign(ticketId) {
+        if (!ticketId) { showToast('ID Tiket tidak valid', 'danger'); return; }
 
-            fetch(`/api/ticket/auto-assign/${ticketId}`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return response.json();
-                })
-                .then(data => {
-                    autoAssignModal.hide();
-                    showToast('Tiket berhasil diassign secara otomatis!', 'success');
-                    setTimeout(() => location.reload(), 1500);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showToast('Gagal mengassign tiket. Silakan coba lagi.', 'danger');
-                    btn.disabled = false;
-                    btn.innerHTML = originalText;
-                });
-        }
+        const assigneeId = document.getElementById('petugasSelect').value;
+        const catatan    = document.getElementById('catatanText').value;
 
-        function confirmManualAssign(ticketId) {
-            if (!ticketId) {
-                showToast('ID Tiket tidak valid', 'danger');
-                return;
-            }
+        if (!assigneeId) { showToast('Pilih petugas terlebih dahulu', 'warning'); return; }
 
-            const petugasSelect = document.getElementById('petugasSelect');
-            const assigneeId = petugasSelect.value;
-            const catatan = document.getElementById('catatanText').value;
+        const btn = document.getElementById('manualAssignBtn');
+        const orig = btn.innerHTML;
+        btn.disabled  = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
 
-            if (!assigneeId) {
-                showToast('Pilih petugas terlebih dahulu', 'warning');
-                return;
-            }
+        fetch(`/api/ticket/manual-assign/${ticketId}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ assignee_id: assigneeId, catatan })
+        })
+        .then(r => { if (!r.ok) throw new Error('Network error'); return r.json(); })
+        .then(() => {
+            manualAssignModal.hide();
+            showToast('Tiket berhasil diassign secara manual!', 'success');
+            setTimeout(() => location.reload(), 1500);
+        })
+        .catch(() => {
+            showToast('Gagal mengassign tiket. Silakan coba lagi.', 'danger');
+            btn.disabled  = false;
+            btn.innerHTML = orig;
+        });
+    }
 
-            const btn = document.getElementById('manualAssignBtn');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
-
-            fetch(`/api/ticket/manual-assign/${ticketId}`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        assignee_id: assigneeId,
-                        catatan: catatan
-                    })
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return response.json();
-                })
-                .then(data => {
-                    manualAssignModal.hide();
-                    showToast('Tiket berhasil diassign secara manual!', 'success');
-                    setTimeout(() => location.reload(), 1500);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showToast('Gagal mengassign tiket. Silakan coba lagi.', 'danger');
-                    btn.disabled = false;
-                    btn.innerHTML = originalText;
-                });
-        }
-
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
-            toast.setAttribute('role', 'alert');
-            toast.style.zIndex = '9999';
-            toast.style.maxWidth = '500px';
-            toast.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    `;
-            document.body.appendChild(toast);
-
-            const bsAlert = new bootstrap.Alert(toast);
-            setTimeout(() => bsAlert.close(), 4000);
-        }
-    </script>
+    function showToast(message, type = 'success') {
+        const el = document.createElement('div');
+        el.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+        el.setAttribute('role', 'alert');
+        el.style.zIndex   = '9999';
+        el.style.maxWidth = '500px';
+        el.innerHTML = `${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+        document.body.appendChild(el);
+        setTimeout(() => new bootstrap.Alert(el).close(), 4000);
+    }
+</script>
 @endpush

@@ -64,6 +64,7 @@
         border-bottom: 2px solid var(--border);
         margin-bottom: 1.5rem;
         gap: .25rem;
+        position: relative;
     }
     .dashboard-tabs .tab-btn {
         background: none; border: none;
@@ -73,22 +74,43 @@
         border-radius: .5rem .5rem 0 0;
         cursor: pointer;
         position: relative;
-        transition: color .2s, background .2s;
+        transition: color .25s ease, background .25s ease;
         display: flex; align-items: center; gap: .5rem;
+        white-space: nowrap;
+        user-select: none;
     }
-    .dashboard-tabs .tab-btn:hover { color: var(--primary); background: var(--primary-light); }
+    .dashboard-tabs .tab-btn:hover {
+        color: var(--primary);
+        background: var(--primary-light);
+    }
     .dashboard-tabs .tab-btn.active {
         color: var(--primary);
         background: var(--primary-light);
     }
-    .dashboard-tabs .tab-btn.active::after {
-        content: '';
-        position: absolute; bottom: -2px; left: 0; right: 0; height: 2px;
+    /* Sliding underline indicator */
+    .tab-indicator {
+        position: absolute;
+        bottom: -2px;
+        height: 2px;
         background: var(--primary);
         border-radius: 2px 2px 0 0;
+        transition: left .3s cubic-bezier(.4,0,.2,1), width .3s cubic-bezier(.4,0,.2,1);
+        pointer-events: none;
     }
-    .tab-pane { display: none; }
-    .tab-pane.active { display: block; }
+    /* Tab pane fade + slide animation */
+    .tab-pane {
+        display: none;
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    .tab-pane.active {
+        display: block;
+        animation: tabFadeIn .3s ease forwards;
+    }
+    @keyframes tabFadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
 
     /* ── CHART CARD ───────────────────────────────────── */
     .chart-card {
@@ -584,37 +606,66 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    /* ─── CHART HELPERS & REGISTRY ──────────────────── */
+    const isDark    = () => document.documentElement.getAttribute('data-theme') === 'dark';
+    const gridColor = () => isDark() ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.06)';
+    const lblColor  = () => isDark() ? '#94a3b8' : '#64748b';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    const charts = [];   // semua chart instance dikumpulkan di sini
+
     /* ─── TAB SYSTEM ────────────────────────────────── */
-    const tabs = document.querySelectorAll('.tab-btn');
-    const panes = document.querySelectorAll('.tab-pane');
+    const tabs   = document.querySelectorAll('.tab-btn');
+    const panes  = document.querySelectorAll('.tab-pane');
+    const tabsEl = document.getElementById('dashboardTabs');
+
+    // Sliding underline indicator
+    const indicator = document.createElement('div');
+    indicator.className = 'tab-indicator';
+    tabsEl.appendChild(indicator);
+
+    function moveIndicator(activeBtn) {
+        if (!activeBtn) return;
+        const tabsRect = tabsEl.getBoundingClientRect();
+        const btnRect  = activeBtn.getBoundingClientRect();
+        indicator.style.left  = (btnRect.left - tabsRect.left) + 'px';
+        indicator.style.width = btnRect.width + 'px';
+    }
 
     function activateTab(tabId) {
-        tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
-        panes.forEach(p => p.classList.toggle('active', p.id === 'pane-' + tabId));
-        // Persist ke hash tanpa scroll
-        history.replaceState(null, '', window.location.pathname + window.location.search + (tabId !== 'ringkasan' ? '#'+tabId : ''));
+        let activeBtn = null;
+        tabs.forEach(t => {
+            const isActive = t.dataset.tab === tabId;
+            t.classList.toggle('active', isActive);
+            if (isActive) activeBtn = t;
+        });
+
+        panes.forEach(p => {
+            const shouldBeActive = p.id === 'pane-' + tabId;
+            if (shouldBeActive) {
+                p.style.display = 'block';
+                void p.offsetWidth;  // force reflow agar animasi restart
+                p.classList.add('active');
+                // Resize semua chart setelah animasi selesai (agar tidak gepeng)
+                setTimeout(() => charts.forEach(c => { try { c.resize(); } catch(e) {} }), 320);
+            } else {
+                p.classList.remove('active');
+                p.style.display = 'none';
+            }
+        });
+
+        requestAnimationFrame(() => moveIndicator(activeBtn));
+
+        const hash = tabId !== 'ringkasan' ? '#' + tabId : '';
+        history.replaceState(null, '', window.location.pathname + window.location.search + hash);
     }
 
     tabs.forEach(btn => btn.addEventListener('click', () => activateTab(btn.dataset.tab)));
 
-    // Baca hash URL
-    if (window.location.hash === '#analitik') {
-        activateTab('analitik');
-    }
-    // Jika ada query param analitik dari form filter
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('dari') || urlParams.has('sampai') || urlParams.has('analytics_dept') || urlParams.has('_tab')) {
-        activateTab('analitik');
-    }
+    // Posisikan indicator ke tab aktif saat page load
+    requestAnimationFrame(() => moveIndicator(document.querySelector('.tab-btn.active')));
 
-    /* ─── CHART HELPERS ─────────────────────────────── */
-    const isDark    = () => document.documentElement.getAttribute('data-theme') === 'dark';
-    const gridColor = () => isDark() ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.06)';
-    const lblColor  = () => isDark() ? '#94a3b8' : '#64748b';
-
-    Chart.defaults.font.family = "'Inter', sans-serif";
-
-    const charts = [];
+    // Perbaiki posisi indicator saat resize window
+    window.addEventListener('resize', () => moveIndicator(document.querySelector('.tab-btn.active')));
 
     /* ─── TAB 1: Tren Bar Chart (Admin/Pimpinan) ────── */
     @if(($isAdmin || $isPimpinan) && $chartData)
@@ -791,6 +842,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Auto refresh every 5 min
     setInterval(() => { if (window.location.pathname==='/dashboard') location.reload(); }, 300000);
+
+    /* ─── Aktifkan tab dari URL hash / query params ─── */
+    const urlParams = new URLSearchParams(window.location.search);
+    if (window.location.hash === '#analitik' ||
+        urlParams.has('dari') || urlParams.has('sampai') ||
+        urlParams.has('analytics_dept') || urlParams.has('_tab')) {
+        activateTab('analitik');
+    }
 });
 </script>
 @endpush

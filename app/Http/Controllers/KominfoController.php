@@ -939,9 +939,21 @@ class KominfoController extends Controller
         $skpdList   = Department::aktif()->orderBy('name')->get();
         $categories = Category::aktif()->orderBy('name')->get();
 
+        // Statistik petugas — hanya dibutuhkan oleh admin & pimpinan
+        $petugasStats = null;
+        if ($user->isAdmin() || $user->isPimpinan()) {
+            $petugasStats = User::role('petugas')
+                ->withCount([
+                    'assignedTickets as total_assigned' => fn($q) => $q->whereBetween('created_at', [$dari, $sampai]),
+                    'assignedTickets as total_selesai'  => fn($q) => $q->whereBetween('created_at', [$dari, $sampai])->where('status', 'selesai'),
+                ])
+                ->orderByDesc('total_assigned')
+                ->get();
+        }
+
         return view('kominfo.laporan', compact(
             'summary', 'statusDistribution', 'skpdReport', 'jenisReport',
-            'skpdList', 'categories', 'dari', 'sampai'
+            'skpdList', 'categories', 'dari', 'sampai', 'petugasStats'
         ));
     }
 

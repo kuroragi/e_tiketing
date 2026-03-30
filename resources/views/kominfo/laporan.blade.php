@@ -189,6 +189,70 @@
         </div>
     </div>
 
+    {{-- Statistik Petugas (hanya Admin & Pimpinan) --}}
+    @if(!empty($petugasStats) && $petugasStats->isNotEmpty())
+    <div class="row g-4 mt-0">
+        <div class="col-12">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h6 class="mb-0 fw-semibold"><i class="bi bi-person-badge text-primary me-2"></i>Kinerja Petugas</h6>
+                    <span class="badge bg-secondary rounded-pill" style="font-size:.7rem;">{{ $petugasStats->count() }} Petugas</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0" style="font-size:.85rem;">
+                        <thead style="background:var(--bg-sidebar);color:var(--text-secondary);">
+                            <tr>
+                                <th class="px-3 py-2">Petugas</th>
+                                <th class="text-center py-2">Ditugaskan</th>
+                                <th class="text-center py-2">Selesai</th>
+                                <th class="text-center py-2">Belum Selesai</th>
+                                <th class="py-2">Tingkat Penyelesaian</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($petugasStats as $p)
+                                @php
+                                    $pct = $p->total_assigned ? round($p->total_selesai / $p->total_assigned * 100) : 0;
+                                    $barClass = $pct >= 80 ? 'bg-success' : ($pct >= 50 ? 'bg-warning' : 'bg-danger');
+                                @endphp
+                                <tr>
+                                    <td class="px-3 py-2">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div style="width:28px;height:28px;border-radius:6px;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0;">
+                                                {{ strtoupper(substr($p->name, 0, 1)) }}
+                                            </div>
+                                            <span class="fw-semibold" style="color:var(--text-primary)">{{ $p->name }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center py-2">
+                                        <span class="badge bg-secondary rounded-pill">{{ $p->total_assigned }}</span>
+                                    </td>
+                                    <td class="text-center py-2">
+                                        <span class="badge bg-success rounded-pill">{{ $p->total_selesai }}</span>
+                                    </td>
+                                    <td class="text-center py-2">
+                                        <span class="badge {{ ($p->total_assigned - $p->total_selesai) > 0 ? 'bg-warning text-dark' : 'bg-secondary' }} rounded-pill">
+                                            {{ $p->total_assigned - $p->total_selesai }}
+                                        </span>
+                                    </td>
+                                    <td class="py-2" style="min-width:140px;">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="flex-grow-1" style="height:6px;border-radius:50px;background:var(--border);overflow:hidden;">
+                                                <div class="{{ $barClass }}" style="width:{{ $pct }}%;height:100%;border-radius:50px;"></div>
+                                            </div>
+                                            <small class="fw-semibold" style="color:var(--text-secondary);min-width:32px;">{{ $pct }}%</small>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
 @endsection
 
 @push('scripts')

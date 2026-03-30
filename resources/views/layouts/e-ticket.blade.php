@@ -567,10 +567,6 @@
                                     href="{{ route('admin.log-aktivitas') }}">
                                     <i class="bi bi-clock-history"></i><span class="link-label">Log Aktivitas</span>
                                 </a>
-                                <a class="nav-link {{ request()->routeIs('admin.laporan') ? 'active' : '' }}"
-                                    href="{{ route('admin.laporan') }}">
-                                    <i class="bi bi-bar-chart"></i><span class="link-label">Laporan Admin</span>
-                                </a>
                                 <a class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}"
                                     href="{{ route('admin.roles.index') }}">
                                     <i class="bi bi-shield-lock"></i><span class="link-label">Manajemen Role</span>

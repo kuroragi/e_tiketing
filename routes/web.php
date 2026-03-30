@@ -93,7 +93,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('pengaturan', [AdminPageController::class, 'savePengaturan'])->name('admin.pengaturan.save');
 
         Route::get('log-aktivitas', [AdminPageController::class, 'logAktivitas'])->name('admin.log-aktivitas');
-        Route::get('laporan', [AdminPageController::class, 'laporan'])->name('admin.laporan');
+        Route::get('laporan', fn() => redirect()->route('laporan.index'))->name('admin.laporan');
 
         // Role Management
         Route::prefix('roles')->name('admin.roles.')->group(function () {
