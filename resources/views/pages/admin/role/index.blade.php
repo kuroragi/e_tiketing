@@ -268,6 +268,8 @@
 
 @push('scripts')
     <script>
+        const roleBaseUrl = "{{ url('admin/roles') }}";
+
         // Edit Role Modal
         document.getElementById('modalEditRole').addEventListener('show.bs.modal', function(e) {
             const btn = e.relatedTarget;
@@ -276,7 +278,7 @@
             const perms = btn.dataset.permissions ? btn.dataset.permissions.split(',') : [];
 
             document.getElementById('editRoleName').value = name;
-            document.getElementById('formEditRole').action = `/admin/roles/${id}`;
+            document.getElementById('formEditRole').action = `${roleBaseUrl}/${id}`;
 
             // Reset all checkboxes
             document.querySelectorAll('.edit-perm-check').forEach(cb => {
@@ -288,7 +290,7 @@
         document.getElementById('modalHapusRole').addEventListener('show.bs.modal', function(e) {
             const btn = e.relatedTarget;
             document.getElementById('hapusRoleName').textContent = btn.dataset.name;
-            document.getElementById('formHapusRole').action = `/admin/roles/${btn.dataset.id}`;
+            document.getElementById('formHapusRole').action = `${roleBaseUrl}/${btn.dataset.id}`;
         });
     </script>
 @endpush

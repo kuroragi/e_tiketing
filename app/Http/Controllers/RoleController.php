@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RoleController extends Controller
 {
@@ -37,6 +38,8 @@ class RoleController extends Controller
         if ($request->filled('permissions')) {
             $role->syncPermissions($request->permissions);
         }
+
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         AuditLog::create([
             'user_id'     => Auth::id(),
@@ -71,6 +74,8 @@ class RoleController extends Controller
         $old = $role->name;
         $role->update(['name' => $request->name]);
         $role->syncPermissions($request->permissions ?? []);
+
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         AuditLog::create([
             'user_id'     => Auth::id(),
@@ -108,6 +113,8 @@ class RoleController extends Controller
         ]);
 
         $role->delete();
+
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         return back()->with('success', "Role berhasil dihapus.");
     }

@@ -7,13 +7,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class PermissionController extends Controller
 {
     public function index()
     {
         $permissions = Permission::withCount('roles')->orderBy('name')->get();
-        $roles       = Role::orderBy('name')->get();
+        $roles       = Role::with('permissions')->orderBy('name')->get();
 
         return view('pages.admin.permission.index', compact('permissions', 'roles'));
     }
@@ -25,6 +26,8 @@ class PermissionController extends Controller
         ]);
 
         $perm = Permission::create(['name' => $request->name, 'guard_name' => 'web']);
+
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         AuditLog::create([
             'user_id'     => Auth::id(),
@@ -50,6 +53,8 @@ class PermissionController extends Controller
 
         $old = $perm->name;
         $perm->update(['name' => $request->name]);
+
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         AuditLog::create([
             'user_id'     => Auth::id(),
@@ -83,6 +88,8 @@ class PermissionController extends Controller
         ]);
 
         $perm->delete();
+
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         return back()->with('success', "Permission berhasil dihapus.");
     }

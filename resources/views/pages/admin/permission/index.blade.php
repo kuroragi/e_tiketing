@@ -222,16 +222,18 @@
 
 @push('scripts')
     <script>
+        const permBaseUrl = "{{ url('admin/permissions') }}";
+
         document.getElementById('modalEditPerm').addEventListener('show.bs.modal', function(e) {
             const btn = e.relatedTarget;
             document.getElementById('editPermName').value = btn.dataset.name;
-            document.getElementById('formEditPerm').action = `/admin/permissions/${btn.dataset.id}`;
+            document.getElementById('formEditPerm').action = `${permBaseUrl}/${btn.dataset.id}`;
         });
 
         document.getElementById('modalHapusPerm').addEventListener('show.bs.modal', function(e) {
             const btn = e.relatedTarget;
             document.getElementById('hapusPermName').textContent = btn.dataset.name;
-            document.getElementById('formHapusPerm').action = `/admin/permissions/${btn.dataset.id}`;
+            document.getElementById('formHapusPerm').action = `${permBaseUrl}/${btn.dataset.id}`;
         });
     </script>
 @endpush
