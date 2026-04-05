@@ -364,6 +364,62 @@ class AdminPageController extends Controller
         return redirect()->route('admin.pengaturan')->with('success', 'Pengaturan berhasil disimpan.');
     }
 
+    //  Landing Page Settings 
+
+    public function landing()
+    {
+        $settings = Setting::all()->keyBy('key');
+        return view('pages.admin.landing', compact('settings'));
+    }
+
+    public function saveLanding(Request $request)
+    {
+        $stringKeys = [
+            'landing_hero_title', 'landing_hero_subtitle',
+            'landing_services_title', 'landing_services_subtitle',
+            'landing_primary_color', 'landing_primary_dark',
+            'api_key',
+        ];
+
+        foreach ($stringKeys as $key) {
+            if ($request->has($key)) {
+                Setting::set($key, $request->get($key));
+            }
+        }
+
+        // Integer settings
+        if ($request->has('api_rate_limit')) {
+            Setting::set('api_rate_limit', $request->get('api_rate_limit'), 'integer');
+        }
+
+        // Boolean (checkbox) settings
+        $boolKeys = [
+            'landing_enable_public_ticket',
+            'landing_show_stats',
+            'landing_show_recent',
+            'api_enabled',
+        ];
+
+        foreach ($boolKeys as $key) {
+            Setting::set($key, $request->has($key) ? '1' : '0', 'boolean');
+        }
+
+        // Layanan sebagai JSON
+        if ($request->has('landing_services')) {
+            $raw  = $request->input('landing_services');
+            $data = is_string($raw) ? json_decode($raw, true) : $raw;
+            Setting::set('landing_services', is_array($data) ? json_encode($data) : '[]', 'json');
+        }
+
+        AuditLog::create([
+            'user_id' => Auth::id(), 'action' => 'updated', 'entity_type' => 'Setting',
+            'entity_id' => 0, 'entity_name' => 'Pengaturan Landing Page',
+            'description' => 'Pengaturan landing page diperbarui', 'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->route('admin.landing')->with('success', 'Pengaturan landing page berhasil disimpan.');
+    }
+
     //  Log Aktivitas 
 
     public function logAktivitas(Request $request)

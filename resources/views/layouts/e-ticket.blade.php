@@ -1062,6 +1062,10 @@
                                     href="{{ route('admin.pengaturan') }}">
                                     <i class="bi bi-gear"></i><span class="link-label">Pengaturan</span>
                                 </a>
+                                <a class="nav-link {{ request()->routeIs('admin.landing') ? 'active' : '' }}"
+                                    href="{{ route('admin.landing') }}">
+                                    <i class="bi bi-palette"></i><span class="link-label">Landing Page</span>
+                                </a>
                                 <a class="nav-link {{ request()->routeIs('admin.log-aktivitas') ? 'active' : '' }}"
                                     href="{{ route('admin.log-aktivitas') }}">
                                     <i class="bi bi-clock-history"></i><span class="link-label">Log Aktivitas</span>

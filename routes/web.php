@@ -3,11 +3,24 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\KominfoController;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\AdminPageController;
 use App\Http\Controllers\TicketManagementController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
+
+// ── Landing Page (Publik, tanpa auth) ──────────────────────────────
+Route::get('/', [LandingController::class, 'index'])->name('landing');
+Route::get('/home', [LandingController::class, 'index'])->name('home');
+
+// ── Public Ticket Routes (tanpa auth) ──────────────────────────────
+Route::prefix('pengaduan')->group(function () {
+    Route::get('/', [LandingController::class, 'createTicket'])->name('public.ticket.create');
+    Route::post('/', [LandingController::class, 'storeTicket'])->name('public.ticket.store');
+    Route::get('sukses/{trackingCode}', [LandingController::class, 'ticketSuccess'])->name('public.ticket.success');
+});
+Route::get('/lacak', [LandingController::class, 'trackTicket'])->name('public.ticket.track');
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
@@ -16,9 +29,6 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
-
-// Redirect root
-Route::redirect('/', '/dashboard');
 
 // Protected Routes (all roles)
 Route::middleware(['auth'])->group(function () {
@@ -91,6 +101,9 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('pengaturan', [AdminPageController::class, 'pengaturan'])->name('admin.pengaturan');
         Route::post('pengaturan', [AdminPageController::class, 'savePengaturan'])->name('admin.pengaturan.save');
+
+        Route::get('landing', [AdminPageController::class, 'landing'])->name('admin.landing');
+        Route::post('landing', [AdminPageController::class, 'saveLanding'])->name('admin.landing.save');
 
         Route::get('log-aktivitas', [AdminPageController::class, 'logAktivitas'])->name('admin.log-aktivitas');
         Route::get('laporan', fn() => redirect()->route('laporan.index'))->name('admin.laporan');
