@@ -7,13 +7,22 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement("ALTER TABLE tickets MODIFY COLUMN status ENUM('baru','diproses','menunggu_verifikasi','selesai','ditolak','dibatalkan') NOT NULL DEFAULT 'baru'");
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'mysql' || $driver === 'mariadb') {
+            DB::statement("ALTER TABLE tickets MODIFY COLUMN status ENUM('baru','diproses','menunggu_verifikasi','selesai','ditolak','dibatalkan') NOT NULL DEFAULT 'baru'");
+        }
+        // SQLite: enum is stored as text, no modification needed
     }
 
     public function down(): void
     {
-        // Move any pending-verification tickets back to diproses before removing the enum value
+        $driver = DB::connection()->getDriverName();
+
         DB::statement("UPDATE tickets SET status = 'diproses' WHERE status = 'menunggu_verifikasi'");
-        DB::statement("ALTER TABLE tickets MODIFY COLUMN status ENUM('baru','diproses','selesai','ditolak','dibatalkan') NOT NULL DEFAULT 'baru'");
+
+        if ($driver === 'mysql' || $driver === 'mariadb') {
+            DB::statement("ALTER TABLE tickets MODIFY COLUMN status ENUM('baru','diproses','selesai','ditolak','dibatalkan') NOT NULL DEFAULT 'baru'");
+        }
     }
 };

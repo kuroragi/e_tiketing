@@ -20,6 +20,9 @@ class LandingController extends Controller
     public function index()
     {
         // Statistik publik
+        $showStats = Setting::get('landing_show_stats', true);
+        $showRecent = Setting::get('landing_show_recent', true);
+
         $stats = [
             'total'    => Ticket::count(),
             'selesai'  => Ticket::where('status', 'selesai')->count(),
@@ -31,13 +34,17 @@ class LandingController extends Controller
         $services = $this->getServices();
 
         // Tiket publik terbaru (hanya yang bersumber dari publik/api)
-        $recentTickets = Ticket::with(['category', 'priority'])
-            ->whereIn('source', ['public', 'api'])
-            ->orderByDesc('created_at')
-            ->limit(6)
-            ->get();
+        $recentTickets = $showRecent
+            ? Ticket::with(['category', 'priority'])
+                ->whereIn('source', ['public', 'api'])
+                ->orderByDesc('created_at')
+                ->limit(6)
+                ->get()
+            : collect();
 
-        return view('landing', compact('stats', 'services', 'recentTickets'));
+        $enablePublicTicket = Setting::get('landing_enable_public_ticket', true);
+
+        return view('landing', compact('stats', 'services', 'recentTickets', 'showStats', 'showRecent', 'enablePublicTicket'));
     }
 
     /**
@@ -45,6 +52,11 @@ class LandingController extends Controller
      */
     public function createTicket()
     {
+        // Cek apakah pengaduan publik diaktifkan
+        if (! Setting::get('landing_enable_public_ticket', true)) {
+            return redirect()->route('landing')->with('warning', 'Layanan pengaduan publik sedang tidak aktif.');
+        }
+
         $categories = Category::aktif()->orderBy('name')->get();
         $priorities = Priority::ordered()->get();
 
@@ -61,6 +73,11 @@ class LandingController extends Controller
      */
     public function storeTicket(Request $request)
     {
+        // Cek apakah pengaduan publik diaktifkan
+        if (! Setting::get('landing_enable_public_ticket', true)) {
+            return redirect()->route('landing')->with('warning', 'Layanan pengaduan publik sedang tidak aktif.');
+        }
+
         // Validasi captcha
         $answer = (int) $request->input('captcha_answer');
         $hash   = $request->input('captcha_hash');

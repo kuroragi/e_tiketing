@@ -143,30 +143,32 @@ class Ticket extends Model
     public function statusBadgeClass(): string
     {
         return match ($this->status) {
-            'baru'       => 'secondary',
-            'diproses'   => 'info',
-            'selesai'    => 'success',
-            'ditolak'    => 'danger',
-            'dibatalkan' => 'warning',
-            default      => 'secondary',
+            'baru'                  => 'secondary',
+            'diproses'              => 'info',
+            'menunggu_verifikasi'   => 'warning',
+            'selesai'               => 'success',
+            'ditolak'               => 'danger',
+            'dibatalkan'            => 'warning',
+            default                 => 'secondary',
         };
     }
 
     public function statusLabel(): string
     {
         return match ($this->status) {
-            'baru'       => 'Baru',
-            'diproses'   => 'Diproses',
-            'selesai'    => 'Selesai',
-            'ditolak'    => 'Ditolak',
-            'dibatalkan' => 'Dibatalkan',
-            default      => ucfirst($this->status),
+            'baru'                => 'Baru',
+            'diproses'            => 'Diproses',
+            'menunggu_verifikasi' => 'Menunggu Verifikasi',
+            'selesai'             => 'Selesai',
+            'ditolak'             => 'Ditolak',
+            'dibatalkan'          => 'Dibatalkan',
+            default               => ucfirst($this->status),
         };
     }
 
     public function isOpen(): bool
     {
-        return in_array($this->status, ['baru', 'diproses']);
+        return in_array($this->status, ['baru', 'diproses', 'menunggu_verifikasi']);
     }
 
     public function isClosed(): bool

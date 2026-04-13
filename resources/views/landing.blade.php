@@ -43,32 +43,35 @@
                 </div>
 
                 <div class="col-lg-5 hero-stats">
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <div class="stat-card">
-                                <div class="stat-number">{{ number_format($stats['total']) }}</div>
-                                <div class="stat-label">Total Pengaduan</div>
+                    @if ($showStats)
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="stat-card">
+                                    <div class="stat-number">{{ number_format($stats['total']) }}</div>
+                                    <div class="stat-label">Total Pengaduan</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card">
+                                    <div class="stat-number">{{ number_format($stats['selesai']) }}</div>
+                                    <div class="stat-label">Selesai Ditangani</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card">
+                                    <div class="stat-number">{{ number_format($stats['diproses']) }}</div>
+                                    <div class="stat-label">Sedang Diproses</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card">
+                                    <div class="stat-number">{{ $stats['rata_hari'] }} <small
+                                            style="font-size:0.5em">hari</small></div>
+                                    <div class="stat-label">Rata-rata Selesai</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-6">
-                            <div class="stat-card">
-                                <div class="stat-number">{{ number_format($stats['selesai']) }}</div>
-                                <div class="stat-label">Selesai Ditangani</div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="stat-card">
-                                <div class="stat-number">{{ number_format($stats['diproses']) }}</div>
-                                <div class="stat-label">Sedang Diproses</div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="stat-card">
-                                <div class="stat-number">{{ $stats['rata_hari'] }} <small style="font-size:0.5em">hari</small></div>
-                                <div class="stat-label">Rata-rata Selesai</div>
-                            </div>
-                        </div>
-                    </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -90,10 +93,11 @@
             </div>
 
             <div class="row g-4">
-                @foreach($services as $service)
+                @foreach ($services as $service)
                     <div class="col-lg-4 col-md-6">
                         <div class="service-card">
-                            <div class="service-icon" style="background: {{ $service['color'] }}15; color: {{ $service['color'] }};">
+                            <div class="service-icon"
+                                style="background: {{ $service['color'] }}15; color: {{ $service['color'] }};">
                                 <i class="bi {{ $service['icon'] }}"></i>
                             </div>
                             <h5>{{ $service['title'] }}</h5>
@@ -154,46 +158,49 @@
     </section>
 
     <!-- ── Recent Public Tickets ─────────────────────────────────── -->
-    @if($recentTickets->count())
-    <section class="py-5" style="background: var(--landing-light);">
-        <div class="container py-4">
-            <div class="text-center mb-5">
-                <span class="badge bg-info bg-opacity-10 text-info px-3 py-2 mb-3" style="font-size:0.85rem;">
-                    <i class="bi bi-clock-history me-1"></i>Terbaru
-                </span>
-                <h2 class="section-title">Pengaduan Terakhir</h2>
-                <p class="section-subtitle">Transparansi penanganan pengaduan masyarakat</p>
-            </div>
+    @if ($showRecent && $recentTickets->count())
+        <section class="py-5" style="background: var(--landing-light);">
+            <div class="container py-4">
+                <div class="text-center mb-5">
+                    <span class="badge bg-info bg-opacity-10 text-info px-3 py-2 mb-3" style="font-size:0.85rem;">
+                        <i class="bi bi-clock-history me-1"></i>Terbaru
+                    </span>
+                    <h2 class="section-title">Pengaduan Terakhir</h2>
+                    <p class="section-subtitle">Transparansi penanganan pengaduan masyarakat</p>
+                </div>
 
-            <div class="row g-3">
-                @foreach($recentTickets as $ticket)
-                    <div class="col-lg-6">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-body d-flex align-items-start gap-3">
-                                <div class="flex-shrink-0">
-                                    <span class="badge bg-{{ $ticket->statusBadgeClass() }} bg-opacity-10 text-{{ $ticket->statusBadgeClass() }} p-2" style="font-size:1rem;">
-                                        <i class="bi bi-ticket-perforated"></i>
-                                    </span>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between align-items-start mb-1">
-                                        <h6 class="mb-0 fw-bold">{{ Str::limit($ticket->title, 50) }}</h6>
-                                        <span class="badge bg-{{ $ticket->statusBadgeClass() }} ms-2">{{ $ticket->statusLabel() }}</span>
+                <div class="row g-3">
+                    @foreach ($recentTickets as $ticket)
+                        <div class="col-lg-6">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body d-flex align-items-start gap-3">
+                                    <div class="flex-shrink-0">
+                                        <span
+                                            class="badge bg-{{ $ticket->statusBadgeClass() }} bg-opacity-10 text-{{ $ticket->statusBadgeClass() }} p-2"
+                                            style="font-size:1rem;">
+                                            <i class="bi bi-ticket-perforated"></i>
+                                        </span>
                                     </div>
-                                    <small class="text-muted d-block mb-1">
-                                        <i class="bi bi-tag me-1"></i>{{ $ticket->category->name ?? '-' }}
-                                        &bull;
-                                        <i class="bi bi-calendar me-1"></i>{{ $ticket->created_at->diffForHumans() }}
-                                    </small>
-                                    <small class="text-muted">{{ Str::limit($ticket->description, 80) }}</small>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <h6 class="mb-0 fw-bold">{{ Str::limit($ticket->title, 50) }}</h6>
+                                            <span
+                                                class="badge bg-{{ $ticket->statusBadgeClass() }} ms-2">{{ $ticket->statusLabel() }}</span>
+                                        </div>
+                                        <small class="text-muted d-block mb-1">
+                                            <i class="bi bi-tag me-1"></i>{{ $ticket->category->name ?? '-' }}
+                                            &bull;
+                                            <i class="bi bi-calendar me-1"></i>{{ $ticket->created_at->diffForHumans() }}
+                                        </small>
+                                        <small class="text-muted">{{ Str::limit($ticket->description, 80) }}</small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                @endforeach
+                    @endforeach
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
     @endif
 
     <!-- ── CTA Section ───────────────────────────────────────────── -->

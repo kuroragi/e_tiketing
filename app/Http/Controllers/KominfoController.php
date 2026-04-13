@@ -581,7 +581,7 @@ class KominfoController extends Controller
             'user_agent'  => $request->userAgent(),
         ]);
 
-        $statusLabel = ['baru' => 'Baru', 'diproses' => 'Diproses', 'selesai' => 'Selesai', 'ditolak' => 'Ditolak', 'dibatalkan' => 'Dibatalkan'];
+        $statusLabel = ['baru' => 'Baru', 'diproses' => 'Diproses', 'menunggu_verifikasi' => 'Menunggu Verifikasi', 'selesai' => 'Selesai', 'ditolak' => 'Ditolak', 'dibatalkan' => 'Dibatalkan'];
         $msg = 'Status tiket berhasil diubah ke ' . ($statusLabel[$newStatus] ?? $newStatus);
 
         return $request->expectsJson()

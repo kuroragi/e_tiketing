@@ -150,7 +150,7 @@ class TicketManagementController extends Controller
             // Cari petugas dengan beban terkecil
             $assignee = User::role('petugas')
                 ->where('status', 'aktif')
-                ->withCount(['assignedTickets as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
+                ->withCount(['assignedTicketsMulti as aktif_count' => fn($q) => $q->whereIn('status', ['baru', 'diproses'])])
                 ->orderBy('aktif_count')
                 ->first();
         }

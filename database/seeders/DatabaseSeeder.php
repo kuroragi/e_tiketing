@@ -18,10 +18,9 @@ class DatabaseSeeder extends Seeder
             DepartmentSeeder::class,
             CategorySeeder::class,
             PrioritySeeder::class,
+            SettingSeeder::class,
             UserSeeder::class,
             RolePermissionSeeder::class,
-            SettingSeeder::class,
-            TicketSeeder::class,
         ]);
     }
 }
