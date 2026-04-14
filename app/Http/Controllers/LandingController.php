@@ -19,9 +19,7 @@ class LandingController extends Controller
      */
     public function index()
     {
-        // Statistik publik
         $showStats = Setting::get('landing_show_stats', true);
-        $showRecent = Setting::get('landing_show_recent', true);
 
         $stats = [
             'total'    => Ticket::count(),
@@ -30,21 +28,7 @@ class LandingController extends Controller
             'rata_hari' => $this->avgResolutionDays(),
         ];
 
-        // Layanan unggulan dari settings atau default
-        $services = $this->getServices();
-
-        // Tiket publik terbaru (hanya yang bersumber dari publik/api)
-        $recentTickets = $showRecent
-            ? Ticket::with(['category', 'priority'])
-                ->whereIn('source', ['public', 'api'])
-                ->orderByDesc('created_at')
-                ->limit(6)
-                ->get()
-            : collect();
-
-        $enablePublicTicket = Setting::get('landing_enable_public_ticket', true);
-
-        return view('landing', compact('stats', 'services', 'recentTickets', 'showStats', 'showRecent', 'enablePublicTicket'));
+        return view('landing', compact('stats', 'showStats'));
     }
 
     /**

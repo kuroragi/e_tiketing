@@ -1,6 +1,6 @@
 @extends('layouts.landing')
 
-@section('title', Setting::get('app_name', 'Layanan Publik Kominfo Bukittinggi'))
+@section('title', Setting::get('app_name', 'Sistem Tiket Internal — Kominfo Bukittinggi'))
 
 @section('content')
     <!-- ── Hero Section ────────────────────────────────────────── -->
@@ -13,32 +13,19 @@
                         {{ Setting::get('app_institution', 'Dinas Komunikasi dan Informatika Kota Bukittinggi') }}
                     </div>
                     <h1 class="hero-title">
-                        {!! nl2br(e(Setting::get('landing_hero_title', "Layanan Pengaduan &\nPermintaan Data Publik"))) !!}
+                        Sistem Manajemen<br>Tiket Layanan Internal
                     </h1>
                     <p class="hero-subtitle">
-                        {{ Setting::get('landing_hero_subtitle', 'Sampaikan pengaduan, permintaan data CCTV, atau layanan lainnya secara online. Cepat, transparan, dan dapat dilacak.') }}
+                        Platform pengelolaan tiket layanan untuk staf dan perangkat daerah di lingkungan
+                        Pemerintah Kota Bukittinggi. Dikelola oleh Dinas Komunikasi dan Informatika.
                     </p>
                     <div class="hero-actions d-flex flex-wrap gap-3 mb-4">
-                        <a href="{{ route('public.ticket.create') }}" class="btn btn-hero-primary btn-lg">
-                            <i class="bi bi-pencil-square me-2"></i>Buat Pengaduan
+                        <a href="#layanan-publik" class="btn btn-hero-primary btn-lg">
+                            <i class="bi bi-arrow-down-circle me-2"></i>Layanan untuk Publik
                         </a>
-                        <a href="#layanan" class="btn btn-hero-secondary btn-lg">
-                            <i class="bi bi-arrow-down-circle me-2"></i>Lihat Layanan
+                        <a href="{{ route('login') }}" class="btn btn-hero-secondary btn-lg">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Masuk Sistem
                         </a>
-                    </div>
-
-                    <!-- Track Ticket Mini Form -->
-                    <div class="hero-track-form">
-                        <form action="{{ route('public.ticket.track') }}" method="GET" class="d-flex gap-2">
-                            <input type="text" name="code" class="form-control"
-                                placeholder="Masukkan kode tracking tiket..." required>
-                            <button type="submit" class="btn btn-hero-primary px-3 flex-shrink-0">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </form>
-                        <small class="text-white-50 d-block mt-2">
-                            <i class="bi bi-info-circle me-1"></i>Lacak status pengaduan Anda kapan saja
-                        </small>
                     </div>
                 </div>
 
@@ -48,7 +35,7 @@
                             <div class="col-6">
                                 <div class="stat-card">
                                     <div class="stat-number">{{ number_format($stats['total']) }}</div>
-                                    <div class="stat-label">Total Pengaduan</div>
+                                    <div class="stat-label">Total Tiket</div>
                                 </div>
                             </div>
                             <div class="col-6">
@@ -77,148 +64,206 @@
         </div>
     </section>
 
-    <!-- ── Layanan Section ──────────────────────────────────────── -->
-    <section class="py-5" id="layanan" style="background: var(--landing-light);">
+    <!-- ── Layanan Publik Resmi ─────────────────────────────────── -->
+    <section class="py-5" id="layanan-publik" style="background: var(--landing-light);">
         <div class="container py-4">
             <div class="text-center mb-5">
                 <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 mb-3" style="font-size:0.85rem;">
-                    <i class="bi bi-grid me-1"></i>Layanan Kami
+                    <i class="bi bi-people me-1"></i>Untuk Masyarakat Umum
                 </span>
-                <h2 class="section-title">
-                    {{ Setting::get('landing_services_title', 'Jenis Layanan yang Tersedia') }}
-                </h2>
+                <h2 class="section-title">Kanal Layanan Publik Resmi</h2>
                 <p class="section-subtitle">
-                    {{ Setting::get('landing_services_subtitle', 'Pilih jenis layanan sesuai kebutuhan Anda. Semua layanan dapat diakses tanpa perlu datang ke kantor.') }}
+                    Sesuai regulasi Kementerian Komunikasi dan Informatika, layanan pengaduan dan
+                    permintaan informasi publik dilayani melalui kanal resmi berikut.
                 </p>
             </div>
 
-            <div class="row g-4">
-                @foreach ($services as $service)
-                    <div class="col-lg-4 col-md-6">
-                        <div class="service-card">
-                            <div class="service-icon"
-                                style="background: {{ $service['color'] }}15; color: {{ $service['color'] }};">
-                                <i class="bi {{ $service['icon'] }}"></i>
-                            </div>
-                            <h5>{{ $service['title'] }}</h5>
-                            <p>{{ $service['description'] }}</p>
-                            <a href="{{ route('public.ticket.create', ['kategori' => $service['category_id'] ?? '']) }}"
-                                class="btn btn-sm btn-outline-primary mt-2">
-                                Ajukan Permintaan <i class="bi bi-arrow-right ms-1"></i>
+            <div class="row g-4 justify-content-center">
+                <!-- PPID Card -->
+                <div class="col-lg-5 col-md-10">
+                    <div class="service-card h-100 d-flex flex-column" style="border-top: 4px solid #0ea5e9;">
+                        <div class="service-icon" style="background: #0ea5e915; color: #0ea5e9;">
+                            <i class="bi bi-database-lock"></i>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge" style="background:#0ea5e920; color:#0ea5e9; font-size:0.75rem;">
+                                Pejabat Pengelola Informasi dan Dokumentasi
+                            </span>
+                        </div>
+                        <h4 class="fw-bold mb-2">Permintaan Informasi Publik</h4>
+                        <p class="text-muted mb-1" style="font-size:0.9rem;">
+                            Ajukan permohonan informasi publik, data, dan dokumen milik
+                            Pemerintah Kota Bukittinggi secara resmi melalui portal PPID.
+                        </p>
+                        <ul class="list-unstyled small text-muted mb-4 mt-2">
+                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Permohonan data
+                                statistik & dokumen publik</li>
+                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Keberatan atas
+                                informasi yang tidak tersedia</li>
+                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Sengketa informasi
+                                sesuai UU KIP No. 14/2008</li>
+                        </ul>
+                        <div class="mt-auto">
+                            <a href="https://ppid.bukittinggikota.go.id/" target="_blank" rel="noopener noreferrer"
+                                class="btn btn-lg w-100 fw-semibold" style="background:#0ea5e9; color:#fff; border:none;">
+                                <i class="bi bi-box-arrow-up-right me-2"></i>Kunjungi PPID Bukittinggi
                             </a>
+                            <p class="text-muted text-center mt-2 mb-0" style="font-size:0.78rem;">
+                                <i class="bi bi-link-45deg me-1"></i>ppid.bukittinggikota.go.id
+                            </p>
                         </div>
                     </div>
-                @endforeach
+                </div>
+
+                <!-- LAPOR! Card -->
+                <div class="col-lg-5 col-md-10">
+                    <div class="service-card h-100 d-flex flex-column" style="border-top: 4px solid #10b981;">
+                        <div class="service-icon" style="background: #10b98115; color: #10b981;">
+                            <i class="bi bi-megaphone"></i>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge" style="background:#10b98120; color:#10b981; font-size:0.75rem;">
+                                Layanan Aspirasi dan Pengaduan Online Rakyat
+                            </span>
+                        </div>
+                        <h4 class="fw-bold mb-2">Pengaduan & Aspirasi Masyarakat</h4>
+                        <p class="text-muted mb-1" style="font-size:0.9rem;">
+                            Sampaikan pengaduan, saran, dan aspirasi terkait layanan publik
+                            Pemerintah Kota Bukittinggi melalui portal LAPOR! yang terintegrasi nasional.
+                        </p>
+                        <ul class="list-unstyled small text-muted mb-4 mt-2">
+                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Pengaduan layanan
+                                publik & infrastruktur</li>
+                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Saran dan aspirasi
+                                untuk pemerintah</li>
+                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Terhubung langsung
+                                ke Kemenpan-RB</li>
+                        </ul>
+                        <div class="mt-auto">
+                            <a href="https://www.lapor.go.id/" target="_blank" rel="noopener noreferrer"
+                                class="btn btn-lg w-100 fw-semibold" style="background:#10b981; color:#fff; border:none;">
+                                <i class="bi bi-box-arrow-up-right me-2"></i>Kunjungi LAPOR!
+                            </a>
+                            <p class="text-muted text-center mt-2 mb-0" style="font-size:0.78rem;">
+                                <i class="bi bi-link-45deg me-1"></i>lapor.go.id
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info note -->
+            <div class="row justify-content-center mt-4">
+                <div class="col-lg-10">
+                    <div class="alert alert-light border d-flex gap-3 align-items-start" style="border-radius:0.75rem;">
+                        <i class="bi bi-info-circle-fill text-primary flex-shrink-0 mt-1" style="font-size:1.1rem;"></i>
+                        <div class="small text-muted">
+                            <strong class="text-dark">Mengapa menggunakan portal tersebut?</strong>
+                            Berdasarkan peraturan Kementerian Kominfo, seluruh permintaan informasi publik
+                            dan pengaduan masyarakat wajib diproses melalui kanal resmi yang telah ditentukan
+                            agar dapat terdokumentasi, dipantau, dan ditindaklanjuti sesuai ketentuan yang berlaku.
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- ── How It Works ─────────────────────────────────────────── -->
+    <!-- ── Tentang Sistem Internal ──────────────────────────────── -->
     <section class="py-5">
         <div class="container py-4">
-            <div class="text-center mb-5">
-                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 mb-3" style="font-size:0.85rem;">
-                    <i class="bi bi-signpost-2 me-1"></i>Cara Kerja
-                </span>
-                <h2 class="section-title">Bagaimana Proses Pengaduan?</h2>
-                <p class="section-subtitle">Proses yang mudah dan transparan dalam 4 langkah sederhana</p>
-            </div>
-
-            <div class="row g-4">
-                <div class="col-lg-3 col-md-6">
-                    <div class="step-card">
-                        <div class="step-number">1</div>
-                        <h5>Isi Formulir</h5>
-                        <p>Lengkapi data diri dan deskripsi pengaduan atau permintaan Anda</p>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6">
-                    <div class="step-card">
-                        <div class="step-number">2</div>
-                        <h5>Dapatkan Kode</h5>
-                        <p>Anda akan mendapatkan kode tracking untuk memantau status</p>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6">
-                    <div class="step-card">
-                        <div class="step-number">3</div>
-                        <h5>Tim Memproses</h5>
-                        <p>Tim Kominfo akan segera menindaklanjuti pengaduan Anda</p>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6">
-                    <div class="step-card">
-                        <div class="step-number">4</div>
-                        <h5>Selesai</h5>
-                        <p>Anda akan mendapatkan notifikasi saat pengaduan telah ditangani</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ── Recent Public Tickets ─────────────────────────────────── -->
-    @if ($showRecent && $recentTickets->count())
-        <section class="py-5" style="background: var(--landing-light);">
-            <div class="container py-4">
-                <div class="text-center mb-5">
-                    <span class="badge bg-info bg-opacity-10 text-info px-3 py-2 mb-3" style="font-size:0.85rem;">
-                        <i class="bi bi-clock-history me-1"></i>Terbaru
+            <div class="row align-items-center g-5">
+                <div class="col-lg-6">
+                    <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 mb-3" style="font-size:0.85rem;">
+                        <i class="bi bi-building me-1"></i>Untuk Staf Internal
                     </span>
-                    <h2 class="section-title">Pengaduan Terakhir</h2>
-                    <p class="section-subtitle">Transparansi penanganan pengaduan masyarakat</p>
-                </div>
-
-                <div class="row g-3">
-                    @foreach ($recentTickets as $ticket)
-                        <div class="col-lg-6">
-                            <div class="card border-0 shadow-sm h-100">
-                                <div class="card-body d-flex align-items-start gap-3">
-                                    <div class="flex-shrink-0">
-                                        <span
-                                            class="badge bg-{{ $ticket->statusBadgeClass() }} bg-opacity-10 text-{{ $ticket->statusBadgeClass() }} p-2"
-                                            style="font-size:1rem;">
-                                            <i class="bi bi-ticket-perforated"></i>
-                                        </span>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex justify-content-between align-items-start mb-1">
-                                            <h6 class="mb-0 fw-bold">{{ Str::limit($ticket->title, 50) }}</h6>
-                                            <span
-                                                class="badge bg-{{ $ticket->statusBadgeClass() }} ms-2">{{ $ticket->statusLabel() }}</span>
-                                        </div>
-                                        <small class="text-muted d-block mb-1">
-                                            <i class="bi bi-tag me-1"></i>{{ $ticket->category->name ?? '-' }}
-                                            &bull;
-                                            <i class="bi bi-calendar me-1"></i>{{ $ticket->created_at->diffForHumans() }}
-                                        </small>
-                                        <small class="text-muted">{{ Str::limit($ticket->description, 80) }}</small>
-                                    </div>
+                    <h2 class="section-title mb-3">Sistem Tiket Internal Kominfo</h2>
+                    <p class="text-muted mb-4">
+                        Aplikasi ini merupakan platform manajemen tiket <strong>khusus untuk staf dan perangkat
+                            daerah</strong> di lingkungan Pemerintah Kota Bukittinggi. Digunakan untuk
+                        pengelolaan, pelacakan, dan pelaporan permintaan layanan TI secara internal.
+                    </p>
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="flex-shrink-0 rounded-2 d-flex align-items-center justify-content-center"
+                                    style="width:40px;height:40px;background:#4f46e515;">
+                                    <i class="bi bi-ticket-perforated text-primary"></i>
+                                </div>
+                                <div>
+                                    <strong class="d-block small">Manajemen Tiket</strong>
+                                    <span class="text-muted" style="font-size:0.82rem;">Buat, kelola, dan pantau tiket
+                                        layanan secara terpusat</span>
                                 </div>
                             </div>
                         </div>
-                    @endforeach
+                        <div class="col-sm-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="flex-shrink-0 rounded-2 d-flex align-items-center justify-content-center"
+                                    style="width:40px;height:40px;background:#0ea5e915;">
+                                    <i class="bi bi-diagram-3" style="color:#0ea5e9;"></i>
+                                </div>
+                                <div>
+                                    <strong class="d-block small">Multi Departemen</strong>
+                                    <span class="text-muted" style="font-size:0.82rem;">Tiket dapat diarahkan ke bidang
+                                        yang tepat secara otomatis</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="flex-shrink-0 rounded-2 d-flex align-items-center justify-content-center"
+                                    style="width:40px;height:40px;background:#10b98115;">
+                                    <i class="bi bi-bar-chart-line" style="color:#10b981;"></i>
+                                </div>
+                                <div>
+                                    <strong class="d-block small">Laporan & Statistik</strong>
+                                    <span class="text-muted" style="font-size:0.82rem;">Dashboard analitik untuk memantau
+                                        kinerja penanganan</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="flex-shrink-0 rounded-2 d-flex align-items-center justify-content-center"
+                                    style="width:40px;height:40px;background:#f59e0b15;">
+                                    <i class="bi bi-bell" style="color:#f59e0b;"></i>
+                                </div>
+                                <div>
+                                    <strong class="d-block small">Notifikasi Otomatis</strong>
+                                    <span class="text-muted" style="font-size:0.82rem;">Update status tiket dikirim
+                                        otomatis melalui Telegram</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{{ route('login') }}" class="btn btn-primary btn-lg px-4">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Masuk sebagai Petugas
+                    </a>
+                </div>
+                <div class="col-lg-6 d-none d-lg-flex justify-content-center align-items-center">
+                    <div class="text-center p-5"
+                        style="background:linear-gradient(135deg,#4f46e508,#0ea5e908);border-radius:1.5rem;border:1px solid #e2e8f0;">
+                        <i class="bi bi-headset" style="font-size:6rem;color:var(--landing-primary);opacity:0.7;"></i>
+                        <p class="text-muted mt-3 mb-0 small">Sistem Tiket Internal<br>Kominfo Bukittinggi</p>
+                    </div>
                 </div>
             </div>
-        </section>
-    @endif
+        </div>
+    </section>
 
-    <!-- ── CTA Section ───────────────────────────────────────────── -->
-    <section class="py-5">
+    <!-- ── CTA Staff Login ───────────────────────────────────────── -->
+    <section class="py-5" style="background: var(--landing-light);">
         <div class="container py-4">
             <div class="cta-section text-center">
-                <h2 class="mb-3">Punya Pengaduan atau Permintaan?</h2>
-                <p class="mb-4 mx-auto" style="max-width:500px;">
-                    Jangan ragu untuk menyampaikan pengaduan atau permintaan data. Tim kami siap membantu Anda.
+                <h2 class="mb-3">Staf Pemerintahan Kota Bukittinggi?</h2>
+                <p class="mb-4 mx-auto" style="max-width:520px;">
+                    Gunakan akun yang telah diberikan oleh administrator untuk mengakses
+                    sistem tiket internal Kominfo.
                 </p>
-                <div class="d-flex justify-content-center gap-3 flex-wrap">
-                    <a href="{{ route('public.ticket.create') }}" class="btn btn-light btn-lg px-4 fw-semibold">
-                        <i class="bi bi-pencil-square me-2"></i>Buat Pengaduan Sekarang
-                    </a>
-                    <a href="{{ route('public.ticket.track') }}" class="btn btn-outline-light btn-lg px-4 fw-semibold">
-                        <i class="bi bi-search me-2"></i>Lacak Tiket
-                    </a>
-                </div>
+                <a href="{{ route('login') }}" class="btn btn-light btn-lg px-5 fw-semibold">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Masuk ke Sistem
+                </a>
             </div>
         </div>
     </section>

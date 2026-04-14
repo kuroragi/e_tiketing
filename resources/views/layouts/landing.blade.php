@@ -5,7 +5,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="description" content="{{ Setting::get('landing_hero_subtitle', 'Layanan pengaduan dan permintaan data untuk masyarakat Kota Bukittinggi') }}">
+    <meta name="description"
+        content="{{ Setting::get('landing_hero_subtitle', 'Layanan pengaduan dan permintaan data untuk masyarakat Kota Bukittinggi') }}">
 
     <title>@yield('title', Setting::get('app_name', 'Layanan Publik Kominfo Bukittinggi'))</title>
 
@@ -108,7 +109,7 @@
             right: -20%;
             width: 600px;
             height: 600px;
-            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
             border-radius: 50%;
         }
 
@@ -402,12 +403,18 @@
                             href="{{ route('landing') }}">Beranda</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('public.ticket.create') ? 'active' : '' }}"
-                            href="{{ route('public.ticket.create') }}">Buat Pengaduan</a>
+                        <a class="nav-link" href="#layanan-publik">Layanan Publik</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('public.ticket.track') ? 'active' : '' }}"
-                            href="{{ route('public.ticket.track') }}">Lacak Tiket</a>
+                        <a class="nav-link" href="https://ppid.bukittinggikota.go.id/" target="_blank"
+                            rel="noopener noreferrer">
+                            PPID <i class="bi bi-box-arrow-up-right" style="font-size:0.7rem;"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://www.lapor.go.id/" target="_blank" rel="noopener noreferrer">
+                            LAPOR! <i class="bi bi-box-arrow-up-right" style="font-size:0.7rem;"></i>
+                        </a>
                     </li>
                 </ul>
                 <a href="{{ route('login') }}" class="btn btn-nav-login">
@@ -432,47 +439,76 @@
                         {{ Setting::get('app_description', 'Layanan pengaduan dan permintaan data publik Dinas Komunikasi dan Informatika Kota Bukittinggi.') }}
                     </p>
                     <div class="d-flex gap-2">
-                        @if(Setting::get('contact_social_facebook'))
-                            <a href="{{ Setting::get('contact_social_facebook') }}" class="btn btn-sm btn-outline-light rounded-circle" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center"><i class="bi bi-facebook"></i></a>
+                        @if (Setting::get('contact_social_facebook'))
+                            <a href="{{ Setting::get('contact_social_facebook') }}"
+                                class="btn btn-sm btn-outline-light rounded-circle"
+                                style="width:36px;height:36px;display:flex;align-items:center;justify-content:center"><i
+                                    class="bi bi-facebook"></i></a>
                         @endif
-                        @if(Setting::get('contact_social_instagram'))
-                            <a href="{{ Setting::get('contact_social_instagram') }}" class="btn btn-sm btn-outline-light rounded-circle" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center"><i class="bi bi-instagram"></i></a>
+                        @if (Setting::get('contact_social_instagram'))
+                            <a href="{{ Setting::get('contact_social_instagram') }}"
+                                class="btn btn-sm btn-outline-light rounded-circle"
+                                style="width:36px;height:36px;display:flex;align-items:center;justify-content:center"><i
+                                    class="bi bi-instagram"></i></a>
                         @endif
-                        @if(Setting::get('contact_social_twitter'))
-                            <a href="{{ Setting::get('contact_social_twitter') }}" class="btn btn-sm btn-outline-light rounded-circle" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center"><i class="bi bi-twitter-x"></i></a>
+                        @if (Setting::get('contact_social_twitter'))
+                            <a href="{{ Setting::get('contact_social_twitter') }}"
+                                class="btn btn-sm btn-outline-light rounded-circle"
+                                style="width:36px;height:36px;display:flex;align-items:center;justify-content:center"><i
+                                    class="bi bi-twitter-x"></i></a>
                         @endif
-                        @if(Setting::get('contact_social_youtube'))
-                            <a href="{{ Setting::get('contact_social_youtube') }}" class="btn btn-sm btn-outline-light rounded-circle" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center"><i class="bi bi-youtube"></i></a>
+                        @if (Setting::get('contact_social_youtube'))
+                            <a href="{{ Setting::get('contact_social_youtube') }}"
+                                class="btn btn-sm btn-outline-light rounded-circle"
+                                style="width:36px;height:36px;display:flex;align-items:center;justify-content:center"><i
+                                    class="bi bi-youtube"></i></a>
                         @endif
                     </div>
                 </div>
                 <div class="col-lg-2 col-md-4">
-                    <h6>Layanan</h6>
+                    <h6>Layanan Publik</h6>
                     <ul class="list-unstyled small">
-                        <li class="mb-2"><a href="{{ route('public.ticket.create') }}">Buat Pengaduan</a></li>
-                        <li class="mb-2"><a href="{{ route('public.ticket.track') }}">Lacak Tiket</a></li>
+                        <li class="mb-2">
+                            <a href="https://ppid.bukittinggikota.go.id/" target="_blank" rel="noopener noreferrer">
+                                PPID Bukittinggi <i class="bi bi-box-arrow-up-right" style="font-size:0.65rem;"></i>
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="https://www.lapor.go.id/" target="_blank" rel="noopener noreferrer">
+                                LAPOR! <i class="bi bi-box-arrow-up-right" style="font-size:0.65rem;"></i>
+                            </a>
+                        </li>
                         <li class="mb-2"><a href="{{ route('login') }}">Login Petugas</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-3 col-md-4">
                     <h6>Informasi</h6>
                     <ul class="list-unstyled small">
-                        <li class="mb-2"><i class="bi bi-telephone me-1"></i>{{ Setting::get('contact_phone', '(0752) 123-4567') }}</li>
-                        <li class="mb-2"><i class="bi bi-envelope me-1"></i>{{ Setting::get('contact_email', 'kominfo@bukittinggi.go.id') }}</li>
-                        <li class="mb-2"><i class="bi bi-clock me-1"></i>{{ Setting::get('contact_hours', 'Senin-Jumat, 08:00-17:00 WIB') }}</li>
+                        <li class="mb-2"><i
+                                class="bi bi-telephone me-1"></i>{{ Setting::get('contact_phone', '(0752) 123-4567') }}
+                        </li>
+                        <li class="mb-2"><i
+                                class="bi bi-envelope me-1"></i>{{ Setting::get('contact_email', 'kominfo@bukittinggi.go.id') }}
+                        </li>
+                        <li class="mb-2"><i
+                                class="bi bi-clock me-1"></i>{{ Setting::get('contact_hours', 'Senin-Jumat, 08:00-17:00 WIB') }}
+                        </li>
                     </ul>
                 </div>
                 <div class="col-lg-3 col-md-4">
                     <h6>Alamat</h6>
                     <p class="small">
-                        <i class="bi bi-geo-alt me-1"></i>{{ Setting::get('contact_address', 'Jl. Panglima Nyak Arief No. 45, Bukittinggi, Sumatera Barat') }}
+                        <i
+                            class="bi bi-geo-alt me-1"></i>{{ Setting::get('contact_address', 'Jl. Panglima Nyak Arief No. 45, Bukittinggi, Sumatera Barat') }}
                     </p>
                 </div>
             </div>
             <hr class="my-4 border-secondary">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <p class="small mb-0">&copy; {{ date('Y') }} {{ Setting::get('app_institution', 'Dinas Komunikasi dan Informatika Kota Bukittinggi') }}. All rights reserved.</p>
+                    <p class="small mb-0">&copy; {{ date('Y') }}
+                        {{ Setting::get('app_institution', 'Dinas Komunikasi dan Informatika Kota Bukittinggi') }}. All
+                        rights reserved.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <p class="small mb-0">Sistem E-Ticketing v1.0</p>

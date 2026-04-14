@@ -14,13 +14,13 @@ use App\Http\Controllers\PermissionController;
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::get('/home', [LandingController::class, 'index'])->name('home');
 
-// ── Public Ticket Routes (tanpa auth) ──────────────────────────────
+// ── Public Ticket Routes — dialihkan ke kanal resmi (PPID & LAPOR!) ──────────
 Route::prefix('pengaduan')->group(function () {
-    Route::get('/', [LandingController::class, 'createTicket'])->name('public.ticket.create');
-    Route::post('/', [LandingController::class, 'storeTicket'])->name('public.ticket.store');
-    Route::get('sukses/{trackingCode}', [LandingController::class, 'ticketSuccess'])->name('public.ticket.success');
+    Route::get('/', fn() => redirect()->route('landing'))->name('public.ticket.create');
+    Route::post('/', fn() => redirect()->route('landing'))->name('public.ticket.store');
+    Route::get('sukses/{trackingCode}', fn() => redirect()->route('landing'))->name('public.ticket.success');
 });
-Route::get('/lacak', [LandingController::class, 'trackTicket'])->name('public.ticket.track');
+Route::get('/lacak', fn() => redirect()->route('landing'))->name('public.ticket.track');
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
