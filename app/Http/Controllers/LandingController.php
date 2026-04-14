@@ -65,7 +65,19 @@ class LandingController extends Controller
         $captchaNum2 = random_int(1, 10);
         $captchaHash = hash_hmac('sha256', $captchaNum1 + $captchaNum2, config('app.key'));
 
-        return view('public.submit-ticket', compact('categories', 'priorities', 'captchaNum1', 'captchaNum2', 'captchaHash'));
+        // Cari layanan yang dipilih dari landing page
+        $selectedService = null;
+        $kategoriId = request('kategori');
+        if ($kategoriId) {
+            foreach ($this->getServices() as $service) {
+                if (isset($service['category_id']) && (string) $service['category_id'] === (string) $kategoriId) {
+                    $selectedService = $service;
+                    break;
+                }
+            }
+        }
+
+        return view('public.submit-ticket', compact('categories', 'priorities', 'captchaNum1', 'captchaNum2', 'captchaHash', 'selectedService'));
     }
 
     /**
@@ -228,46 +240,58 @@ class LandingController extends Controller
         // Default services
         return [
             [
-                'icon'        => 'bi-camera-video',
-                'title'       => 'Permintaan Data CCTV',
-                'description' => 'Permintaan rekaman CCTV untuk keperluan investigasi, keamanan, atau bukti kejadian di area publik.',
-                'color'       => '#6366f1',
-                'category_id' => null,
+                'icon'                 => 'bi-camera-video',
+                'title'                => 'Permintaan Data CCTV',
+                'description'          => 'Permintaan rekaman CCTV untuk keperluan investigasi, keamanan, atau bukti kejadian di area publik.',
+                'color'                => '#6366f1',
+                'category_id'          => null,
+                'title_placeholder'    => 'Permintaan rekaman CCTV di [lokasi] pada [tanggal]',
+                'desc_placeholder'     => "Saya membutuhkan rekaman CCTV di lokasi... pada tanggal... pukul...\n\nKeperluan: (investigasi, laporan polisi, dll.)\nDeskripsi singkat kejadian:",
             ],
             [
-                'icon'        => 'bi-hdd-network',
-                'title'       => 'Gangguan Jaringan & Internet',
-                'description' => 'Laporkan gangguan jaringan internet, WiFi publik, atau infrastruktur telekomunikasi di wilayah Bukittinggi.',
-                'color'       => '#0ea5e9',
-                'category_id' => null,
+                'icon'                 => 'bi-hdd-network',
+                'title'                => 'Gangguan Jaringan & Internet',
+                'description'          => 'Laporkan gangguan jaringan internet, WiFi publik, atau infrastruktur telekomunikasi di wilayah Bukittinggi.',
+                'color'                => '#0ea5e9',
+                'category_id'          => null,
+                'title_placeholder'    => 'Gangguan jaringan internet di [nama lokasi/kelurahan]',
+                'desc_placeholder'     => "Terjadi gangguan jaringan di lokasi... sejak tanggal/pukul...\n\nJenis gangguan: (putus total / lambat / tidak stabil)\nDampak yang dirasakan:",
             ],
             [
-                'icon'        => 'bi-globe2',
-                'title'       => 'Informasi Website Resmi',
-                'description' => 'Permintaan update informasi, pelaporan konten tidak sesuai, atau saran untuk website pemerintah.',
-                'color'       => '#10b981',
-                'category_id' => null,
+                'icon'                 => 'bi-globe2',
+                'title'                => 'Informasi Website Resmi',
+                'description'          => 'Permintaan update informasi, pelaporan konten tidak sesuai, atau saran untuk website pemerintah.',
+                'color'                => '#10b981',
+                'category_id'          => null,
+                'title_placeholder'    => 'Laporan/permintaan terkait website [nama website]',
+                'desc_placeholder'     => "URL halaman yang terdampak: ...\n\nJenis permintaan: (update informasi / konten tidak sesuai / saran)\nDetail permintaan:",
             ],
             [
-                'icon'        => 'bi-database',
-                'title'       => 'Permintaan Data Publik',
-                'description' => 'Permintaan data statistik, data terbuka, atau informasi publik dari Dinas Kominfo.',
-                'color'       => '#f59e0b',
-                'category_id' => null,
+                'icon'                 => 'bi-database',
+                'title'                => 'Permintaan Data Publik',
+                'description'          => 'Permintaan data statistik, data terbuka, atau informasi publik dari Dinas Kominfo.',
+                'color'                => '#f59e0b',
+                'category_id'          => null,
+                'title_placeholder'    => 'Permintaan data [jenis data] untuk [keperluan]',
+                'desc_placeholder'     => "Jenis data yang diminta: ...\n\nPeriode/rentang data: ...\nKeperluan penggunaan data:\nInstansi/organisasi pemohon (jika ada):",
             ],
             [
-                'icon'        => 'bi-megaphone',
-                'title'       => 'Pengaduan Layanan Publik',
-                'description' => 'Sampaikan keluhan atau pengaduan terkait layanan publik berbasis teknologi informasi.',
-                'color'       => '#ef4444',
-                'category_id' => null,
+                'icon'                 => 'bi-megaphone',
+                'title'                => 'Pengaduan Layanan Publik',
+                'description'          => 'Sampaikan keluhan atau pengaduan terkait layanan publik berbasis teknologi informasi.',
+                'color'                => '#ef4444',
+                'category_id'          => null,
+                'title_placeholder'    => 'Pengaduan terkait [nama layanan yang dipermasalahkan]',
+                'desc_placeholder'     => "Layanan yang bermasalah: ...\n\nKronologi kejadian:\nUpaya yang sudah dilakukan:\nHarapan/permintaan tindak lanjut:",
             ],
             [
-                'icon'        => 'bi-question-circle',
-                'title'       => 'Pertanyaan & Konsultasi',
-                'description' => 'Ajukan pertanyaan atau konsultasi terkait layanan Kominfo untuk kebutuhan organisasi atau umum.',
-                'color'       => '#8b5cf6',
-                'category_id' => null,
+                'icon'                 => 'bi-question-circle',
+                'title'                => 'Pertanyaan & Konsultasi',
+                'description'          => 'Ajukan pertanyaan atau konsultasi terkait layanan Kominfo untuk kebutuhan organisasi atau umum.',
+                'color'                => '#8b5cf6',
+                'category_id'          => null,
+                'title_placeholder'    => 'Konsultasi mengenai [topik pertanyaan]',
+                'desc_placeholder'     => "Topik konsultasi: ...\n\nLatar belakang pertanyaan:\nInformasi atau solusi yang diharapkan:",
             ],
         ];
     }
