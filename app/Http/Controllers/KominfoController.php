@@ -884,62 +884,170 @@ class KominfoController extends Controller
             403, 'Akses ditolak.'
         );
 
-        $dari    = $request->filled('dari')    ? Carbon::parse($request->dari)->startOfDay()    : now()->startOfMonth();
-        $sampai  = $request->filled('sampai')  ? Carbon::parse($request->sampai)->endOfDay()    : now()->endOfMonth();
-        $deptId  = $request->get('department_id');
-        $catId   = $request->get('category_id');
+        $dari       = $request->filled('dari')        ? Carbon::parse($request->dari)->startOfDay()      : now()->startOfMonth();
+        $sampai     = $request->filled('sampai')      ? Carbon::parse($request->sampai)->endOfDay()      : now()->endOfMonth();
+        $deptId     = $request->get('department_id');
+        $catId      = $request->get('category_id');
+        $statusF    = $request->get('status');
+        $priorityId = $request->get('priority_id');
+        $assigneeId = $request->get('assignee_id');
 
-        $base = Ticket::whereBetween('created_at', [$dari, $sampai]);
-        if ($deptId) $base->where('department_id', $deptId);
-        if ($catId)  $base->where('category_id', $catId);
+        // ── Base query with all active filters ────────────────────────────────
+        $buildBase = function () use ($dari, $sampai, $deptId, $catId, $statusF, $priorityId, $assigneeId) {
+            $q = Ticket::whereBetween('created_at', [$dari, $sampai]);
+            if ($deptId)     $q->where('department_id', $deptId);
+            if ($catId)      $q->where('category_id', $catId);
+            if ($statusF)    $q->where('status', $statusF);
+            if ($priorityId) $q->where('priority_id', $priorityId);
+            if ($assigneeId) $q->whereHas('assignees', fn($aq) => $aq->where('users.id', $assigneeId));
+            return $q;
+        };
 
-        $total   = (clone $base)->count();
-        $selesai = (clone $base)->where('status', 'selesai')->count();
-        $avg     = (clone $base)->where('status', 'selesai')->whereNotNull('closed_at')->get()
+        $total   = (clone $buildBase())->count();
+        $selesai = (clone $buildBase())->where('status', 'selesai')->count();
+        $avgDays = (clone $buildBase())->where('status', 'selesai')->whereNotNull('closed_at')->get()
             ->avg(fn($t) => $t->created_at->diffInDays($t->closed_at));
 
         $summary = [
             'total_tiket'        => $total,
             'tiket_selesai'      => $selesai,
+            'tiket_ditolak'      => (clone $buildBase())->where('status', 'ditolak')->count(),
             'persentase_selesai' => $total ? round($selesai / $total * 100) : 0,
-            'rata_waktu'         => round($avg ?? 0, 1),
-            'backlog'            => (clone $base)->whereIn('status', ['baru', 'diproses'])->count(),
+            'rata_waktu'         => round($avgDays ?? 0, 1),
+            'backlog'            => (clone $buildBase())->whereIn('status', ['baru', 'diproses', 'menunggu_verifikasi'])->count(),
         ];
 
         $statusDistribution = [
-            'baru'       => (clone $base)->where('status', 'baru')->count(),
-            'diproses'   => (clone $base)->where('status', 'diproses')->count(),
-            'selesai'    => $selesai,
-            'ditolak'    => (clone $base)->where('status', 'ditolak')->count(),
-            'dibatalkan' => (clone $base)->where('status', 'dibatalkan')->count(),
+            'baru'                => (clone $buildBase())->where('status', 'baru')->count(),
+            'diproses'            => (clone $buildBase())->where('status', 'diproses')->count(),
+            'menunggu_verifikasi' => (clone $buildBase())->where('status', 'menunggu_verifikasi')->count(),
+            'selesai'             => $selesai,
+            'ditolak'             => (clone $buildBase())->where('status', 'ditolak')->count(),
+            'dibatalkan'          => (clone $buildBase())->where('status', 'dibatalkan')->count(),
         ];
 
-        // Rekap per SKPD
-        $skpdReport = Department::withCount([
-            'tickets as total'   => fn($q) => $q->whereBetween('created_at', [$dari, $sampai]),
-            'tickets as selesai' => fn($q) => $q->whereBetween('created_at', [$dari, $sampai])->where('status', 'selesai'),
-        ])->having('total', '>', 0)->orderByDesc('total')->get()
-            ->map(fn($d) => [
-                'nama'       => $d->name,
-                'total'      => $d->total,
-                'selesai'    => $d->selesai,
-                'persentase' => $d->total ? round($d->selesai / $d->total * 100) : 0,
-            ])->toArray();
+        // ── Trend 6 bulan terakhir ─────────────────────────────────────────────
+        $trendData = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $m = now()->subMonths($i);
+            $trendData[] = [
+                'label'   => $m->translatedFormat('M Y'),
+                'masuk'   => Ticket::whereYear('created_at', $m->year)->whereMonth('created_at', $m->month)->count(),
+                'selesai' => Ticket::where('status', 'selesai')->whereYear('closed_at', $m->year)->whereMonth('closed_at', $m->month)->count(),
+            ];
+        }
 
-        // Rekap per kategori
-        $jenisReport = Category::withCount([
-            'tickets as jumlah' => fn($q) => $q->whereBetween('created_at', [$dari, $sampai]),
-        ])->having('jumlah', '>', 0)->orderByDesc('jumlah')->get()
-            ->map(fn($c) => [
-                'nama'       => $c->name,
-                'jumlah'     => $c->jumlah,
-                'persentase' => $total ? round($c->jumlah / $total * 100) : 0,
-            ])->toArray();
+        // ── Laporan detail per SKPD ────────────────────────────────────────────
+        // Load tickets with eager-loading to avoid N+1 queries
+        $ticketsAll = (clone $buildBase())
+            ->with(['department:id,name,code', 'category:id,name', 'assignees:id,name'])
+            ->get();
 
-        $skpdList   = Department::aktif()->orderBy('name')->get();
-        $categories = Category::aktif()->orderBy('name')->get();
+        // Group by department
+        $skpdDetail = [];
+        $ticketsByDept = $ticketsAll->groupBy('department_id');
 
-        // Statistik petugas — hanya dibutuhkan oleh admin & pimpinan
+        foreach ($ticketsByDept as $dId => $deptTickets) {
+            $firstDept   = $deptTickets->first()->department;
+            $deptTotal   = $deptTickets->count();
+            $deptSelesai = $deptTickets->where('status', 'selesai')->count();
+            $deptAvg     = $deptTickets->where('status', 'selesai')
+                ->filter(fn($t) => $t->closed_at)
+                ->avg(fn($t) => $t->created_at->diffInDays($t->closed_at));
+
+            // Category breakdown for this SKPD (top 5)
+            $katBreakdown = $deptTickets->groupBy('category_id')
+                ->map(fn($grp) => [
+                    'nama'       => optional($grp->first()->category)->name ?? '—',
+                    'jumlah'     => $grp->count(),
+                    'selesai'    => $grp->where('status', 'selesai')->count(),
+                    'persentase' => round($grp->count() / $deptTotal * 100),
+                ])
+                ->sortByDesc('jumlah')->values()->take(5)->toArray();
+
+            // Petugas assigned to tickets of this SKPD
+            $petugasDept = $deptTickets->flatMap(fn($t) => $t->assignees)
+                ->unique('id')
+                ->map(fn($u) => [
+                    'nama'    => $u->name,
+                    'jumlah'  => $deptTickets->filter(fn($t) => $t->assignees->contains('id', $u->id))->count(),
+                    'selesai' => $deptTickets->filter(fn($t) => $t->assignees->contains('id', $u->id) && $t->status === 'selesai')->count(),
+                ])
+                ->sortByDesc('jumlah')->values()->toArray();
+
+            $skpdDetail[] = [
+                'id'         => $dId,
+                'nama'       => optional($firstDept)->name ?? '(Tanpa SKPD)',
+                'code'       => optional($firstDept)->code ?? strtoupper(mb_substr(optional($firstDept)->name ?? 'N/A', 0, 3)),
+                'total'      => $deptTotal,
+                'selesai'    => $deptSelesai,
+                'ditolak'    => $deptTickets->where('status', 'ditolak')->count(),
+                'dibatalkan' => $deptTickets->where('status', 'dibatalkan')->count(),
+                'backlog'    => $deptTickets->whereIn('status', ['baru', 'diproses', 'menunggu_verifikasi'])->count(),
+                'persentase' => $deptTotal ? round($deptSelesai / $deptTotal * 100) : 0,
+                'rata_hari'  => round($deptAvg ?? 0, 1),
+                'kategori'   => $katBreakdown,
+                'petugas'    => $petugasDept,
+            ];
+        }
+        usort($skpdDetail, fn($a, $b) => $b['total'] - $a['total']);
+
+        // ── Laporan detail per Kategori ────────────────────────────────────────
+        $categoryDetail = [];
+        $ticketsByCat = $ticketsAll->groupBy('category_id');
+
+        foreach ($ticketsByCat as $cId => $catTickets) {
+            $firstCat    = $catTickets->first()->category;
+            $catTotal    = $catTickets->count();
+            $catSelesai  = $catTickets->where('status', 'selesai')->count();
+            $catAvg      = $catTickets->where('status', 'selesai')
+                ->filter(fn($t) => $t->closed_at)
+                ->avg(fn($t) => $t->created_at->diffInDays($t->closed_at));
+
+            // Top SKPDs submitting this category (top 5)
+            $skpdBreakdown = $catTickets->groupBy('department_id')
+                ->map(fn($grp) => [
+                    'nama'       => optional($grp->first()->department)->name ?? '(Publik)',
+                    'jumlah'     => $grp->count(),
+                    'selesai'    => $grp->where('status', 'selesai')->count(),
+                    'persentase' => round($grp->count() / $catTotal * 100),
+                ])
+                ->sortByDesc('jumlah')->values()->take(5)->toArray();
+
+            $categoryDetail[] = [
+                'id'          => $cId,
+                'nama'        => optional($firstCat)->name ?? '—',
+                'total'       => $catTotal,
+                'selesai'     => $catSelesai,
+                'ditolak'     => $catTickets->where('status', 'ditolak')->count(),
+                'dibatalkan'  => $catTickets->where('status', 'dibatalkan')->count(),
+                'backlog'     => $catTickets->whereIn('status', ['baru', 'diproses', 'menunggu_verifikasi'])->count(),
+                'persentase'  => $catTotal ? round($catSelesai / $catTotal * 100) : 0,
+                'rata_hari'   => round($catAvg ?? 0, 1),
+                'skpd_top'    => $skpdBreakdown,
+                'status_dist' => [
+                    'baru'                => $catTickets->where('status', 'baru')->count(),
+                    'diproses'            => $catTickets->where('status', 'diproses')->count(),
+                    'menunggu_verifikasi' => $catTickets->where('status', 'menunggu_verifikasi')->count(),
+                    'selesai'             => $catSelesai,
+                    'ditolak'             => $catTickets->where('status', 'ditolak')->count(),
+                    'dibatalkan'          => $catTickets->where('status', 'dibatalkan')->count(),
+                ],
+            ];
+        }
+        usort($categoryDetail, fn($a, $b) => $b['total'] - $a['total']);
+
+        // ── Backward-compat arrays ─────────────────────────────────────────────
+        $skpdReport  = array_map(fn($d) => ['nama' => $d['nama'], 'total' => $d['total'], 'selesai' => $d['selesai'], 'persentase' => $d['persentase']], $skpdDetail);
+        $jenisReport = array_map(fn($c) => ['nama' => $c['nama'], 'jumlah' => $c['total'], 'persentase' => $total ? round($c['total'] / $total * 100) : 0], $categoryDetail);
+
+        // ── Filter option lists ────────────────────────────────────────────────
+        $skpdList    = Department::aktif()->orderBy('name')->get();
+        $categories  = Category::aktif()->orderBy('name')->get();
+        $priorities  = Priority::ordered()->get();
+        $petugasList = User::role('petugas')->orderBy('name')->get(['id', 'name']);
+
+        // ── Kinerja petugas ────────────────────────────────────────────────────
         $petugasStats = null;
         if ($user->isAdmin() || $user->isPimpinan()) {
             $petugasStats = User::role('petugas')
@@ -953,7 +1061,9 @@ class KominfoController extends Controller
 
         return view('kominfo.laporan', compact(
             'summary', 'statusDistribution', 'skpdReport', 'jenisReport',
-            'skpdList', 'categories', 'dari', 'sampai', 'petugasStats'
+            'skpdList', 'categories', 'dari', 'sampai', 'petugasStats',
+            'skpdDetail', 'categoryDetail', 'trendData',
+            'priorities', 'petugasList',
         ));
     }
 
@@ -967,13 +1077,24 @@ class KominfoController extends Controller
             403, 'Akses ditolak.'
         );
 
-        $dari   = $request->filled('dari')   ? Carbon::parse($request->dari)->startOfDay()  : now()->startOfMonth();
-        $sampai = $request->filled('sampai') ? Carbon::parse($request->sampai)->endOfDay()  : now()->endOfMonth();
+        $dari       = $request->filled('dari')        ? Carbon::parse($request->dari)->startOfDay()  : now()->startOfMonth();
+        $sampai     = $request->filled('sampai')      ? Carbon::parse($request->sampai)->endOfDay()  : now()->endOfMonth();
+        $deptId     = $request->get('department_id');
+        $catId      = $request->get('category_id');
+        $statusF    = $request->get('status');
+        $priorityId = $request->get('priority_id');
+        $assigneeId = $request->get('assignee_id');
+        $type       = $request->get('type', 'semua'); // semua | skpd | kategori
 
-        $tickets = Ticket::with(['department', 'category', 'priority', 'requester', 'assignee'])
-            ->whereBetween('created_at', [$dari, $sampai])
-            ->orderByDesc('created_at')
-            ->get();
+        $query = Ticket::with(['department', 'category', 'priority', 'requester', 'assignees'])
+            ->whereBetween('created_at', [$dari, $sampai]);
+        if ($deptId)     $query->where('department_id', $deptId);
+        if ($catId)      $query->where('category_id', $catId);
+        if ($statusF)    $query->where('status', $statusF);
+        if ($priorityId) $query->where('priority_id', $priorityId);
+        if ($assigneeId) $query->whereHas('assignees', fn($aq) => $aq->where('users.id', $assigneeId));
+
+        $tickets = $query->orderByDesc('created_at')->get();
 
         $filename = 'laporan-tiket-' . now()->format('Y-m-d') . '.csv';
         $headers  = [
@@ -983,9 +1104,11 @@ class KominfoController extends Controller
 
         $callback = function () use ($tickets) {
             $handle = fopen('php://output', 'w');
-            // BOM untuk Excel UTF-8
             fputs($handle, "\xEF\xBB\xBF");
-            fputcsv($handle, ['No. Tiket', 'Judul', 'SKPD', 'Kategori', 'Prioritas', 'Status', 'Pemohon', 'Petugas', 'Tgl Dibuat', 'Tgl Selesai', 'Durasi (hari)']);
+            fputcsv($handle, [
+                'No. Tiket', 'Judul', 'SKPD', 'Kategori', 'Prioritas', 'Status',
+                'Pemohon', 'Petugas', 'Tgl Dibuat', 'Tgl Selesai', 'Durasi (hari)',
+            ]);
 
             foreach ($tickets as $t) {
                 fputcsv($handle, [
@@ -995,8 +1118,8 @@ class KominfoController extends Controller
                     $t->category->name   ?? '-',
                     $t->priority->name   ?? '-',
                     $t->statusLabel(),
-                    $t->requester->name  ?? '-',
-                    $t->assignee->name   ?? '-',
+                    $t->requester->name  ?? $t->public_name ?? '-',
+                    $t->assignees->pluck('name')->join(', ') ?: '-',
                     $t->created_at->format('d/m/Y'),
                     $t->closed_at        ? $t->closed_at->format('d/m/Y') : '-',
                     $t->resolutionDays() ?? '-',
