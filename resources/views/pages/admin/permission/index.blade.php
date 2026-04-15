@@ -149,7 +149,8 @@
                             <input type="text" name="name" class="form-control" placeholder="contoh: kelola-laporan"
                                 required>
                             <div class="form-text">Gunakan format: <code>kata-kerja-objek</code> (contoh:
-                                <code>lihat-tiket</code>)</div>
+                                <code>lihat-tiket</code>)
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
