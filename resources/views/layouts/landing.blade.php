@@ -405,17 +405,6 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#layanan-publik">Layanan Publik</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="https://ppid.bukittinggikota.go.id/" target="_blank"
-                            rel="noopener noreferrer">
-                            PPID <i class="bi bi-box-arrow-up-right" style="font-size:0.7rem;"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="https://www.lapor.go.id/" target="_blank" rel="noopener noreferrer">
-                            LAPOR! <i class="bi bi-box-arrow-up-right" style="font-size:0.7rem;"></i>
-                        </a>
-                    </li>
                 </ul>
                 <a href="{{ route('login') }}" class="btn btn-nav-login">
                     <i class="bi bi-box-arrow-in-right me-1"></i>Login Petugas

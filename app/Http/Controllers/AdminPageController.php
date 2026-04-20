@@ -271,6 +271,7 @@ class AdminPageController extends Controller
     {
         $validated = $request->validate([
             'name'        => 'required|string|max:255|unique:categories,name',
+            'jenis'       => 'required|in:cctv,publik,skpd',
             'description' => 'nullable|string',
             'status'      => 'required|in:aktif,nonaktif',
         ]);
@@ -292,6 +293,7 @@ class AdminPageController extends Controller
 
         $validated = $request->validate([
             'name'        => "required|string|max:255|unique:categories,name,{$id}",
+            'jenis'       => 'required|in:cctv,publik,skpd',
             'description' => 'nullable|string',
             'status'      => 'required|in:aktif,nonaktif',
         ]);

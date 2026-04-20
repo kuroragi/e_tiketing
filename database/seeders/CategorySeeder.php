@@ -4,26 +4,49 @@ namespace Database\Seeders;
 
 use App\Models\Category;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class CategorySeeder extends Seeder
 {
     public function run(): void
     {
-        $categories = [
-            ['name' => 'PIC Presensi',         'description' => 'Permasalahan terkait sistem presensi elektronik pegawai'],
-            ['name' => 'Perbaikan Portal',      'description' => 'Perbaikan website/portal resmi SKPD'],
-            ['name' => 'Troubleshooting',       'description' => 'Pemecahan masalah teknis umum (jaringan, perangkat, software)'],
-            ['name' => 'Maintenance Server',    'description' => 'Pemeliharaan rutin server dan infrastruktur'],
-            ['name' => 'Instalasi Software',    'description' => 'Pemasangan perangkat lunak baru atau pembaruan'],
-            ['name' => 'Keamanan Jaringan',     'description' => 'Penanganan insiden keamanan siber dan jaringan'],
-            ['name' => 'Migrasi Data',          'description' => 'Pemindahan atau konversi data antar sistem'],
-            ['name' => 'Pelatihan TI',          'description' => 'Bimbingan dan pelatihan penggunaan sistem/aplikasi'],
-            ['name' => 'Pengembangan Aplikasi', 'description' => 'Permintaan pengembangan atau modifikasi aplikasi'],
-            ['name' => 'Lainnya',               'description' => 'Permasalahan teknis lainnya yang tidak termasuk kategori di atas'],
+        // ── CCTV ────────────────────────────────────────────────────────────────
+        $cctv = [
+            ['name' => 'CCTV', 'jenis' => 'cctv', 'description' => 'Pemasangan, perbaikan, dan pemeliharaan sistem CCTV'],
         ];
 
-        foreach ($categories as $cat) {
-            Category::firstOrCreate(['name' => $cat['name']], array_merge($cat, ['status' => 'aktif']));
+        // ── Pengaduan Publik ─────────────────────────────────────────────────────
+        $publik = [
+            ['name' => 'Internet Lambat',       'jenis' => 'publik', 'description' => 'Keluhan kecepatan internet publik yang lambat atau tidak stabil'],
+            ['name' => 'Kabel Putus',            'jenis' => 'publik', 'description' => 'Pelaporan kabel jaringan yang putus atau rusak di area publik'],
+            ['name' => 'Gangguan Jaringan',      'jenis' => 'publik', 'description' => 'Gangguan koneksi jaringan publik yang mempengaruhi masyarakat umum'],
+            ['name' => 'Lainnya (Publik)',        'jenis' => 'publik', 'description' => 'Pengaduan publik lainnya yang tidak termasuk kategori di atas'],
+        ];
+
+        // ── Layanan SKPD ────────────────────────────────────────────────────────
+        $skpd = [
+            ['name' => 'Perbaikan Internet',       'jenis' => 'skpd', 'description' => 'Perbaikan koneksi atau infrastruktur internet di lingkungan SKPD'],
+            ['name' => 'Pengembangan Aplikasi',    'jenis' => 'skpd', 'description' => 'Permintaan pengembangan atau modifikasi aplikasi internal SKPD'],
+            ['name' => 'Integrasi Data',            'jenis' => 'skpd', 'description' => 'Integrasi atau sinkronisasi data antar sistem/aplikasi SKPD'],
+            ['name' => 'Perbaikan Web Portal',     'jenis' => 'skpd', 'description' => 'Perbaikan website atau portal resmi SKPD'],
+            ['name' => 'PIC',                       'jenis' => 'skpd', 'description' => 'Permasalahan terkait sistem presensi elektronik (PIC) pegawai'],
+            ['name' => 'Troubleshooting',           'jenis' => 'skpd', 'description' => 'Pemecahan masalah teknis umum (jaringan, perangkat, software)'],
+            ['name' => 'Permintaan Internet Baru', 'jenis' => 'skpd', 'description' => 'Permohonan pemasangan atau penambahan akses internet baru di SKPD'],
+            ['name' => 'Lainnya',                   'jenis' => 'skpd', 'description' => 'Permintaan layanan SKPD lainnya yang tidak termasuk kategori di atas'],
+        ];
+
+        $all = array_merge($cctv, $publik, $skpd);
+
+        foreach ($all as $cat) {
+            Category::updateOrCreate(
+                ['name' => $cat['name']],
+                array_merge($cat, ['status' => 'aktif'])
+            );
         }
+
+        // Nonaktifkan kategori lama yang tidak ada di daftar baru
+        $namaAktif = array_column($all, 'name');
+        Category::whereNotIn('name', $namaAktif)->update(['status' => 'nonaktif']);
     }
 }
+

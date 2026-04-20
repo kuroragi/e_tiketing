@@ -41,8 +41,16 @@ class LandingController extends Controller
             return redirect()->route('landing')->with('warning', 'Layanan pengaduan publik sedang tidak aktif.');
         }
 
-        $categories = Category::aktif()->orderBy('name')->get();
         $priorities = Priority::ordered()->get();
+        $layanan    = request('layanan', '');
+
+        // Untuk form CCTV, ambil category CCTV otomatis
+        $cctvCategory = Category::aktif()->where('jenis', 'cctv')->first();
+
+        // Untuk form pengaduan publik, hanya tampilkan kategori jenis publik
+        $categories = $layanan === 'cctv'
+            ? collect()
+            : Category::aktif()->where('jenis', 'publik')->orderBy('name')->get();
 
         // Captcha sederhana
         $captchaNum1 = random_int(2, 15);
@@ -51,17 +59,23 @@ class LandingController extends Controller
 
         // Cari layanan yang dipilih dari landing page
         $selectedService = null;
-        $kategoriId = request('kategori');
-        if ($kategoriId) {
-            foreach ($this->getServices() as $service) {
-                if (isset($service['category_id']) && (string) $service['category_id'] === (string) $kategoriId) {
-                    $selectedService = $service;
-                    break;
-                }
+        foreach ($this->getServices() as $service) {
+            if ($layanan === 'cctv' && str_contains($service['icon'], 'camera')) {
+                $selectedService = $service;
+                break;
+            }
+            if ($layanan === 'pengaduan' && str_contains($service['icon'], 'megaphone')) {
+                $selectedService = $service;
+                break;
+            }
+            $kategoriId = request('kategori');
+            if ($kategoriId && isset($service['category_id']) && (string) $service['category_id'] === (string) $kategoriId) {
+                $selectedService = $service;
+                break;
             }
         }
 
-        return view('public.submit-ticket', compact('categories', 'priorities', 'captchaNum1', 'captchaNum2', 'captchaHash', 'selectedService'));
+        return view('public.submit-ticket', compact('categories', 'priorities', 'captchaNum1', 'captchaNum2', 'captchaHash', 'selectedService', 'layanan', 'cctvCategory'));
     }
 
     /**
@@ -83,30 +97,89 @@ class LandingController extends Controller
             return back()->withErrors(['captcha_answer' => 'Jawaban verifikasi salah.'])->withInput();
         }
 
-        $validated = $request->validate([
+        $layanan = $request->input('layanan', '');
+
+        // Base validation rules
+        $baseRules = [
             'public_name'    => 'required|string|max:255',
             'public_email'   => 'required|email|max:255',
             'public_phone'   => 'required|string|max:20',
             'public_nik'     => 'nullable|string|size:16',
             'public_address' => 'nullable|string|max:500',
-            'title'          => 'required|string|max:255',
-            'description'    => 'required|string|min:20',
-            'category_id'    => 'required|exists:categories,id',
+            'category_id'    => $layanan === 'cctv' ? 'nullable|exists:categories,id' : 'required|exists:categories,id',
             'priority_id'    => 'required|exists:priorities,id',
             'lampiran'       => 'nullable|array|max:5',
             'lampiran.*'     => ['file', 'max:10240', new SafeFile()],
-        ], [
-            'public_name.required'    => 'Nama lengkap harus diisi.',
-            'public_email.required'   => 'Email harus diisi.',
-            'public_email.email'      => 'Format email tidak valid.',
-            'public_phone.required'   => 'Nomor HP harus diisi.',
-            'public_nik.size'         => 'NIK harus terdiri dari 16 digit.',
-            'title.required'          => 'Judul pengaduan harus diisi.',
-            'description.required'    => 'Deskripsi pengaduan harus diisi.',
-            'description.min'         => 'Deskripsi minimal 20 karakter.',
-            'category_id.required'    => 'Kategori layanan harus dipilih.',
-            'priority_id.required'    => 'Prioritas harus dipilih.',
+        ];
+
+        if ($layanan === 'cctv') {
+            $rules = array_merge($baseRules, [
+                'tanggal_kejadian' => 'required|date|before_or_equal:today',
+                'daerah_kejadian'  => 'required|string|max:255',
+                'lokasi_cctv'      => 'nullable|string|max:255',
+                'waktu_awal'       => 'required|date_format:H:i',
+                'waktu_akhir'      => 'nullable|date_format:H:i',
+                'keperluan'        => 'required|string|max:100',
+                'nama_instansi'    => 'nullable|string|max:255',
+                'nomor_laporan'    => 'nullable|string|max:100',
+                'keterangan'       => 'nullable|string|max:2000',
+            ]);
+        } else {
+            $rules = array_merge($baseRules, [
+                'title'       => 'required|string|max:255',
+                'description' => 'required|string|min:20',
+            ]);
+        }
+
+        $validated = $request->validate($rules, [
+            'public_name.required'          => 'Nama lengkap harus diisi.',
+            'public_email.required'         => 'Email harus diisi.',
+            'public_email.email'            => 'Format email tidak valid.',
+            'public_phone.required'         => 'Nomor HP harus diisi.',
+            'public_nik.size'               => 'NIK harus terdiri dari 16 digit.',
+            'title.required'                => 'Judul pengaduan harus diisi.',
+            'description.required'          => 'Deskripsi pengaduan harus diisi.',
+            'description.min'               => 'Deskripsi minimal 20 karakter.',
+            'category_id.required'          => 'Kategori layanan harus dipilih.',
+            'priority_id.required'          => 'Prioritas harus dipilih.',
+            'tanggal_kejadian.required'     => 'Tanggal kejadian harus diisi.',
+            'tanggal_kejadian.before_or_equal' => 'Tanggal kejadian tidak boleh di masa depan.',
+            'daerah_kejadian.required'      => 'Daerah/lokasi kejadian harus diisi.',
+            'waktu_awal.required'           => 'Perkiraan waktu awal harus diisi.',
+            'waktu_awal.date_format'        => 'Format waktu tidak valid (HH:MM).',
+            'waktu_akhir.date_format'       => 'Format waktu tidak valid (HH:MM).',
+            'keperluan.required'            => 'Keperluan permintaan harus dipilih.',
         ]);
+
+        // Build title & description for CCTV from structured fields
+        if ($layanan === 'cctv') {
+            $tglFormatted = date('d/m/Y', strtotime($validated['tanggal_kejadian']));
+            $waktu = $validated['waktu_awal'];
+            if (! empty($validated['waktu_akhir'])) {
+                $waktu .= ' s.d. ' . $validated['waktu_akhir'];
+            }
+            $validated['title'] = "Permintaan Data CCTV — {$validated['daerah_kejadian']} ({$tglFormatted})";
+
+            $descLines = [
+                "Tanggal Kejadian  : " . $tglFormatted,
+                "Daerah Kejadian   : " . $validated['daerah_kejadian'],
+            ];
+            if (! empty($validated['lokasi_cctv'])) {
+                $descLines[] = "Titik Lokasi CCTV : " . $validated['lokasi_cctv'];
+            }
+            $descLines[] = "Perkiraan Waktu   : " . $waktu . " WIB";
+            $descLines[] = "Keperluan         : " . $validated['keperluan'];
+            if (! empty($validated['nama_instansi'])) {
+                $descLines[] = "Instansi/Lembaga  : " . $validated['nama_instansi'];
+            }
+            if (! empty($validated['nomor_laporan'])) {
+                $descLines[] = "No. Surat/LP      : " . $validated['nomor_laporan'];
+            }
+            if (! empty($validated['keterangan'])) {
+                $descLines[] = "\nKeterangan Tambahan:\n" . $validated['keterangan'];
+            }
+            $validated['description'] = implode("\n", $descLines);
+        }
 
         // Generate tracking code (UUID)
         $trackingCode = (string) Str::uuid();
@@ -117,7 +190,9 @@ class LandingController extends Controller
             'description'    => $validated['description'],
             'requester_id'   => null,
             'department_id'  => null,
-            'category_id'    => $validated['category_id'],
+            'category_id'    => $layanan === 'cctv'
+                ? (Category::aktif()->where('jenis', 'cctv')->value('id') ?? $validated['category_id'] ?? null)
+                : $validated['category_id'],
             'priority_id'    => $validated['priority_id'],
             'contact_pic'    => $validated['public_name'],
             'public_name'    => $validated['public_name'],

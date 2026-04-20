@@ -126,6 +126,7 @@
 
                             <form method="POST" action="{{ route('public.ticket.store') }}" enctype="multipart/form-data">
                                 @csrf
+                                <input type="hidden" name="layanan" value="{{ $layanan ?? '' }}">
 
                                 <!-- Data Pelapor -->
                                 <h5 class="fw-bold mb-3 pb-2 border-bottom">
@@ -185,6 +186,159 @@
                                 </div>
 
                                 <!-- Detail Pengaduan -->
+                                @if (($layanan ?? '') === 'cctv')
+                                {{-- ══════════════════ FORM PERMINTAAN DATA CCTV ══════════════════ --}}
+                                <h5 class="fw-bold mb-3 pb-2 border-bottom">
+                                    <i class="bi bi-camera-video text-primary me-2"></i>Detail Permintaan CCTV
+                                </h5>
+
+                                {{-- Kategori CCTV otomatis --}}
+                                @if($cctvCategory ?? null)
+                                    <input type="hidden" name="category_id" value="{{ $cctvCategory->id }}">
+                                    <div class="alert alert-info d-flex align-items-center gap-2 mb-3 py-2">
+                                        <i class="bi bi-camera-video-fill fs-5"></i>
+                                        <div class="small">
+                                            <strong>Kategori:</strong> {{ $cctvCategory->name }}
+                                            <span class="text-muted ms-1">— dipilih otomatis</span>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Tanggal Kejadian <span class="text-danger">*</span></label>
+                                        <input type="date" name="tanggal_kejadian"
+                                            class="form-control @error('tanggal_kejadian') is-invalid @enderror"
+                                            value="{{ old('tanggal_kejadian') }}"
+                                            max="{{ date('Y-m-d') }}" required>
+                                        @error('tanggal_kejadian')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Daerah / Area Kejadian <span class="text-danger">*</span></label>
+                                        <input type="text" name="daerah_kejadian"
+                                            class="form-control @error('daerah_kejadian') is-invalid @enderror"
+                                            value="{{ old('daerah_kejadian') }}" required
+                                            placeholder="Contoh: Jl. Ahmad Yani, Pasar Atas">
+                                        @error('daerah_kejadian')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        Titik Lokasi CCTV
+                                        <small class="text-muted fw-normal">(opsional — landmark atau titik terdekat)</small>
+                                    </label>
+                                    <input type="text" name="lokasi_cctv"
+                                        class="form-control @error('lokasi_cctv') is-invalid @enderror"
+                                        value="{{ old('lokasi_cctv') }}"
+                                        placeholder="Contoh: Depan Kantor Pos, Persimpangan Lampu Merah ...">
+                                    @error('lokasi_cctv')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Perkiraan Waktu Awal <span class="text-danger">*</span></label>
+                                        <input type="time" name="waktu_awal"
+                                            class="form-control @error('waktu_awal') is-invalid @enderror"
+                                            value="{{ old('waktu_awal') }}" required>
+                                        @error('waktu_awal')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            Perkiraan Waktu Akhir
+                                            <small class="text-muted fw-normal">(opsional)</small>
+                                        </label>
+                                        <input type="time" name="waktu_akhir"
+                                            class="form-control @error('waktu_akhir') is-invalid @enderror"
+                                            value="{{ old('waktu_akhir') }}">
+                                        @error('waktu_akhir')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Keperluan Permintaan <span class="text-danger">*</span></label>
+                                    <select name="keperluan"
+                                        class="form-select @error('keperluan') is-invalid @enderror" required>
+                                        <option value="">-- Pilih Keperluan --</option>
+                                        <option value="Laporan Kepolisian" {{ old('keperluan') === 'Laporan Kepolisian' ? 'selected' : '' }}>Laporan Kepolisian</option>
+                                        <option value="Penyelidikan / Investigasi" {{ old('keperluan') === 'Penyelidikan / Investigasi' ? 'selected' : '' }}>Penyelidikan / Investigasi</option>
+                                        <option value="Keperluan Asuransi" {{ old('keperluan') === 'Keperluan Asuransi' ? 'selected' : '' }}>Keperluan Asuransi</option>
+                                        <option value="Kepentingan Instansi Pemerintah" {{ old('keperluan') === 'Kepentingan Instansi Pemerintah' ? 'selected' : '' }}>Kepentingan Instansi Pemerintah</option>
+                                        <option value="Keperluan Lainnya" {{ old('keperluan') === 'Keperluan Lainnya' ? 'selected' : '' }}>Keperluan Lainnya</option>
+                                    </select>
+                                    @error('keperluan')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            Instansi / Lembaga
+                                            <small class="text-muted fw-normal">(opsional)</small>
+                                        </label>
+                                        <input type="text" name="nama_instansi"
+                                            class="form-control @error('nama_instansi') is-invalid @enderror"
+                                            value="{{ old('nama_instansi') }}"
+                                            placeholder="Contoh: Polres Bukittinggi, PT. XYZ">
+                                        @error('nama_instansi')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            No. Surat / No. Laporan Polisi
+                                            <small class="text-muted fw-normal">(opsional)</small>
+                                        </label>
+                                        <input type="text" name="nomor_laporan"
+                                            class="form-control @error('nomor_laporan') is-invalid @enderror"
+                                            value="{{ old('nomor_laporan') }}"
+                                            placeholder="Contoh: LP/123/IV/2026/...">
+                                        @error('nomor_laporan')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Keterangan Tambahan <small class="text-muted fw-normal">(opsional)</small></label>
+                                    <textarea name="keterangan"
+                                        class="form-control @error('keterangan') is-invalid @enderror" rows="4"
+                                        placeholder="Jelaskan kronologi kejadian, ciri-ciri pelaku/kendaraan, atau informasi lain yang relevan...">{{ old('keterangan') }}</textarea>
+                                    @error('keterangan')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Prioritas <span class="text-danger">*</span></label>
+                                    <select name="priority_id"
+                                        class="form-select @error('priority_id') is-invalid @enderror" required>
+                                        <option value="">-- Pilih Prioritas --</option>
+                                        @foreach ($priorities as $p)
+                                            <option value="{{ $p->id }}"
+                                                {{ old('priority_id') == $p->id ? 'selected' : '' }}>
+                                                {{ $p->name }} — {{ $p->description ?? '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('priority_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                @else
+                                {{-- ══════════════════ FORM PENGADUAN LAYANAN KOMINFO ══════════════════ --}}
                                 <h5 class="fw-bold mb-3 pb-2 border-bottom">
                                     <i class="bi bi-file-earmark-text text-primary me-2"></i>Detail Pengaduan
                                 </h5>
@@ -245,16 +399,40 @@
                                     @enderror
                                 </div>
 
+                                @endif
+                                {{-- ══════════════════ LAMPIRAN (drag-and-drop) ══════════════════ --}}
                                 <div class="mb-4">
-                                    <label class="form-label">Lampiran <small class="text-muted">(opsional, maks 5
-                                            file)</small></label>
-                                    <input type="file" name="lampiran[]"
-                                        class="form-control @error('lampiran.*') is-invalid @enderror" multiple
-                                        accept=".pdf,.jpg,.jpeg,.png">
-                                    @error('lampiran.*')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    <label class="form-label">
+                                        <i class="bi bi-paperclip me-1"></i>Lampiran
+                                        <small class="text-muted fw-normal">(opsional, maks 5 file)</small>
+                                    </label>
+
+                                    {{-- Hidden actual input --}}
+                                    <input type="file" name="lampiran[]" id="pub-lampiran"
+                                        accept=".pdf,.jpg,.jpeg,.png" multiple class="d-none">
+
+                                    <div id="pub-drop-zone"
+                                        class="rounded-3 p-4 text-center"
+                                        style="border: 2px dashed #ced4da; background:#f8f9fa; cursor:pointer; transition: border-color .2s, background .2s;">
+                                        <i class="bi bi-cloud-upload fs-2 text-secondary mb-2 d-block"></i>
+                                        <p class="mb-2 text-muted small">Seret &amp; lepas file di sini, atau</p>
+                                        <button type="button" class="btn btn-outline-primary btn-sm"
+                                            onclick="document.getElementById('pub-lampiran').click()">
+                                            <i class="bi bi-folder2-open me-1"></i>Pilih File
+                                        </button>
+                                        <p class="small text-muted mt-2 mb-0">
+                                            PDF, JPG, PNG &nbsp;·&nbsp; Maks 10 MB per file &nbsp;·&nbsp; Maks 5 file
+                                        </p>
+                                    </div>
+
+                                    <div id="pub-file-list" class="mt-2"></div>
+
+                                    @error('lampiran')
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
                                     @enderror
-                                    <div class="form-text">Format: PDF, JPG, PNG. Maks 10 MB per file.</div>
+                                    @error('lampiran.*')
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
                                 <!-- Captcha sederhana -->
@@ -280,7 +458,11 @@
                                         <i class="bi bi-arrow-left me-1"></i>Kembali
                                     </a>
                                     <button type="submit" class="btn btn-primary btn-lg px-4">
-                                        <i class="bi bi-send me-2"></i>Kirim Pengaduan
+                                        @if (($layanan ?? '') === 'cctv')
+                                            <i class="bi bi-send me-2"></i>Kirim Permintaan CCTV
+                                        @else
+                                            <i class="bi bi-send me-2"></i>Kirim Pengaduan
+                                        @endif
                                     </button>
                                 </div>
                             </form>
@@ -367,3 +549,92 @@
         </div>
     </section>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const dropZone  = document.getElementById('pub-drop-zone');
+    const fileInput = document.getElementById('pub-lampiran');
+    const fileList  = document.getElementById('pub-file-list');
+    if (!dropZone || !fileInput || !fileList) return;
+
+    let files = [];
+    const MAX_FILES = 5;
+    const MAX_SIZE  = 10 * 1024 * 1024;
+    const ALLOWED   = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+
+    function renderFileList() {
+        fileList.innerHTML = '';
+        files.forEach(function (file, i) {
+            const row = document.createElement('div');
+            row.className = 'd-flex align-items-center gap-2 mt-1 p-2 border rounded bg-white small';
+            const ext = file.name.split('.').pop().toUpperCase();
+            row.innerHTML =
+                '<span class="badge bg-secondary">' + ext + '</span>' +
+                '<span class="flex-grow-1 text-truncate">' + file.name + '</span>' +
+                '<span class="text-muted text-nowrap">' + (file.size / 1024 / 1024).toFixed(1) + ' MB</span>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 lh-1" data-i="' + i + '">' +
+                '<i class="bi bi-x"></i></button>';
+            fileList.appendChild(row);
+        });
+        fileList.querySelectorAll('[data-i]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                files.splice(parseInt(this.dataset.i), 1);
+                syncInput();
+                renderFileList();
+            });
+        });
+    }
+
+    function syncInput() {
+        const dt = new DataTransfer();
+        files.forEach(function (f) { dt.items.add(f); });
+        fileInput.files = dt.files;
+    }
+
+    function addFiles(incoming) {
+        Array.from(incoming).forEach(function (f) {
+            if (files.length >= MAX_FILES) {
+                alert('Maksimal ' + MAX_FILES + ' file lampiran.');
+                return;
+            }
+            if (f.size > MAX_SIZE) {
+                alert('"' + f.name + '" terlalu besar. Maks 10 MB per file.');
+                return;
+            }
+            if (!ALLOWED.includes(f.type)) {
+                alert('"' + f.name + '" tidak didukung. Gunakan PDF, JPG, atau PNG.');
+                return;
+            }
+            files.push(f);
+        });
+        syncInput();
+        renderFileList();
+    }
+
+    // Click to browse
+    dropZone.addEventListener('click', function () { fileInput.click(); });
+    fileInput.addEventListener('change', function () {
+        addFiles(fileInput.files);
+        fileInput.value = '';
+    });
+
+    // Drag events
+    dropZone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        dropZone.style.borderColor = '#4f46e5';
+        dropZone.style.background  = '#eef0ff';
+    });
+    dropZone.addEventListener('dragleave', function () {
+        dropZone.style.borderColor = '#ced4da';
+        dropZone.style.background  = '#f8f9fa';
+    });
+    dropZone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dropZone.style.borderColor = '#ced4da';
+        dropZone.style.background  = '#f8f9fa';
+        addFiles(e.dataTransfer.files);
+    });
+});
+</script>
+@endpush

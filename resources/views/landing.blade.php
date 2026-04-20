@@ -13,11 +13,11 @@
                         {{ Setting::get('app_institution', 'Dinas Komunikasi dan Informatika Kota Bukittinggi') }}
                     </div>
                     <h1 class="hero-title">
-                        Sistem Manajemen<br>Tiket Layanan Internal
+                        Layanan Publik &amp; Tiket<br>Kominfo Bukittinggi
                     </h1>
                     <p class="hero-subtitle">
-                        Platform pengelolaan tiket layanan untuk staf dan perangkat daerah di lingkungan
-                        Pemerintah Kota Bukittinggi. Dikelola oleh Dinas Komunikasi dan Informatika.
+                        Ajukan permintaan data CCTV, laporkan gangguan Wi-Fi publik, kerusakan
+                        infrastruktur jaringan, atau layanan IT Kominfo lainnya secara online.
                     </p>
                     <div class="hero-actions d-flex flex-wrap gap-3 mb-4">
                         <a href="#layanan-publik" class="btn btn-hero-primary btn-lg">
@@ -64,105 +64,97 @@
         </div>
     </section>
 
-    <!-- ── Layanan Publik Resmi ─────────────────────────────────── -->
+    <!-- ── Layanan Publik Kominfo ──────────────────────────────────── -->
     <section class="py-5" id="layanan-publik" style="background: var(--landing-light);">
         <div class="container py-4">
             <div class="text-center mb-5">
                 <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 mb-3" style="font-size:0.85rem;">
                     <i class="bi bi-people me-1"></i>Untuk Masyarakat Umum
                 </span>
-                <h2 class="section-title">Kanal Layanan Publik Resmi</h2>
+                <h2 class="section-title">Layanan Publik Kominfo Bukittinggi</h2>
                 <p class="section-subtitle">
-                    Sesuai regulasi Kementerian Komunikasi dan Informatika, layanan pengaduan dan
-                    permintaan informasi publik dilayani melalui kanal resmi berikut.
+                    Sampaikan permintaan atau pengaduan terkait layanan Dinas Komunikasi dan Informatika
+                    Kota Bukittinggi secara online. Cepat, mudah, dan dapat dilacak.
                 </p>
             </div>
 
             <div class="row g-4 justify-content-center">
-                <!-- PPID Card -->
+
+                <!-- Permintaan Data CCTV -->
                 <div class="col-lg-5 col-md-10">
-                    <div class="service-card h-100 d-flex flex-column" style="border-top: 4px solid #0ea5e9;">
-                        <div class="service-icon" style="background: #0ea5e915; color: #0ea5e9;">
-                            <i class="bi bi-database-lock"></i>
+                    <div class="service-card h-100 d-flex flex-column" style="border-top: 4px solid #6366f1;">
+                        <div class="service-icon" style="background: #6366f115; color: #6366f1;">
+                            <i class="bi bi-camera-video"></i>
                         </div>
                         <div class="mb-2">
-                            <span class="badge" style="background:#0ea5e920; color:#0ea5e9; font-size:0.75rem;">
-                                Pejabat Pengelola Informasi dan Dokumentasi
+                            <span class="badge" style="background:#6366f120; color:#6366f1; font-size:0.75rem;">
+                                Permintaan Data
                             </span>
                         </div>
-                        <h4 class="fw-bold mb-2">Permintaan Informasi Publik</h4>
+                        <h4 class="fw-bold mb-2">Permintaan Data CCTV</h4>
                         <p class="text-muted mb-1" style="font-size:0.9rem;">
-                            Ajukan permohonan informasi publik, data, dan dokumen milik
-                            Pemerintah Kota Bukittinggi secara resmi melalui portal PPID.
+                            Ajukan permintaan rekaman CCTV milik Pemkot Bukittinggi untuk keperluan
+                            pelaporan, penyelidikan, atau kebutuhan lainnya yang sah.
                         </p>
                         <ul class="list-unstyled small text-muted mb-4 mt-2">
-                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Permohonan data
-                                statistik & dokumen publik</li>
-                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Keberatan atas
-                                informasi yang tidak tersedia</li>
-                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Sengketa informasi
-                                sesuai UU KIP No. 14/2008</li>
+                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Rekaman CCTV untuk laporan kepolisian</li>
+                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Permintaan data keamanan kawasan publik</li>
+                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Keperluan investigasi resmi</li>
                         </ul>
                         <div class="mt-auto">
-                            <a href="https://ppid.bukittinggikota.go.id/" target="_blank" rel="noopener noreferrer"
-                                class="btn btn-lg w-100 fw-semibold" style="background:#0ea5e9; color:#fff; border:none;">
-                                <i class="bi bi-box-arrow-up-right me-2"></i>Kunjungi PPID Bukittinggi
+                            <a href="{{ route('public.ticket.create') }}?layanan=cctv"
+                                class="btn btn-lg w-100 fw-semibold"
+                                style="background:#6366f1; color:#fff; border:none;">
+                                <i class="bi bi-send me-2"></i>Ajukan Permintaan
                             </a>
-                            <p class="text-muted text-center mt-2 mb-0" style="font-size:0.78rem;">
-                                <i class="bi bi-link-45deg me-1"></i>ppid.bukittinggikota.go.id
-                            </p>
                         </div>
                     </div>
                 </div>
 
-                <!-- LAPOR! Card -->
+                <!-- Pengaduan Layanan Kominfo -->
                 <div class="col-lg-5 col-md-10">
                     <div class="service-card h-100 d-flex flex-column" style="border-top: 4px solid #10b981;">
                         <div class="service-icon" style="background: #10b98115; color: #10b981;">
-                            <i class="bi bi-megaphone"></i>
+                            <i class="bi bi-wifi"></i>
                         </div>
                         <div class="mb-2">
                             <span class="badge" style="background:#10b98120; color:#10b981; font-size:0.75rem;">
-                                Layanan Aspirasi dan Pengaduan Online Rakyat
+                                Pengaduan Layanan
                             </span>
                         </div>
-                        <h4 class="fw-bold mb-2">Pengaduan & Aspirasi Masyarakat</h4>
+                        <h4 class="fw-bold mb-2">Pengaduan Layanan Kominfo</h4>
                         <p class="text-muted mb-1" style="font-size:0.9rem;">
-                            Sampaikan pengaduan, saran, dan aspirasi terkait layanan publik
-                            Pemerintah Kota Bukittinggi melalui portal LAPOR! yang terintegrasi nasional.
+                            Laporkan gangguan atau kerusakan pada layanan dan infrastruktur yang dikelola
+                            Dinas Komunikasi dan Informatika Kota Bukittinggi.
                         </p>
                         <ul class="list-unstyled small text-muted mb-4 mt-2">
-                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Pengaduan layanan
-                                publik & infrastruktur</li>
-                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Saran dan aspirasi
-                                untuk pemerintah</li>
-                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Terhubung langsung
-                                ke Kemenpan-RB</li>
+                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Wi-Fi publik lemot atau tidak dapat terhubung</li>
+                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Kabel jaringan/infrastruktur yang rusak</li>
+                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Gangguan CCTV, videotron, atau perangkat publik lainnya</li>
                         </ul>
                         <div class="mt-auto">
-                            <a href="https://www.lapor.go.id/" target="_blank" rel="noopener noreferrer"
-                                class="btn btn-lg w-100 fw-semibold" style="background:#10b981; color:#fff; border:none;">
-                                <i class="bi bi-box-arrow-up-right me-2"></i>Kunjungi LAPOR!
+                            <a href="{{ route('public.ticket.create') }}?layanan=pengaduan"
+                                class="btn btn-lg w-100 fw-semibold"
+                                style="background:#10b981; color:#fff; border:none;">
+                                <i class="bi bi-megaphone me-2"></i>Buat Pengaduan
                             </a>
-                            <p class="text-muted text-center mt-2 mb-0" style="font-size:0.78rem;">
-                                <i class="bi bi-link-45deg me-1"></i>lapor.go.id
-                            </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Info note -->
+            <!-- Lacak Pengaduan -->
             <div class="row justify-content-center mt-4">
                 <div class="col-lg-10">
-                    <div class="alert alert-light border d-flex gap-3 align-items-start" style="border-radius:0.75rem;">
-                        <i class="bi bi-info-circle-fill text-primary flex-shrink-0 mt-1" style="font-size:1.1rem;"></i>
-                        <div class="small text-muted">
-                            <strong class="text-dark">Mengapa menggunakan portal tersebut?</strong>
-                            Berdasarkan peraturan Kementerian Kominfo, seluruh permintaan informasi publik
-                            dan pengaduan masyarakat wajib diproses melalui kanal resmi yang telah ditentukan
-                            agar dapat terdokumentasi, dipantau, dan ditindaklanjuti sesuai ketentuan yang berlaku.
+                    <div class="alert alert-light border d-flex gap-3 align-items-center" style="border-radius:0.75rem;">
+                        <i class="bi bi-search text-primary flex-shrink-0" style="font-size:1.3rem;"></i>
+                        <div class="flex-grow-1 small">
+                            <strong class="text-dark">Sudah punya kode pengaduan?</strong>
+                            <span class="text-muted ms-1">Lacak status pengaduan Anda secara real-time.</span>
                         </div>
+                        <a href="{{ route('public.ticket.track') }}" class="btn btn-outline-primary btn-sm text-nowrap">
+                            <i class="bi bi-search me-1"></i>Lacak Pengaduan
+                        </a>
                     </div>
                 </div>
             </div>

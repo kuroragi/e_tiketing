@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class KominfoController extends Controller
 {
@@ -274,11 +275,9 @@ class KominfoController extends Controller
         $user = Auth::user();
         $this->authorize('create', Ticket::class);
 
-        $skpdList      = Department::aktif()->orderBy('name')->get();
-        $jenisKerjaan  = Category::aktif()->orderBy('name')->get();
-        $prioritasList = Priority::ordered()->get();
+        $jenisKerjaan = Category::aktif()->orderBy('name')->get();
 
-        return view('kominfo.tiket-pengajuan', compact('skpdList', 'jenisKerjaan', 'prioritasList'));
+        return view('kominfo.tiket-pengajuan', compact('jenisKerjaan'));
     }
 
     //  Simpan Tiket Baru 
@@ -289,34 +288,37 @@ class KominfoController extends Controller
         $this->authorize('create', Ticket::class);
 
         $validated = $request->validate([
-            'title'       => 'required|string|max:255',
             'description' => 'required|string|min:20',
             'category_id' => 'required|exists:categories,id',
-            'priority_id' => 'required|exists:priorities,id',
-            'contact_pic' => 'required|string|max:255',
-            'target_date' => 'nullable|date|after:today',
             'lampiran'    => 'nullable|array|max:5',
             'lampiran.*'  => ['file', 'max:10240', new SafeFile()],
         ], [
-            'title.required'       => 'Judul tiket harus diisi.',
             'description.required' => 'Deskripsi harus diisi.',
             'description.min'      => 'Deskripsi minimal 20 karakter.',
             'category_id.required' => 'Jenis pekerjaan harus dipilih.',
-            'priority_id.required' => 'Prioritas harus dipilih.',
-            'contact_pic.required' => 'Kontak/PIC harus diisi.',
         ]);
 
+        // Auto-generate judul dari baris pertama deskripsi
+        $firstLine = trim(strtok($validated['description'], "\n"));
+        $title = Str::limit($firstLine, 100);
+        if (mb_strlen($title) < 5) {
+            $category = Category::find($validated['category_id']);
+            $title = ($category->name ?? 'Pekerjaan') . ' - ' . now()->format('d/m/Y');
+        }
+
+        // Default priority: Sedang (weight=2), fallback ke yang pertama
+        $defaultPriority = Priority::where('weight', 2)->first() ?? Priority::ordered()->first();
+
         $ticket = Ticket::create([
-            'number'       => Ticket::generateNumber(),
-            'title'        => $validated['title'],
-            'description'  => $validated['description'],
-            'requester_id' => $user->id,
-            'department_id'=> $user->department_id,
-            'category_id'  => $validated['category_id'],
-            'priority_id'  => $validated['priority_id'],
-            'contact_pic'  => $validated['contact_pic'],
-            'target_date'  => $validated['target_date'] ?? null,
-            'status'       => 'baru',
+            'number'        => Ticket::generateNumber(),
+            'title'         => $title,
+            'description'   => $validated['description'],
+            'requester_id'  => $user->id,
+            'department_id' => $user->department_id,
+            'category_id'   => $validated['category_id'],
+            'priority_id'   => $defaultPriority?->id,
+            'contact_pic'   => $user->name,
+            'status'        => 'baru',
         ]);
 
         // Simpan lampiran

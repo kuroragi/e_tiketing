@@ -66,7 +66,7 @@
     <div class="card mb-4">
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <input type="text" id="searchInput" class="form-control"
                         placeholder="Cari jenis pekerjaan...">
                 </div>
@@ -78,8 +78,16 @@
                     </select>
                 </div>
                 <div class="col-md-3">
+                    <select id="jenisFilter" class="form-select">
+                        <option value="">Semua Jenis</option>
+                        <option value="cctv">CCTV</option>
+                        <option value="publik">Pengaduan Publik</option>
+                        <option value="skpd">SKPD</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#tambahModal">
-                        <i class="bi bi-plus-circle me-2"></i>Tambah Jenis
+                        <i class="bi bi-plus-circle me-2"></i>Tambah
                     </button>
                 </div>
             </div>
@@ -104,6 +112,7 @@
                     <thead class="table-light">
                         <tr>
                             <th>Nama Jenis Pekerjaan</th>
+                            <th class="text-center">Jenis</th>
                             <th>Deskripsi</th>
                             <th class="text-center">Tiket</th>
                             <th class="text-center">Status</th>
@@ -112,9 +121,22 @@
                     </thead>
                     <tbody>
                         @forelse ($categories as $cat)
-                            <tr data-name="{{ strtolower($cat->name) }}" data-status="{{ $cat->status }}">
+                            <tr data-name="{{ strtolower($cat->name) }}" data-status="{{ $cat->status }}" data-jenis="{{ $cat->jenis ?? 'skpd' }}">
                                 <td>
                                     <strong>{{ $cat->name }}</strong>
+                                </td>
+                                <td class="text-center">
+                                    @php
+                                        $jenis = $cat->jenis ?? 'skpd';
+                                        $jenisBadge = match($jenis) {
+                                            'cctv'   => ['bg-info text-dark',    'bi-camera-video',    'CCTV'],
+                                            'publik' => ['bg-warning text-dark', 'bi-megaphone',       'Publik'],
+                                            default  => ['bg-primary',           'bi-building',        'SKPD'],
+                                        };
+                                    @endphp
+                                    <span class="badge {{ $jenisBadge[0] }}">
+                                        <i class="bi {{ $jenisBadge[1] }} me-1"></i>{{ $jenisBadge[2] }}
+                                    </span>
                                 </td>
                                 <td>
                                     <small class="text-muted">{{ $cat->description ? Str::limit($cat->description, 60) : '-' }}</small>
@@ -137,7 +159,8 @@
                                             data-id="{{ $cat->id }}"
                                             data-name="{{ $cat->name }}"
                                             data-description="{{ $cat->description }}"
-                                            data-status="{{ $cat->status }}">
+                                            data-status="{{ $cat->status }}"
+                                            data-jenis="{{ $cat->jenis ?? 'skpd' }}">
                                             <i class="bi bi-pencil"></i>
                                         </button>
                                         <button type="button" class="btn btn-outline-danger"
@@ -188,6 +211,15 @@
                             @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         <div class="mb-3">
+                            <label class="form-label">Jenis <span class="text-danger">*</span></label>
+                            <select class="form-select @error('jenis') is-invalid @enderror" name="jenis" required>
+                                <option value="skpd"  {{ old('jenis', 'skpd') === 'skpd'  ? 'selected' : '' }}>SKPD — Layanan Internal SKPD</option>
+                                <option value="publik"{{ old('jenis') === 'publik' ? 'selected' : '' }}>Publik — Pengaduan Layanan Publik</option>
+                                <option value="cctv"  {{ old('jenis') === 'cctv'  ? 'selected' : '' }}>CCTV — Layanan CCTV</option>
+                            </select>
+                            @error('jenis') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label">Deskripsi</label>
                             <textarea class="form-control @error('description') is-invalid @enderror"
                                 name="description" rows="3"
@@ -228,6 +260,14 @@
                         <div class="mb-3">
                             <label class="form-label">Nama Jenis Pekerjaan <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="editName" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Jenis <span class="text-danger">*</span></label>
+                            <select class="form-select" id="editJenis" name="jenis" required>
+                                <option value="skpd">SKPD — Layanan Internal SKPD</option>
+                                <option value="publik">Publik — Pengaduan Layanan Publik</option>
+                                <option value="cctv">CCTV — Layanan CCTV</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Deskripsi</label>
@@ -289,17 +329,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusFilter = document.getElementById('statusFilter');
     const rows = document.querySelectorAll('#kategoriTable tbody tr[data-name]');
 
+    const jenisFilter = document.getElementById('jenisFilter');
+
     function filterTable() {
         const q = searchInput.value.toLowerCase();
         const s = statusFilter.value;
+        const j = jenisFilter.value;
         rows.forEach(row => {
-            const matchName = row.dataset.name.includes(q);
+            const matchName   = row.dataset.name.includes(q);
             const matchStatus = !s || row.dataset.status === s;
-            row.style.display = matchName && matchStatus ? '' : 'none';
+            const matchJenis  = !j || row.dataset.jenis === j;
+            row.style.display = matchName && matchStatus && matchJenis ? '' : 'none';
         });
     }
     searchInput.addEventListener('input', filterTable);
     statusFilter.addEventListener('change', filterTable);
+    jenisFilter.addEventListener('change', filterTable);
 
     // Edit modal
     document.getElementById('editModal').addEventListener('show.bs.modal', function(e) {
@@ -307,6 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const id = btn.dataset.id;
         document.getElementById('editForm').action = '/admin/jenis-pekerjaan/' + id;
         document.getElementById('editName').value = btn.dataset.name;
+        document.getElementById('editJenis').value = btn.dataset.jenis || 'skpd';
         document.getElementById('editDescription').value = btn.dataset.description || '';
         document.getElementById('editStatus').value = btn.dataset.status;
     });

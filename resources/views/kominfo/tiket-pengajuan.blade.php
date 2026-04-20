@@ -11,7 +11,7 @@
         <i class="bi bi-plus-circle me-2"></i>
         Pengajuan Tiket Pekerjaan
     </h2>
-    <p class="mb-0">Ajukan permintaan bantuan pekerjaan kepada Dinas Kominfo</p>
+    <p class="mb-0">Ajukan permintaan bantuan IT kepada Dinas Kominfo Kota Bukittinggi</p>
 @endsection
 
 @section('content')
@@ -25,57 +25,27 @@
                     </h5>
                 </div>
                 <div class="card-body">
+                    {{-- Info SKPD (read-only, tidak perlu diisi ulang) --}}
+                    <div class="alert alert-light border d-flex align-items-center gap-3 mb-4" style="border-radius:.6rem;">
+                        <i class="bi bi-building text-primary fs-5 flex-shrink-0"></i>
+                        <div class="small">
+                            <span class="text-muted">Pengaju:</span>
+                            <strong class="ms-1">{{ auth()->user()->name }}</strong>
+                            <span class="text-muted ms-2">—</span>
+                            <span class="ms-2">{{ auth()->user()->department->name ?? 'Tidak terdaftar' }}</span>
+                        </div>
+                    </div>
+
                     <form action="{{ route('tiket.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
-                        <!-- Informasi Pemohon -->
+                        <!-- Jenis Pekerjaan & Lokasi -->
                         <div class="row mb-4">
-                            <div class="col-12">
-                                <h6 class="text-primary mb-3">
-                                    <i class="bi bi-person-badge me-2"></i>
-                                    Informasi Pemohon
-                                </h6>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">SKPD/Unit Kerja</label>
-                                <input type="text" class="form-control"
-                                    value="{{ auth()->user()->department->name ?? 'Tidak terdaftar' }}" readonly>
-                                <div class="form-text">SKPD otomatis sesuai akun Anda</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="contact_pic" class="form-label">Nama / No. Telepon PIC *</label>
-                                <input type="text" class="form-control @error('contact_pic') is-invalid @enderror"
-                                    name="contact_pic" id="contact_pic"
-                                    value="{{ old('contact_pic', auth()->user()->name) }}" required
-                                    placeholder="Nama dan nomor WA yang bisa dihubungi">
-                                @error('contact_pic')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <!-- Detail Pekerjaan -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h6 class="text-primary mb-3">
-                                    <i class="bi bi-tools me-2"></i>
-                                    Detail Pekerjaan yang Diminta
-                                </h6>
-                            </div>
-                            <div class="col-md-8">
-                                <label for="title" class="form-label">Judul/Ringkasan Pekerjaan *</label>
-                                <input type="text" class="form-control @error('title') is-invalid @enderror"
-                                    name="title" id="title" value="{{ old('title') }}"
-                                    placeholder="Contoh: Perbaikan Jaringan Internet Kantor SKPD" required>
-                                @error('title')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="col-md-4">
-                                <label for="category_id" class="form-label">Jenis Pekerjaan *</label>
-                                <select class="form-select @error('category_id') is-invalid @enderror" name="category_id"
-                                    id="category_id" required>
-                                    <option value="">Pilih Jenis...</option>
+                            <div class="col-md-7">
+                                <label for="category_id" class="form-label">Jenis Pekerjaan <span class="text-danger">*</span></label>
+                                <select class="form-select @error('category_id') is-invalid @enderror"
+                                    name="category_id" id="category_id" required>
+                                    <option value="">— Pilih Jenis Pekerjaan —</option>
                                     @foreach ($jenisKerjaan ?? [] as $jenis)
                                         <option value="{{ $jenis->id }}"
                                             {{ old('category_id') == $jenis->id ? 'selected' : '' }}>
@@ -87,106 +57,93 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                        </div>
-
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <label for="description" class="form-label">Deskripsi Lengkap Pekerjaan *</label>
-                                <textarea class="form-control @error('description') is-invalid @enderror" name="description" id="description"
-                                    rows="5" required
-                                    placeholder="Jelaskan secara detail pekerjaan yang diminta, kondisi saat ini, dan hasil yang diharapkan...">{{ old('description') }}</textarea>
-                                @error('description')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <div class="form-text">Jelaskan sedetail mungkin agar tim Kominfo dapat memahami kebutuhan
-                                    Anda (min. 20 karakter)</div>
-                            </div>
-                        </div>
-
-                        <div class="row mb-4">
-                            <div class="col-md-4">
-                                <label for="priority_id" class="form-label">Tingkat Prioritas *</label>
-                                <select class="form-select @error('priority_id') is-invalid @enderror" name="priority_id"
-                                    id="priority_id" required>
-                                    <option value="">Pilih Prioritas...</option>
-                                    @foreach ($prioritasList ?? [] as $prioritas)
-                                        <option value="{{ $prioritas->id }}"
-                                            {{ old('priority_id') == $prioritas->id ? 'selected' : '' }}>
-                                            {{ $prioritas->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('priority_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="col-md-4">
-                                <label for="target_date" class="form-label">Target Waktu Penyelesaian</label>
-                                <input type="date" class="form-control @error('target_date') is-invalid @enderror"
-                                    name="target_date" id="target_date" value="{{ old('target_date') }}"
-                                    min="{{ date('Y-m-d', strtotime('+1 day')) }}">
-                                @error('target_date')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <div class="form-text">Opsional - jika ada deadline khusus</div>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Lokasi Pekerjaan</label>
-                                <input type="text" class="form-control" name="location" value="{{ old('location') }}"
+                            <div class="col-md-5">
+                                <label for="location" class="form-label">
+                                    Lokasi Pekerjaan
+                                    <small class="text-muted fw-normal">(opsional)</small>
+                                </label>
+                                <input type="text" class="form-control" name="location" id="location"
+                                    value="{{ old('location') }}"
                                     placeholder="Contoh: Ruang IT Lantai 2">
                             </div>
                         </div>
 
-                        <!-- Lampiran -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h6 class="text-primary mb-3">
-                                    <i class="bi bi-paperclip me-2"></i>
-                                    Lampiran Pendukung
-                                </h6>
-                            </div>
-                            <div class="col-md-12">
-                                <label for="lampiran" class="form-label">Upload File (maks. 5 file)</label>
-                                <input type="file"
-                                    class="form-control @error('lampiran') @error('lampiran.*') is-invalid @enderror @enderror"
-                                    name="lampiran[]" id="lampiran" accept=".pdf,.jpg,.jpeg,.png" multiple>
-                                @error('lampiran')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                @error('lampiran.*')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <div class="form-text">File: PDF, JPG, PNG (Max: 10MB per file, maks. 5 file)</div>
+                        <!-- Deskripsi -->
+                        <div class="mb-4">
+                            <label for="description" class="form-label">
+                                Detail Pengaduan / Permintaan
+                                <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control @error('description') is-invalid @enderror"
+                                name="description" id="description" rows="6" required
+                                placeholder="Jelaskan secara detail: kondisi yang terjadi, perangkat yang bermasalah, langkah yang sudah dilakukan, dan hasil yang diharapkan...">{{ old('description') }}</textarea>
+                            @error('description')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="d-flex justify-content-between mt-1">
+                                <div class="form-text">Jelaskan sedetail mungkin agar tim Kominfo dapat memahami kebutuhan Anda (min. 20 karakter).</div>
+                                <div class="form-text text-end" id="char-count"></div>
                             </div>
                         </div>
 
-                        <!-- Terms & Submit -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="border rounded p-3 bg-light mb-4">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="agreement" required>
-                                        <label class="form-check-label" for="agreement">
-                                            Saya menyatakan bahwa informasi yang diberikan adalah benar dan saya memahami
-                                            bahwa pekerjaan akan dilaksanakan sesuai dengan prioritas dan ketersediaan
-                                            sumber daya Dinas Kominfo Kota Bukittinggi. *
-                                        </label>
-                                    </div>
-                                </div>
+                        <!-- Lampiran Drag & Drop -->
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-paperclip me-1"></i>Lampiran Pendukung
+                                <small class="text-muted fw-normal">(opsional, maks 5 file)</small>
+                            </label>
 
-                                <div class="d-flex justify-content-between">
-                                    <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">
-                                        <i class="bi bi-arrow-left me-2"></i>Kembali
-                                    </a>
-                                    <div>
-                                        <button type="reset" class="btn btn-outline-warning me-2">
-                                            <i class="bi bi-arrow-clockwise me-2"></i>Reset Form
-                                        </button>
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="bi bi-send me-2"></i>Ajukan Tiket
-                                        </button>
-                                    </div>
-                                </div>
+                            {{-- Hidden actual input --}}
+                            <input type="file" name="lampiran[]" id="lampiran"
+                                accept=".pdf,.jpg,.jpeg,.png" multiple class="d-none">
+
+                            <div id="drop-zone"
+                                class="rounded-3 p-4 text-center"
+                                style="border: 2px dashed #ced4da; background:#f8f9fa; cursor:pointer; transition: border-color .2s, background .2s;">
+                                <i class="bi bi-cloud-upload fs-2 text-secondary mb-2 d-block"></i>
+                                <p class="mb-2 text-muted small">Seret & lepas file di sini, atau</p>
+                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                    onclick="document.getElementById('lampiran').click()">
+                                    <i class="bi bi-folder2-open me-1"></i>Pilih File
+                                </button>
+                                <p class="small text-muted mt-2 mb-0">
+                                    PDF, JPG, PNG &nbsp;·&nbsp; Maks 10 MB per file &nbsp;·&nbsp; Maks 5 file
+                                </p>
+                            </div>
+
+                            <div id="file-list" class="mt-2"></div>
+
+                            @error('lampiran')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                            @error('lampiran.*')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Terms & Submit -->
+                        <div class="border rounded p-3 bg-light mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="agreement" required>
+                                <label class="form-check-label small" for="agreement">
+                                    Saya menyatakan bahwa informasi yang diberikan adalah benar dan saya memahami
+                                    bahwa pekerjaan akan dilaksanakan sesuai dengan prioritas dan ketersediaan
+                                    sumber daya Dinas Kominfo Kota Bukittinggi.
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Kembali
+                            </a>
+                            <div>
+                                <button type="reset" class="btn btn-outline-warning me-2">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>Reset
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send me-2"></i>Ajukan Tiket
+                                </button>
                             </div>
                         </div>
                     </form>
@@ -207,23 +164,23 @@
                     <ul class="list-unstyled">
                         <li class="mb-3">
                             <i class="bi bi-check-circle text-success me-2"></i>
-                            <strong>Isi form dengan lengkap</strong><br>
-                            <small class="text-muted">Berikan informasi detail agar tim dapat memahami kebutuhan</small>
+                            <strong>Pilih jenis pekerjaan</strong><br>
+                            <small class="text-muted">Pilih kategori yang paling sesuai dengan permasalahan Anda</small>
                         </li>
                         <li class="mb-3">
                             <i class="bi bi-check-circle text-success me-2"></i>
-                            <strong>Pilih prioritas sesuai kebutuhan</strong><br>
-                            <small class="text-muted">Prioritas tinggi untuk pekerjaan yang mendesak</small>
+                            <strong>Deskripsikan secara detail</strong><br>
+                            <small class="text-muted">Jelaskan kondisi yang terjadi dan hasil yang diharapkan</small>
                         </li>
                         <li class="mb-3">
                             <i class="bi bi-check-circle text-success me-2"></i>
-                            <strong>Sertakan lampiran jika diperlukan</strong><br>
-                            <small class="text-muted">Screenshot error, dokumen spesifikasi, dll.</small>
+                            <strong>Sertakan lampiran jika ada</strong><br>
+                            <small class="text-muted">Screenshot error, foto perangkat, atau dokumen pendukung lainnya</small>
                         </li>
                         <li class="mb-0">
                             <i class="bi bi-check-circle text-success me-2"></i>
                             <strong>Pantau status tiket</strong><br>
-                            <small class="text-muted">Cek menu "Tiket Saya" untuk melihat progress</small>
+                            <small class="text-muted">Cek menu "Tiket Saya" untuk melihat progress penanganan</small>
                         </li>
                     </ul>
                 </div>
@@ -233,38 +190,34 @@
                 <div class="card-header">
                     <h6 class="mb-0">
                         <i class="bi bi-clock me-2"></i>
-                        Estimasi Waktu
+                        Estimasi Waktu Penanganan
                     </h6>
                 </div>
                 <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-4">
-                            <div class="text-success">
-                                <i class="bi bi-flag display-6"></i>
-                                <div><strong>1-2</strong></div>
-                                <small>Hari Kerja<br>Prioritas Tinggi</small>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="text-warning">
-                                <i class="bi bi-flag display-6"></i>
-                                <div><strong>3-5</strong></div>
-                                <small>Hari Kerja<br>Prioritas Sedang</small>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="text-info">
-                                <i class="bi bi-flag display-6"></i>
-                                <div><strong>1-2</strong></div>
-                                <small>Minggu<br>Prioritas Rendah</small>
-                            </div>
-                        </div>
+                    <ul class="list-unstyled small text-muted mb-0">
+                        <li class="mb-2 d-flex align-items-center gap-2">
+                            <span class="badge" style="background:#dc3545;">Urgent</span>
+                            Segera — gangguan kritis operasional
+                        </li>
+                        <li class="mb-2 d-flex align-items-center gap-2">
+                            <span class="badge" style="background:#fd7e14;">Tinggi</span>
+                            1 hari kerja
+                        </li>
+                        <li class="mb-2 d-flex align-items-center gap-2">
+                            <span class="badge" style="background:#0dcaf0; color:#000;">Sedang</span>
+                            3 hari kerja
+                        </li>
+                        <li class="d-flex align-items-center gap-2">
+                            <span class="badge" style="background:#198754;">Rendah</span>
+                            7 hari kerja
+                        </li>
+                    </ul>
+                    <div class="mt-3 pt-2 border-top">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Prioritas ditentukan oleh tim Kominfo sesuai dampak dan urgensi.
+                        </small>
                     </div>
-                    <hr>
-                    <small class="text-muted">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Estimasi dapat berubah sesuai kompleksitas pekerjaan
-                    </small>
                 </div>
             </div>
         </div>
@@ -272,95 +225,104 @@
 @endsection
 
 @push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Character counter for description
-            const deskripsi = document.getElementById('description');
-            const charCounter = document.createElement('div');
-            charCounter.className = 'form-text text-end';
-            deskripsi.parentNode.appendChild(charCounter);
+<script>
+document.addEventListener('DOMContentLoaded', function () {
 
-            deskripsi.addEventListener('input', function() {
-                const length = this.value.length;
-                charCounter.textContent = `${length}/1000 karakter`;
+    // ── Character counter ─────────────────────────────────────────
+    const deskripsi  = document.getElementById('description');
+    const charCount  = document.getElementById('char-count');
 
-                if (length > 900) {
-                    charCounter.className = 'form-text text-end text-danger';
-                } else if (length > 800) {
-                    charCounter.className = 'form-text text-end text-warning';
-                } else {
-                    charCounter.className = 'form-text text-end text-muted';
-                }
-            });
+    function updateCount() {
+        const n = deskripsi.value.length;
+        charCount.textContent = n + ' karakter';
+        charCount.className   = 'form-text text-end ' + (n > 900 ? 'text-danger' : n > 700 ? 'text-warning' : 'text-muted');
+    }
+    deskripsi.addEventListener('input', updateCount);
+    updateCount();
 
-            // Initial count
-            deskripsi.dispatchEvent(new Event('input'));
+    // ── Drag & Drop uploader ──────────────────────────────────────
+    const dropZone  = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('lampiran');
+    const fileList  = document.getElementById('file-list');
+    let   files     = [];
 
-            // Priority helper
-            const prioritas = document.getElementById('priority_id');
-            prioritas.addEventListener('change', function() {
-                const helpTexts = {
-                    'rendah': 'Pekerjaan tidak mendesak, dapat dikerjakan sesuai jadwal normal',
-                    'sedang': 'Pekerjaan dengan prioritas normal dalam antrian',
-                    'tinggi': 'Pekerjaan mendesak yang memerlukan penanganan segera'
-                };
+    const MAX_FILES = 5;
+    const MAX_SIZE  = 10 * 1024 * 1024;
+    const ALLOWED   = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
 
-                let helpEl = document.getElementById('priority-help');
-                if (!helpEl) {
-                    helpEl = document.createElement('div');
-                    helpEl.id = 'priority-help';
-                    helpEl.className = 'form-text';
-                    prioritas.parentNode.appendChild(helpEl);
-                }
+    function renderFileList() {
+        fileList.innerHTML = '';
+        files.forEach(function (file, i) {
+            const row = document.createElement('div');
+            row.className = 'd-flex align-items-center gap-2 mt-1 p-2 border rounded bg-white small';
+            const ext = file.name.split('.').pop().toUpperCase();
+            row.innerHTML =
+                '<span class="badge bg-secondary">' + ext + '</span>' +
+                '<span class="flex-grow-1 text-truncate">' + file.name + '</span>' +
+                '<span class="text-muted text-nowrap">' + (file.size / 1024 / 1024).toFixed(1) + ' MB</span>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 lh-1" data-i="' + i + '">' +
+                '<i class="bi bi-x"></i></button>';
+            fileList.appendChild(row);
+        });
 
-                helpEl.textContent = helpTexts[this.value] || '';
-            });
-
-            // File upload validation
-            const lampiran = document.getElementById('lampiran');
-            lampiran.addEventListener('change', function() {
-                const files = Array.from(this.files);
-                const maxSize = 10 * 1024 * 1024; // 10MB
-                const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-
-                for (const file of files) {
-                    if (file.size > maxSize) {
-                        alert(`File "${file.name}" terlalu besar. Maksimal 10MB per file.`);
-                        this.value = '';
-                        return;
-                    }
-                    if (!allowedTypes.includes(file.type)) {
-                        alert(`Tipe file "${file.name}" tidak didukung. Gunakan PDF, JPG, atau PNG.`);
-                        this.value = '';
-                        return;
-                    }
-                }
-                if (files.length > 5) {
-                    alert('Maksimal 5 file lampiran.');
-                    this.value = '';
-                }
-            });
-
-            // Form validation enhancement
-            const form = document.querySelector('form');
-            form.addEventListener('submit', function(e) {
-                const requiredFields = form.querySelectorAll('[required]');
-                let isValid = true;
-
-                requiredFields.forEach(field => {
-                    if (!field.value.trim()) {
-                        field.classList.add('is-invalid');
-                        isValid = false;
-                    } else {
-                        field.classList.remove('is-invalid');
-                    }
-                });
-
-                if (!isValid) {
-                    e.preventDefault();
-                    alert('Mohon lengkapi semua field yang wajib diisi (*)');
-                }
+        fileList.querySelectorAll('[data-i]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                files.splice(parseInt(this.dataset.i), 1);
+                syncInput();
+                renderFileList();
             });
         });
-    </script>
+    }
+
+    function syncInput() {
+        const dt = new DataTransfer();
+        files.forEach(function (f) { dt.items.add(f); });
+        fileInput.files = dt.files;
+    }
+
+    function addFiles(incoming) {
+        Array.from(incoming).forEach(function (f) {
+            if (files.length >= MAX_FILES) {
+                alert('Maksimal ' + MAX_FILES + ' file lampiran.');
+                return;
+            }
+            if (f.size > MAX_SIZE) {
+                alert('"' + f.name + '" terlalu besar. Maks 10 MB per file.');
+                return;
+            }
+            if (!ALLOWED.includes(f.type)) {
+                alert('"' + f.name + '" tidak didukung. Gunakan PDF, JPG, atau PNG.');
+                return;
+            }
+            files.push(f);
+        });
+        syncInput();
+        renderFileList();
+    }
+
+    // Click to browse
+    dropZone.addEventListener('click', function () { fileInput.click(); });
+    fileInput.addEventListener('change', function () {
+        addFiles(fileInput.files);
+        fileInput.value = '';
+    });
+
+    // Drag events
+    dropZone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        dropZone.style.borderColor  = '#4f46e5';
+        dropZone.style.background   = '#eef0ff';
+    });
+    dropZone.addEventListener('dragleave', function () {
+        dropZone.style.borderColor  = '#ced4da';
+        dropZone.style.background   = '#f8f9fa';
+    });
+    dropZone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dropZone.style.borderColor  = '#ced4da';
+        dropZone.style.background   = '#f8f9fa';
+        addFiles(e.dataTransfer.files);
+    });
+});
+</script>
 @endpush
