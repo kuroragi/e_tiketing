@@ -500,7 +500,9 @@ class KominfoController extends Controller
         $progressList = $ticket->comments()->progress()->with('user')->orderBy('created_at')->get();
         $commentList  = $ticket->comments()->public()->with('user')->orderBy('created_at')->get();
 
-        return view('kominfo.tiket-detail', compact('ticket', 'petugasList', 'progressList', 'commentList'));
+        $priorities = Priority::ordered()->get();
+
+        return view('kominfo.tiket-detail', compact('ticket', 'petugasList', 'progressList', 'commentList', 'priorities'));
     }
 
     //  Update Status 
@@ -513,9 +515,10 @@ class KominfoController extends Controller
         $ticket = Ticket::findOrFail($id);
 
         $request->validate([
-            'status'  => 'required|in:baru,diproses,menunggu_verifikasi,selesai,ditolak,dibatalkan',
-            'catatan' => 'nullable|string|max:1000',
-            'summary' => 'nullable|string',
+            'status'      => 'required|in:baru,diproses,menunggu_verifikasi,selesai,ditolak,dibatalkan',
+            'catatan'     => 'nullable|string|max:1000',
+            'summary'     => 'nullable|string',
+            'priority_id' => 'nullable|exists:priorities,id',
         ]);
 
         $oldStatus = $ticket->status;
@@ -548,6 +551,10 @@ class KominfoController extends Controller
             if ($request->filled('summary')) {
                 $updateData['summary'] = $request->summary;
             }
+        }
+        // Saat admin memverifikasi (selesai), simpan prioritas yang ditetapkan
+        if ($newStatus === 'selesai' && $user->isAdmin() && $request->filled('priority_id')) {
+            $updateData['priority_id'] = $request->priority_id;
         }
         // Simpan ringkasan pekerjaan saat petugas meminta verifikasi
         if ($newStatus === 'menunggu_verifikasi' && $request->filled('summary')) {

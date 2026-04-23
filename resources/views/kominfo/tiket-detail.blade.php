@@ -348,6 +348,21 @@
                                 @csrf @method('PUT')
                                 <input type="hidden" name="status" value="selesai">
                                 <div class="mb-2">
+                                    <label class="form-label form-label-sm fw-semibold">
+                                        <i class="bi bi-flag-fill me-1"></i>Tetapkan Prioritas <span
+                                            class="text-danger">*</span>
+                                    </label>
+                                    <select name="priority_id" class="form-select form-select-sm" required>
+                                        <option value="">-- Pilih Prioritas --</option>
+                                        @foreach ($priorities as $p)
+                                            <option value="{{ $p->id }}"
+                                                {{ $ticket->priority_id == $p->id ? 'selected' : '' }}>
+                                                {{ $p->name }}{{ $p->description ? ' — ' . $p->description : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="mb-2">
                                     <textarea class="form-control form-control-sm" name="catatan" rows="2"
                                         placeholder="Catatan verifikasi (opsional)"></textarea>
                                 </div>

@@ -41,7 +41,6 @@ class LandingController extends Controller
             return redirect()->route('landing')->with('warning', 'Layanan pengaduan publik sedang tidak aktif.');
         }
 
-        $priorities = Priority::ordered()->get();
         $layanan    = request('layanan', '');
 
         // Untuk form CCTV, ambil category CCTV otomatis
@@ -75,7 +74,7 @@ class LandingController extends Controller
             }
         }
 
-        return view('public.submit-ticket', compact('categories', 'priorities', 'captchaNum1', 'captchaNum2', 'captchaHash', 'selectedService', 'layanan', 'cctvCategory'));
+        return view('public.submit-ticket', compact('categories', 'captchaNum1', 'captchaNum2', 'captchaHash', 'selectedService', 'layanan', 'cctvCategory'));
     }
 
     /**
@@ -107,7 +106,6 @@ class LandingController extends Controller
             'public_nik'     => 'nullable|string|size:16',
             'public_address' => 'nullable|string|max:500',
             'category_id'    => $layanan === 'cctv' ? 'nullable|exists:categories,id' : 'required|exists:categories,id',
-            'priority_id'    => 'required|exists:priorities,id',
             'lampiran'       => 'nullable|array|max:5',
             'lampiran.*'     => ['file', 'max:10240', new SafeFile()],
         ];
@@ -141,7 +139,6 @@ class LandingController extends Controller
             'description.required'          => 'Deskripsi pengaduan harus diisi.',
             'description.min'               => 'Deskripsi minimal 20 karakter.',
             'category_id.required'          => 'Kategori layanan harus dipilih.',
-            'priority_id.required'          => 'Prioritas harus dipilih.',
             'tanggal_kejadian.required'     => 'Tanggal kejadian harus diisi.',
             'tanggal_kejadian.before_or_equal' => 'Tanggal kejadian tidak boleh di masa depan.',
             'daerah_kejadian.required'      => 'Daerah/lokasi kejadian harus diisi.',
@@ -193,7 +190,7 @@ class LandingController extends Controller
             'category_id'    => $layanan === 'cctv'
                 ? (Category::aktif()->where('jenis', 'cctv')->value('id') ?? $validated['category_id'] ?? null)
                 : $validated['category_id'],
-            'priority_id'    => $validated['priority_id'],
+            'priority_id'    => (Priority::where('weight', 1)->first() ?? Priority::ordered()->first())?->id,
             'contact_pic'    => $validated['public_name'],
             'public_name'    => $validated['public_name'],
             'public_email'   => $validated['public_email'],

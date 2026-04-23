@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <link rel="icon" type="image/x-icon" href="/assets/ticket.ico">
+    <link rel="icon" type="image/x-icon" href="/assets/logo-ticket.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -1251,8 +1251,8 @@
 
     <script>
         /* ═══════════════════════════════════
-           DARK MODE SYSTEM
-        ═══════════════════════════════════ */
+               DARK MODE SYSTEM
+            ═══════════════════════════════════ */
         (function() {
             const html = document.documentElement;
             const toggle = document.getElementById('themeToggle');
