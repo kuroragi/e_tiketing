@@ -72,23 +72,7 @@
                             placeholder="Cari no/judul..." value="{{ request('search') }}">
                     </div>
                 </div>
-                <div class="col-md-2">
-                    <label for="status" class="form-label">Status</label>
-                    <select class="form-select" name="status" id="status">
-                        <option value="">Semua Status</option>
-                        <option value="baru" {{ request('status') === 'baru' ? 'selected' : '' }}>Baru</option>
-                        <option value="diproses" {{ request('status') === 'diproses' ? 'selected' : '' }}>Diproses</option>
-                        <option value="menunggu_verifikasi"
-                            {{ request('status') === 'menunggu_verifikasi' ? 'selected' : '' }}>Menunggu Verifikasi</option>
-                        <option value="selesai" {{ request('status') === 'selesai' ? 'selected' : '' }}>Selesai</option>
-                        <option value="ditolak" {{ request('status') === 'ditolak' ? 'selected' : '' }}>Ditolak</option>
-                        @if ($viewMode === 'saya')
-                            <option value="dibatalkan" {{ request('status') === 'dibatalkan' ? 'selected' : '' }}>
-                                Dibatalkan
-                            </option>
-                        @endif
-                    </select>
-                </div>
+
                 <div class="col-md-2">
                     <label for="priority_id" class="form-label">Prioritas</label>
                     <select class="form-select" name="priority_id" id="priority_id">
@@ -150,52 +134,23 @@
         </div>
     </div>
 
-    <!-- Quick Stats -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card card-warning">
-                <div class="card-body text-center">
-                    <h4 class="text-warning">{{ $stats['baru'] ?? 0 }}</h4>
-                    <small class="text-muted">{{ $viewMode === 'saya' ? 'Menunggu Proses' : 'Tiket Baru' }}</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card card-info">
-                <div class="card-body text-center">
-                    <h4 class="text-info">{{ $stats['diproses'] ?? 0 }}</h4>
-                    <small class="text-muted">Sedang Diproses</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card card-success">
-                <div class="card-body text-center">
-                    <h4 class="text-success">{{ $stats['selesai'] ?? 0 }}</h4>
-                    <small class="text-muted">Selesai</small>
-                </div>
-            </div>
-        </div>
-        @if ($viewMode === 'semua')
-            <div class="col-md-3">
-                <div class="card" style="border-top:3px solid #ea580c;">
-                    <div class="card-body text-center">
-                        <h4 style="color:#ea580c;">{{ $stats['menunggu_verifikasi'] ?? 0 }}</h4>
-                        <small class="text-muted">Menunggu Verifikasi</small>
-                    </div>
-                </div>
-            </div>
-        @else
-            <div class="col-md-3">
-                <div class="card card-primary">
-                    <div class="card-body text-center">
-                        <h4 class="text-primary">{{ $stats['total'] ?? 0 }}</h4>
-                        <small class="text-muted">Total Tiket</small>
-                    </div>
-                </div>
-            </div>
-        @endif
-    </div>
+    @php
+        $activeTab = request('tab', 'semua');
+        $tabBase   = request()->except(['tab', 'page']);
+        $mkTabUrl  = fn($tab) => $filterRoute . '?' . http_build_query(array_merge($tabBase, ['tab' => $tab]));
+
+        $tabDefs = [
+            ['key' => 'semua',                'label' => 'Semua',                'count' => $stats['total'] ?? 0,                'icon' => 'bi-list-task',          'color' => 'text-secondary'],
+            ['key' => 'baru',                 'label' => 'Baru',                 'count' => $stats['baru'] ?? 0,                 'icon' => 'bi-inbox',              'color' => 'text-warning'],
+            ['key' => 'diproses',             'label' => 'Diproses',             'count' => $stats['diproses'] ?? 0,             'icon' => 'bi-hourglass-split',    'color' => 'text-info'],
+            ['key' => 'menunggu_verifikasi',  'label' => 'Menunggu Verifikasi',  'count' => $stats['menunggu_verifikasi'] ?? 0,  'icon' => 'bi-clock-history',      'color' => 'text-warning'],
+            ['key' => 'selesai',              'label' => 'Selesai',              'count' => $stats['selesai'] ?? 0,              'icon' => 'bi-check-circle',       'color' => 'text-success'],
+            ['key' => 'ditolak',              'label' => 'Ditolak',              'count' => $stats['ditolak'] ?? 0,              'icon' => 'bi-x-circle',           'color' => 'text-danger'],
+        ];
+        if ($viewMode === 'saya') {
+            $tabDefs[] = ['key' => 'dibatalkan', 'label' => 'Dibatalkan', 'count' => $stats['dibatalkan'] ?? 0, 'icon' => 'bi-slash-circle', 'color' => 'text-muted'];
+        }
+    @endphp
 
     <!-- Tickets List -->
     <div class="card">
@@ -211,21 +166,33 @@
             </h5>
             <div class="d-flex gap-2">
                 @if (!$isPetugas)
-                    <a href="{{ route('tiket.create') }}">
-                        <button class="btn btn-sm btn-primary">Tambah Tiket</button></a>
+                    <a href="{{ route('tiket.create') }}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>Tambah Tiket
+                    </a>
                 @endif
-                <div class="btn-group" role="group">
-                    <input type="radio" class="btn-check" name="view-mode" id="list-view" checked>
-                    <label class="btn btn-outline-primary btn-sm" for="list-view">
-                        <i class="bi bi-list"></i>
-                    </label>
-                    <input type="radio" class="btn-check" name="view-mode" id="card-view">
-                    <label class="btn btn-outline-primary btn-sm" for="card-view">
-                        <i class="bi bi-grid-3x3-gap"></i>
-                    </label>
-                </div>
             </div>
         </div>
+
+        {{-- Tab Navigasi per Status --}}
+        <div class="border-bottom" style="background:var(--bg-card,#fff);">
+            <ul class="nav nav-tabs border-0 px-3 pt-2 flex-nowrap overflow-auto" style="gap:.25rem;">
+                @foreach ($tabDefs as $tab)
+                    <li class="nav-item flex-shrink-0">
+                        <a class="nav-link d-flex align-items-center gap-1 py-2 px-3 {{ $activeTab === $tab['key'] ? 'active fw-semibold' : '' }}"
+                           href="{{ $mkTabUrl($tab['key']) }}"
+                           style="white-space:nowrap;font-size:.82rem;">
+                            <i class="bi {{ $tab['icon'] }} {{ $tab['color'] }}"></i>
+                            {{ $tab['label'] }}
+                            @if ($tab['count'] > 0)
+                                <span class="badge rounded-pill {{ $activeTab === $tab['key'] ? 'bg-primary' : 'bg-secondary' }} ms-1"
+                                      style="font-size:.68rem;">{{ $tab['count'] }}</span>
+                            @endif
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+
         <div class="card-body p-0">
             @if ($tickets->count() > 0)
                 <!-- List View -->
@@ -447,83 +414,8 @@
                     </div>
                 </div>
 
-                <!-- Card View -->
-                <div id="card-container" class="d-none">
-                    <div class="row p-3">
-                        @foreach ($tickets as $ticket)
-                            <div class="col-md-6 col-lg-4 mb-3">
-                                <a href="{{ route('tiket.show', $ticket->id) }}" class="text-decoration-none">
-                                    <div class="card ticket-card h-100">
-                                        <div class="card-header d-flex justify-content-between align-items-center py-2">
-                                            <small class="fw-bold text-primary">{{ $ticket->number }}</small>
-                                            <span class="status-badge status-{{ strtolower($ticket->status) }}">
-                                                {{ $ticket->status === 'menunggu_verifikasi' ? 'Menunggu Verifikasi' : ucfirst($ticket->status) }}
-                                            </span>
-                                        </div>
-                                        <div class="card-body">
-                                            <h6 class="card-title text-dark">{{ Str::limit($ticket->title, 50) }}</h6>
-                                            <p class="card-text small text-muted">
-                                                {{ Str::limit($ticket->description, 70) }}</p>
-
-                                            @if ($viewMode === 'semua')
-                                                <div class="d-flex align-items-center mb-2">
-                                                    <div class="user-avatar me-2">
-                                                        {{ substr($ticket->department->name ?? 'T', 0, 1) }}</div>
-                                                    <small
-                                                        class="text-muted">{{ $ticket->department->name ?? '-' }}</small>
-                                                </div>
-                                            @endif
-
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <span class="priority-{{ strtolower($ticket->priority->name ?? 'rendah') }}">
-                                                    <i class="bi bi-flag-fill"></i>
-                                                    {{ ucfirst($ticket->priority->name ?? 'Rendah') }}
-                                                </span>
-                                                <small class="text-muted">{{ $ticket->created_at->format('d/m/Y') }}</small>
-                                            </div>
-                                            @if($ticket->target_date)
-                                                @php
-                                                    $tdCard = \Carbon\Carbon::parse($ticket->target_date);
-                                                    $isOverdueCard = $tdCard->isPast() && $ticket->isOpen();
-                                                @endphp
-                                                @if($isOverdueCard)
-                                                    <div class="badge-overdue mt-2">⚠ Terlambat {{ now()->diffInDays($tdCard) }} hari</div>
-                                                @endif
-                                            @endif
-
-                                            @if ($viewMode === 'saya' && $ticket->status === 'baru' && $ticket->requester_id === $authUser->id)
-                                                <div class="mt-2">
-                                                    <form method="POST"
-                                                        action="{{ route('tiket.batalkan', $ticket->id) }}"
-                                                        onsubmit="return confirm('Yakin ingin membatalkan tiket ini?')">
-                                                        @csrf @method('PUT')
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100"
-                                                            onclick="event.stopPropagation(); event.preventDefault(); if(confirm('Yakin?')) this.form.submit();">
-                                                            <i class="bi bi-x-octagon me-1"></i>Batalkan
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            @endif
-
-                                            @if ($viewMode === 'semua' && $ticket->assignees->count())
-                                                @foreach ($ticket->assignees as $a)
-                                                    <div class="mt-1 d-flex align-items-center">
-                                                        <div class="user-avatar me-2"
-                                                            style="width:24px;height:24px;font-size:10px">
-                                                            {{ substr($a->name, 0, 1) }}</div>
-                                                        <small class="text-muted">{{ $a->name }}</small>
-                                                    </div>
-                                                @endforeach
-                                            @elseif ($viewMode === 'semua')
-                                                <small class="text-muted fst-italic mt-1 d-block">Belum ditugaskan</small>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
+                {{-- Card view removed; replaced by status tabs --}}
+                <div class="d-none" id="card-container-removed"><!-- Removed --></div>
 
                 <!-- Pagination -->
                 <div class="p-3">
@@ -556,28 +448,8 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // View mode toggle
-            const listView = document.getElementById('list-view');
-            const cardView = document.getElementById('card-view');
-            const listContainer = document.getElementById('list-container');
-            const cardContainer = document.getElementById('card-container');
-
-            listView.addEventListener('change', function() {
-                if (this.checked) {
-                    listContainer.classList.remove('d-none');
-                    cardContainer.classList.add('d-none');
-                }
-            });
-
-            cardView.addEventListener('change', function() {
-                if (this.checked) {
-                    listContainer.classList.add('d-none');
-                    cardContainer.classList.remove('d-none');
-                }
-            });
-
-            // Auto-submit form on filter change
-            ['status', 'priority_id', 'department_id'].forEach(function(id) {
+            // Auto-submit form on filter change (priority, dept)
+            ['priority_id', 'department_id', 'assignee_id'].forEach(function(id) {
                 const el = document.getElementById(id);
                 if (el) el.addEventListener('change', function() {
                     this.form.submit();

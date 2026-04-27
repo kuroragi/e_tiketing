@@ -365,7 +365,12 @@ class KominfoController extends Controller
         $query = Ticket::with(['requester', 'department', 'category', 'priority', 'assignee', 'assignees'])
             ->where('requester_id', $user->id);
 
-        if ($request->filled('status'))      $query->where('status', $request->status);
+        // Tab-based status filter
+        $activeTab = $request->get('tab', 'semua');
+        $validTabs = ['baru','diproses','menunggu_verifikasi','selesai','ditolak','dibatalkan'];
+        $statusFilter = in_array($activeTab, $validTabs) ? $activeTab : $request->get('status');
+        if ($statusFilter) $query->where('status', $statusFilter);
+
         if ($request->filled('category_id')) $query->where('category_id', $request->category_id);
         if ($request->filled('priority_id')) $query->where('priority_id', $request->priority_id);
         if ($request->filled('search')) {
@@ -386,6 +391,8 @@ class KominfoController extends Controller
             'diproses'            => (clone $base)->where('status', 'diproses')->count(),
             'menunggu_verifikasi' => (clone $base)->where('status', 'menunggu_verifikasi')->count(),
             'selesai'             => (clone $base)->where('status', 'selesai')->count(),
+            'ditolak'             => (clone $base)->where('status', 'ditolak')->count(),
+            'dibatalkan'          => (clone $base)->where('status', 'dibatalkan')->count(),
         ];
 
         return view('kominfo.tiket-daftar', compact(
@@ -407,9 +414,12 @@ class KominfoController extends Controller
             $query->whereHas('assignees', fn($q) => $q->where('users.id', $user->id));
         }
 
-        // Terapkan filter
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        // Terapkan filter status — prioritaskan tab, fallback ke param status
+        $activeTab = $request->get('tab', 'semua');
+        $validTabs = ['baru','diproses','menunggu_verifikasi','selesai','ditolak','dibatalkan'];
+        $statusFilter = in_array($activeTab, $validTabs) ? $activeTab : $request->get('status');
+        if ($statusFilter) {
+            $query->where('status', $statusFilter);
         }
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
@@ -470,6 +480,8 @@ class KominfoController extends Controller
             'diproses'            => (clone $statsBase)->where('status', 'diproses')->count(),
             'menunggu_verifikasi' => (clone $statsBase)->where('status', 'menunggu_verifikasi')->count(),
             'selesai'             => (clone $statsBase)->where('status', 'selesai')->count(),
+            'ditolak'             => (clone $statsBase)->where('status', 'ditolak')->count(),
+            'dibatalkan'          => (clone $statsBase)->where('status', 'dibatalkan')->count(),
         ];
 
         return view('kominfo.tiket-daftar', compact(
@@ -1074,6 +1086,76 @@ class KominfoController extends Controller
             'skpdDetail', 'categoryDetail', 'trendData',
             'priorities', 'petugasList',
         ));
+    }
+
+    //  Export PDF 
+
+    public function exportPdf(Request $request)
+    {
+        $user = Auth::user();
+        abort_unless(
+            $user->isAdmin() || $user->isPimpinan(),
+            403, 'Akses ditolak.'
+        );
+
+        $request->validate([
+            'dari'          => 'required|date',
+            'sampai'        => 'required|date|after_or_equal:dari',
+            'assignee_ids'  => 'nullable|array',
+            'assignee_ids.*'=> 'integer|exists:users,id',
+        ]);
+
+        $dari   = Carbon::parse($request->dari)->startOfDay();
+        $sampai = Carbon::parse($request->sampai)->endOfDay();
+
+        $query = Ticket::with(['department:id,name', 'category:id,name', 'priority:id,name', 'requester:id,name', 'assignees:id,name'])
+            ->whereBetween('created_at', [$dari, $sampai]);
+
+        // Filter petugas jika dipilih
+        $selectedAssigneeIds = $request->get('assignee_ids', []);
+        if (!empty($selectedAssigneeIds)) {
+            $query->whereHas('assignees', fn($q) => $q->whereIn('users.id', $selectedAssigneeIds));
+        }
+
+        $tickets = $query->orderByDesc('created_at')->get();
+
+        // Rekap ringkasan
+        $total   = $tickets->count();
+        $selesai = $tickets->where('status', 'selesai')->count();
+        $avgDays = $tickets->where('status', 'selesai')
+            ->filter(fn($t) => $t->closed_at)
+            ->avg(fn($t) => $t->created_at->diffInDays($t->closed_at));
+
+        $summary = [
+            'total'      => $total,
+            'baru'       => $tickets->where('status', 'baru')->count(),
+            'diproses'   => $tickets->where('status', 'diproses')->count(),
+            'menunggu'   => $tickets->where('status', 'menunggu_verifikasi')->count(),
+            'selesai'    => $selesai,
+            'ditolak'    => $tickets->where('status', 'ditolak')->count(),
+            'dibatalkan' => $tickets->where('status', 'dibatalkan')->count(),
+            'rata_hari'  => round($avgDays ?? 0, 1),
+        ];
+
+        // Daftar petugas yang dipilih (untuk keterangan header)
+        $selectedPetugas = [];
+        if (!empty($selectedAssigneeIds)) {
+            $selectedPetugas = User::whereIn('id', $selectedAssigneeIds)->pluck('name')->toArray();
+        }
+
+        $allPetugas = User::role('petugas')->orderBy('name')->get(['id', 'name']);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('kominfo.laporan-pdf', [
+            'tickets'         => $tickets,
+            'summary'         => $summary,
+            'dari'            => $dari,
+            'sampai'          => $sampai,
+            'selectedPetugas' => $selectedPetugas,
+            'printedAt'       => now(),
+            'printedBy'       => $user->name,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download('laporan-tiket-' . $dari->format('Y-m-d') . '_sd_' . $sampai->format('Y-m-d') . '.pdf');
     }
 
     //  Export CSV 

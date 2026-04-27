@@ -73,6 +73,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/laporan/export/csv', [KominfoController::class, 'exportCsv'])
         ->name('laporan.export.csv');
 
+    Route::get('/laporan/export/pdf', [KominfoController::class, 'exportPdf'])
+        ->name('laporan.export.pdf');
+
     // Static Pages
     Route::get('/panduan', [PageController::class, 'panduan'])->name('panduan');
     Route::get('/tentang', [PageController::class, 'tentang'])->name('tentang');

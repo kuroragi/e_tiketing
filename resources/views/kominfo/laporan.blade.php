@@ -26,11 +26,18 @@
                     ]),
                 );
             @endphp
-            <a href="{{ route('laporan.export.csv') }}?{{ $csvParams }}"
-                class="btn btn-success d-flex align-items-center gap-2"
-                style="background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4);color:#fff;">
-                <i class="bi bi-download"></i>Export CSV
-            </a>
+            <div class="d-flex gap-2">
+                <a href="{{ route('laporan.export.csv') }}?{{ $csvParams }}"
+                    class="btn btn-success d-flex align-items-center gap-2"
+                    style="background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4);color:#fff;">
+                    <i class="bi bi-filetype-csv"></i>Export CSV
+                </a>
+                <button type="button" class="btn d-flex align-items-center gap-2"
+                    style="background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4);color:#fff;"
+                    data-bs-toggle="modal" data-bs-target="#pdfModal">
+                    <i class="bi bi-file-earmark-pdf"></i>Export PDF
+                </button>
+            </div>
         @endif
     </div>
 @endsection
@@ -877,6 +884,104 @@
         </div>
     @endif
 
+    {{-- ══════════════════════════════════════════════════════════
+         MODAL: Konfigurasi Laporan PDF
+    ══════════════════════════════════════════════════════════ --}}
+    @if (auth()->user()->isAdmin() || auth()->user()->isPimpinan())
+    <div class="modal fade" id="pdfModal" tabindex="-1" aria-labelledby="pdfModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background:var(--primary);color:#fff;">
+                    <h5 class="modal-title" id="pdfModalLabel">
+                        <i class="bi bi-file-earmark-pdf me-2"></i>Cetak Laporan PDF
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ route('laporan.export.pdf') }}" method="GET" target="_blank">
+                    <div class="modal-body">
+
+                        <div class="alert alert-info d-flex align-items-start gap-2 py-2" style="font-size:.85rem;">
+                            <i class="bi bi-info-circle-fill mt-1 flex-shrink-0"></i>
+                            <div>
+                                Laporan akan dicetak dengan kop:<br>
+                                <strong>Laporan Tiket Pekerjaan · Dinas Komunikasi dan Informatika · Kota Bukittinggi</strong><br>
+                                Isi laporan mencakup daftar tiket sesuai rentang waktu dan filter petugas yang dipilih.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Rentang Waktu Laporan</label>
+                            <div class="row g-2">
+                                <div class="col-sm-6">
+                                    <label class="form-label" style="font-size:.8rem;">Dari Tanggal</label>
+                                    <input type="date" class="form-control" name="dari" required
+                                        value="{{ request('dari', now()->startOfMonth()->format('Y-m-d')) }}">
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label" style="font-size:.8rem;">Sampai Tanggal</label>
+                                    <input type="date" class="form-control" name="sampai" required
+                                        value="{{ request('sampai', now()->endOfMonth()->format('Y-m-d')) }}">
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-1 mt-2">
+                                @php
+                                    $pdfPresets = [
+                                        ['label' => 'Bulan Ini',  'dari' => now()->startOfMonth()->format('Y-m-d'),                         'sampai' => now()->endOfMonth()->format('Y-m-d')],
+                                        ['label' => 'Bulan Lalu', 'dari' => now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d'),    'sampai' => now()->subMonthNoOverflow()->endOfMonth()->format('Y-m-d')],
+                                        ['label' => '3 Bulan',    'dari' => now()->subMonths(2)->startOfMonth()->format('Y-m-d'),            'sampai' => now()->endOfMonth()->format('Y-m-d')],
+                                        ['label' => 'Tahun Ini',  'dari' => now()->startOfYear()->format('Y-m-d'),                          'sampai' => now()->endOfYear()->format('Y-m-d')],
+                                    ];
+                                @endphp
+                                @foreach ($pdfPresets as $pr)
+                                    <button type="button" class="btn btn-sm btn-outline-secondary pdf-preset"
+                                        data-dari="{{ $pr['dari'] }}" data-sampai="{{ $pr['sampai'] }}"
+                                        style="font-size:.75rem;padding:.2rem .6rem;border-radius:20px;">
+                                        {{ $pr['label'] }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Filter Petugas</label>
+                            <div class="mb-2 d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllPetugas"
+                                    style="font-size:.78rem;">Pilih Semua</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="clearPetugas"
+                                    style="font-size:.78rem;">Kosongkan</button>
+                                <span class="text-muted" style="font-size:.78rem;align-self:center;">
+                                    (kosongkan = semua petugas)
+                                </span>
+                            </div>
+                            <div class="border rounded p-3" style="max-height:200px;overflow-y:auto;background:var(--bg-body,#f8fafc);">
+                                @forelse ($petugasList ?? [] as $pt)
+                                    <div class="form-check">
+                                        <input class="form-check-input petugas-check" type="checkbox"
+                                            name="assignee_ids[]" value="{{ $pt->id }}"
+                                            id="pt_{{ $pt->id }}">
+                                        <label class="form-check-label" for="pt_{{ $pt->id }}" style="font-size:.88rem;">
+                                            {{ $pt->name }}
+                                        </label>
+                                    </div>
+                                @empty
+                                    <div class="text-muted" style="font-size:.85rem;">Tidak ada data petugas.</div>
+                                @endforelse
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-file-earmark-pdf me-1"></i>Cetak PDF
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
+
 @endsection
 
 @push('scripts')
@@ -1144,6 +1249,21 @@
             /* ── Re-render on theme toggle ────────────────────── */
             document.getElementById('themeToggle')?.addEventListener('click', () => {
                 setTimeout(() => charts.forEach(c => c.update()), 300);
+            });
+
+            /* ── PDF Modal: preset tanggal & pilih petugas ─────── */
+            document.querySelectorAll('.pdf-preset').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const form = btn.closest('form');
+                    form.querySelector('[name="dari"]').value   = btn.dataset.dari;
+                    form.querySelector('[name="sampai"]').value = btn.dataset.sampai;
+                });
+            });
+            document.getElementById('selectAllPetugas')?.addEventListener('click', function () {
+                document.querySelectorAll('.petugas-check').forEach(cb => cb.checked = true);
+            });
+            document.getElementById('clearPetugas')?.addEventListener('click', function () {
+                document.querySelectorAll('.petugas-check').forEach(cb => cb.checked = false);
             });
         });
     </script>

@@ -131,10 +131,6 @@ class MobileTicketController extends Controller
         ], 201);
     }
 
-    // placeholder closing brace to be removed by next replacement
-        ], 201);
-    }
-
     /**
      * PUT /api/mobile/tickets/{id}/status
      * Update status tiket (admin / petugas).
