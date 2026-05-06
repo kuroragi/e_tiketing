@@ -114,6 +114,7 @@
                             <th>Nama Jenis Pekerjaan</th>
                             <th class="text-center">Jenis</th>
                             <th>Deskripsi</th>
+                            <th>PIC Petugas</th>
                             <th class="text-center">Tiket</th>
                             <th class="text-center">Status</th>
                             <th class="text-center">Aksi</th>
@@ -141,6 +142,17 @@
                                 <td>
                                     <small class="text-muted">{{ $cat->description ? Str::limit($cat->description, 60) : '-' }}</small>
                                 </td>
+                                <td>
+                                    @if($cat->jenis === 'skpd' && $cat->autoAssignee)
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                            <i class="bi bi-person-check me-1"></i>{{ $cat->autoAssignee->name }}
+                                        </span>
+                                    @elseif($cat->jenis === 'skpd')
+                                        <span class="text-muted small"><i class="bi bi-dash"></i> Via Admin</span>
+                                    @else
+                                        <span class="text-muted small">—</span>
+                                    @endif
+                                </td>
                                 <td class="text-center">
                                     <span class="badge bg-light text-dark">{{ $cat->tickets_count }}</span>
                                 </td>
@@ -160,7 +172,8 @@
                                             data-name="{{ $cat->name }}"
                                             data-description="{{ $cat->description }}"
                                             data-status="{{ $cat->status }}"
-                                            data-jenis="{{ $cat->jenis ?? 'skpd' }}">
+                                            data-jenis="{{ $cat->jenis ?? 'skpd' }}"
+                                            data-auto-assignee="{{ $cat->auto_assignee_id ?? '' }}">
                                             <i class="bi bi-pencil"></i>
                                         </button>
                                         <button type="button" class="btn btn-outline-danger"
@@ -234,6 +247,25 @@
                             </select>
                             @error('status') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
+                        <div class="mb-3" id="tambahAutoAssigneeWrap">
+                            <label class="form-label">
+                                <i class="bi bi-person-check me-1 text-success"></i>Petugas PIC (Auto-Assign)
+                            </label>
+                            <select class="form-select @error('auto_assignee_id') is-invalid @enderror"
+                                    name="auto_assignee_id" id="tambahAutoAssignee">
+                                <option value="">— Tidak ada (melalui admin) —</option>
+                                @foreach($petugasList as $p)
+                                    <option value="{{ $p->id }}" {{ old('auto_assignee_id') == $p->id ? 'selected' : '' }}>
+                                        {{ $p->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="form-text text-success">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Jika diisi, tiket kategori ini langsung ditugaskan tanpa melalui admin.
+                            </div>
+                            @error('auto_assignee_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
@@ -279,6 +311,21 @@
                                 <option value="aktif">Aktif</option>
                                 <option value="nonaktif">Nonaktif</option>
                             </select>
+                        </div>
+                        <div class="mb-3" id="editAutoAssigneeWrap">
+                            <label class="form-label">
+                                <i class="bi bi-person-check me-1 text-success"></i>Petugas PIC (Auto-Assign)
+                            </label>
+                            <select class="form-select" id="editAutoAssignee" name="auto_assignee_id">
+                                <option value="">— Tidak ada (melalui admin) —</option>
+                                @foreach($petugasList as $p)
+                                    <option value="{{ $p->id }}">{{ $p->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="form-text text-success">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Jika diisi, tiket kategori ini langsung ditugaskan tanpa melalui admin.
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -346,15 +393,42 @@ document.addEventListener('DOMContentLoaded', function() {
     statusFilter.addEventListener('change', filterTable);
     jenisFilter.addEventListener('change', filterTable);
 
-    // Edit modal
+    // ── Toggle PIC field berdasarkan jenis (Tambah modal) ──────────────────────
+    const tambahJenis      = document.querySelector('#tambahModal select[name="jenis"]');
+    const tambahPICWrap    = document.getElementById('tambahAutoAssigneeWrap');
+    function toggleTambahPIC() {
+        tambahPICWrap.style.display = tambahJenis.value === 'skpd' ? '' : 'none';
+        if (tambahJenis.value !== 'skpd') {
+            document.getElementById('tambahAutoAssignee').value = '';
+        }
+    }
+    if (tambahJenis) {
+        tambahJenis.addEventListener('change', toggleTambahPIC);
+        toggleTambahPIC();
+    }
+
+    // ── Edit modal ──────────────────────────────────────────────────────────────
+    const editPICWrap = document.getElementById('editAutoAssigneeWrap');
+    const editJenis   = document.getElementById('editJenis');
+
+    function toggleEditPIC() {
+        editPICWrap.style.display = editJenis.value === 'skpd' ? '' : 'none';
+        if (editJenis.value !== 'skpd') {
+            document.getElementById('editAutoAssignee').value = '';
+        }
+    }
+    editJenis.addEventListener('change', toggleEditPIC);
+
     document.getElementById('editModal').addEventListener('show.bs.modal', function(e) {
         const btn = e.relatedTarget;
         const id = btn.dataset.id;
         document.getElementById('editForm').action = '/admin/jenis-pekerjaan/' + id;
         document.getElementById('editName').value = btn.dataset.name;
-        document.getElementById('editJenis').value = btn.dataset.jenis || 'skpd';
+        editJenis.value = btn.dataset.jenis || 'skpd';
         document.getElementById('editDescription').value = btn.dataset.description || '';
         document.getElementById('editStatus').value = btn.dataset.status;
+        document.getElementById('editAutoAssignee').value = btn.dataset.autoAssignee || '';
+        toggleEditPIC();
     });
 
     // Hapus modal

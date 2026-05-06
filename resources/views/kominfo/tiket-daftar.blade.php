@@ -136,19 +136,61 @@
 
     @php
         $activeTab = request('tab', 'semua');
-        $tabBase   = request()->except(['tab', 'page']);
-        $mkTabUrl  = fn($tab) => $filterRoute . '?' . http_build_query(array_merge($tabBase, ['tab' => $tab]));
+        $tabBase = request()->except(['tab', 'page']);
+        $mkTabUrl = fn($tab) => $filterRoute . '?' . http_build_query(array_merge($tabBase, ['tab' => $tab]));
 
         $tabDefs = [
-            ['key' => 'semua',                'label' => 'Semua',                'count' => $stats['total'] ?? 0,                'icon' => 'bi-list-task',          'color' => 'text-secondary'],
-            ['key' => 'baru',                 'label' => 'Baru',                 'count' => $stats['baru'] ?? 0,                 'icon' => 'bi-inbox',              'color' => 'text-warning'],
-            ['key' => 'diproses',             'label' => 'Diproses',             'count' => $stats['diproses'] ?? 0,             'icon' => 'bi-hourglass-split',    'color' => 'text-info'],
-            ['key' => 'menunggu_verifikasi',  'label' => 'Menunggu Verifikasi',  'count' => $stats['menunggu_verifikasi'] ?? 0,  'icon' => 'bi-clock-history',      'color' => 'text-warning'],
-            ['key' => 'selesai',              'label' => 'Selesai',              'count' => $stats['selesai'] ?? 0,              'icon' => 'bi-check-circle',       'color' => 'text-success'],
-            ['key' => 'ditolak',              'label' => 'Ditolak',              'count' => $stats['ditolak'] ?? 0,              'icon' => 'bi-x-circle',           'color' => 'text-danger'],
+            [
+                'key' => 'semua',
+                'label' => 'Semua',
+                'count' => $stats['total'] ?? 0,
+                'icon' => 'bi-list-task',
+                'color' => 'text-secondary',
+            ],
+            [
+                'key' => 'baru',
+                'label' => 'Baru',
+                'count' => $stats['baru'] ?? 0,
+                'icon' => 'bi-inbox',
+                'color' => 'text-warning',
+            ],
+            [
+                'key' => 'diproses',
+                'label' => 'Diproses',
+                'count' => $stats['diproses'] ?? 0,
+                'icon' => 'bi-hourglass-split',
+                'color' => 'text-info',
+            ],
+            [
+                'key' => 'menunggu_verifikasi',
+                'label' => 'Menunggu Verifikasi',
+                'count' => $stats['menunggu_verifikasi'] ?? 0,
+                'icon' => 'bi-clock-history',
+                'color' => 'text-warning',
+            ],
+            [
+                'key' => 'selesai',
+                'label' => 'Selesai',
+                'count' => $stats['selesai'] ?? 0,
+                'icon' => 'bi-check-circle',
+                'color' => 'text-success',
+            ],
+            [
+                'key' => 'ditolak',
+                'label' => 'Ditolak',
+                'count' => $stats['ditolak'] ?? 0,
+                'icon' => 'bi-x-circle',
+                'color' => 'text-danger',
+            ],
         ];
         if ($viewMode === 'saya') {
-            $tabDefs[] = ['key' => 'dibatalkan', 'label' => 'Dibatalkan', 'count' => $stats['dibatalkan'] ?? 0, 'icon' => 'bi-slash-circle', 'color' => 'text-muted'];
+            $tabDefs[] = [
+                'key' => 'dibatalkan',
+                'label' => 'Dibatalkan',
+                'count' => $stats['dibatalkan'] ?? 0,
+                'icon' => 'bi-slash-circle',
+                'color' => 'text-muted',
+            ];
         }
     @endphp
 
@@ -179,13 +221,13 @@
                 @foreach ($tabDefs as $tab)
                     <li class="nav-item flex-shrink-0">
                         <a class="nav-link d-flex align-items-center gap-1 py-2 px-3 {{ $activeTab === $tab['key'] ? 'active fw-semibold' : '' }}"
-                           href="{{ $mkTabUrl($tab['key']) }}"
-                           style="white-space:nowrap;font-size:.82rem;">
+                            href="{{ $mkTabUrl($tab['key']) }}" style="white-space:nowrap;font-size:.82rem;">
                             <i class="bi {{ $tab['icon'] }} {{ $tab['color'] }}"></i>
                             {{ $tab['label'] }}
                             @if ($tab['count'] > 0)
-                                <span class="badge rounded-pill {{ $activeTab === $tab['key'] ? 'bg-primary' : 'bg-secondary' }} ms-1"
-                                      style="font-size:.68rem;">{{ $tab['count'] }}</span>
+                                <span
+                                    class="badge rounded-pill {{ $activeTab === $tab['key'] ? 'bg-primary' : 'bg-secondary' }} ms-1"
+                                    style="font-size:.68rem;">{{ $tab['count'] }}</span>
                             @endif
                         </a>
                     </li>
@@ -251,17 +293,21 @@
                                         </td>
                                         <td>
                                             <div>{{ $ticket->created_at->format('d/m/Y') }}</div>
-                                            @if($ticket->target_date)
+                                            @if ($ticket->target_date)
                                                 @php
                                                     $td = \Carbon\Carbon::parse($ticket->target_date);
                                                     $isOverdue = $td->isPast() && $ticket->isOpen();
                                                     $overdueDays = $isOverdue ? now()->diffInDays($td) : 0;
-                                                    $remaining = !$isOverdue && $ticket->isOpen() ? now()->diffInDays($td, false) : null;
+                                                    $remaining =
+                                                        !$isOverdue && $ticket->isOpen()
+                                                            ? now()->diffInDays($td, false)
+                                                            : null;
                                                 @endphp
-                                                @if($isOverdue)
+                                                @if ($isOverdue)
                                                     <div class="badge-overdue mt-1">⚠ {{ $overdueDays }}h terlambat</div>
                                                 @elseif($remaining !== null && $remaining <= 3)
-                                                    <small style="color:var(--warning);font-weight:600;">⏳ {{ $remaining }}h lagi</small>
+                                                    <small style="color:var(--warning);font-weight:600;">⏳
+                                                        {{ $remaining }}h lagi</small>
                                                 @else
                                                     <small class="text-muted">Target: {{ $td->format('d/m/Y') }}</small>
                                                 @endif

@@ -309,6 +309,11 @@ class KominfoController extends Controller
         // Default priority: Sedang (weight=2), fallback ke yang pertama
         $defaultPriority = Priority::where('weight', 2)->first() ?? Priority::ordered()->first();
 
+        // Cek apakah kategori memiliki petugas auto-assign
+        $category       = Category::with('autoAssignee')->find($validated['category_id']);
+        $autoAssignee   = $category?->autoAssignee;
+        $ticketStatus   = $autoAssignee ? 'diproses' : 'baru';
+
         $ticket = Ticket::create([
             'number'        => Ticket::generateNumber(),
             'title'         => $title,
@@ -318,8 +323,40 @@ class KominfoController extends Controller
             'category_id'   => $validated['category_id'],
             'priority_id'   => $defaultPriority?->id,
             'contact_pic'   => $user->name,
-            'status'        => 'baru',
+            'status'        => $ticketStatus,
+            'assignee_id'   => $autoAssignee?->id,
+            'assigned_at'   => $autoAssignee ? now() : null,
+            'started_at'    => $autoAssignee ? now() : null,
         ]);
+
+        // Jika ada auto-assign, daftarkan pivot dan buat komentar otomatis
+        if ($autoAssignee) {
+            $ticket->assignees()->sync([
+                $autoAssignee->id => [
+                    'assigned_by_id' => $autoAssignee->id,
+                    'assigned_at'    => now(),
+                ],
+            ]);
+
+            TicketComment::create([
+                'ticket_id' => $ticket->id,
+                'user_id'   => $autoAssignee->id,
+                'body'      => "Tiket otomatis ditugaskan ke **{$autoAssignee->name}** karena kategori **{$category->name}** memiliki petugas PIC yang ditunjuk.",
+                'type'      => 'assignment',
+            ]);
+
+            AuditLog::create([
+                'user_id'     => $user->id,
+                'action'      => 'assigned',
+                'entity_type' => 'Ticket',
+                'entity_id'   => $ticket->id,
+                'entity_name' => $ticket->number,
+                'new_value'   => ['assignee_id' => $autoAssignee->id, 'assignee_name' => $autoAssignee->name, 'method' => 'pic_auto'],
+                'description' => "Tiket {$ticket->number} di-assign otomatis (PIC) ke {$autoAssignee->name}",
+                'ip_address'  => $request->ip(),
+                'user_agent'  => $request->userAgent(),
+            ]);
+        }
 
         // Simpan lampiran
         if ($request->hasFile('lampiran')) {
@@ -352,7 +389,10 @@ class KominfoController extends Controller
         ]);
 
         return redirect()->route('tiket.show', $ticket->id)
-            ->with('success', "Tiket berhasil diajukan dengan nomor: {$ticket->number}");
+            ->with('success', $autoAssignee
+                ? "Tiket {$ticket->number} berhasil diajukan dan langsung ditugaskan ke {$autoAssignee->name}."
+                : "Tiket berhasil diajukan dengan nomor: {$ticket->number}"
+            );
     }
 
     //  Tiket Saya (SKPD) 

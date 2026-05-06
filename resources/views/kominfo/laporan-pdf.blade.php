@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Laporan Tiket Pekerjaan</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
             font-family: 'DejaVu Sans', Arial, sans-serif;
@@ -60,9 +65,19 @@
             color: #475569;
         }
 
-        .info-box table { width: 100%; }
-        .info-box td { padding: 1px 6px; }
-        .info-box td:first-child { font-weight: bold; color: #334155; width: 120px; }
+        .info-box table {
+            width: 100%;
+        }
+
+        .info-box td {
+            padding: 1px 6px;
+        }
+
+        .info-box td:first-child {
+            font-weight: bold;
+            color: #334155;
+            width: 120px;
+        }
 
         /* ── Ringkasan Statistik ────────────────────────────── */
         .stat-row {
@@ -90,12 +105,29 @@
             margin-top: 2px;
         }
 
-        .stat-total   .stat-val { color: #1e40af; }
-        .stat-selesai .stat-val { color: #16a34a; }
-        .stat-proses  .stat-val { color: #0891b2; }
-        .stat-baru    .stat-val { color: #ca8a04; }
-        .stat-ditolak .stat-val { color: #dc2626; }
-        .stat-waktu   .stat-val { color: #7c3aed; }
+        .stat-total .stat-val {
+            color: #1e40af;
+        }
+
+        .stat-selesai .stat-val {
+            color: #16a34a;
+        }
+
+        .stat-proses .stat-val {
+            color: #0891b2;
+        }
+
+        .stat-baru .stat-val {
+            color: #ca8a04;
+        }
+
+        .stat-ditolak .stat-val {
+            color: #dc2626;
+        }
+
+        .stat-waktu .stat-val {
+            color: #7c3aed;
+        }
 
         /* ── Judul Seksi ────────────────────────────────────── */
         .section-title {
@@ -151,12 +183,35 @@
             font-weight: bold;
         }
 
-        .status-baru                { background: #fef9c3; color: #854d0e; }
-        .status-diproses            { background: #dbeafe; color: #1e40af; }
-        .status-menunggu_verifikasi { background: #ede9fe; color: #5b21b6; }
-        .status-selesai             { background: #dcfce7; color: #14532d; }
-        .status-ditolak             { background: #fee2e2; color: #7f1d1d; }
-        .status-dibatalkan          { background: #f1f5f9; color: #475569; }
+        .status-baru {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+
+        .status-diproses {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-menunggu_verifikasi {
+            background: #ede9fe;
+            color: #5b21b6;
+        }
+
+        .status-selesai {
+            background: #dcfce7;
+            color: #14532d;
+        }
+
+        .status-ditolak {
+            background: #fee2e2;
+            color: #7f1d1d;
+        }
+
+        .status-dibatalkan {
+            background: #f1f5f9;
+            color: #475569;
+        }
 
         /* ── Footer ─────────────────────────────────────────── */
         .page-footer {
@@ -192,9 +247,12 @@
         }
 
         /* ── Page break ─────────────────────────────────────── */
-        .page-break { page-break-after: always; }
+        .page-break {
+            page-break-after: always;
+        }
     </style>
 </head>
+
 <body>
 
     {{-- ── KOP / HEADER ────────────────────────────────────── --}}
@@ -286,14 +344,14 @@
                 @foreach ($tickets as $i => $ticket)
                     @php
                         $statusClass = 'status-' . $ticket->status;
-                        $statusLabel = match($ticket->status) {
-                            'baru'                => 'Baru',
-                            'diproses'            => 'Diproses',
+                        $statusLabel = match ($ticket->status) {
+                            'baru' => 'Baru',
+                            'diproses' => 'Diproses',
                             'menunggu_verifikasi' => 'Menunggu Verif.',
-                            'selesai'             => 'Selesai',
-                            'ditolak'             => 'Ditolak',
-                            'dibatalkan'          => 'Dibatalkan',
-                            default               => ucfirst($ticket->status),
+                            'selesai' => 'Selesai',
+                            'ditolak' => 'Ditolak',
+                            'dibatalkan' => 'Dibatalkan',
+                            default => ucfirst($ticket->status),
                         };
                         $durasi = $ticket->resolutionDays();
                     @endphp
@@ -349,4 +407,5 @@
     </div>
 
 </body>
+
 </html>

@@ -193,12 +193,12 @@
                                     </h5>
 
                                     {{-- Kategori CCTV otomatis --}}
-                                    @if ($cctvCategory ?? null)
-                                        <input type="hidden" name="category_id" value="{{ $cctvCategory->id }}">
+                                    @if ($categories ?? null)
+                                        <input type="hidden" name="category_id" value="{{ $categories->id }}">
                                         <div class="alert alert-info d-flex align-items-center gap-2 mb-3 py-2">
                                             <i class="bi bi-camera-video-fill fs-5"></i>
                                             <div class="small">
-                                                <strong>Kategori:</strong> {{ $cctvCategory->name }}
+                                                <strong>Kategori:</strong> {{ $categories->name }}
                                                 <span class="text-muted ms-1">— dipilih otomatis</span>
                                             </div>
                                         </div>
@@ -550,7 +550,7 @@
                 files.forEach(function(file, i) {
                     const row = document.createElement('div');
                     row.className =
-                    'd-flex align-items-center gap-2 mt-1 p-2 border rounded bg-white small';
+                        'd-flex align-items-center gap-2 mt-1 p-2 border rounded bg-white small';
                     const ext = file.name.split('.').pop().toUpperCase();
                     row.innerHTML =
                         '<span class="badge bg-secondary">' + ext + '</span>' +

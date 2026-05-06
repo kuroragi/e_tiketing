@@ -262,19 +262,26 @@ class AdminPageController extends Controller
 
     public function jenisPekerjaan()
     {
-        $categories = Category::withCount('tickets')->orderBy('name')->paginate(20);
-        $priorities = Priority::ordered()->get();
-        return view('pages.admin.jenis-pekerjaan', compact('categories', 'priorities'));
+        $categories  = Category::with('autoAssignee')->withCount('tickets')->orderBy('name')->paginate(20);
+        $priorities  = Priority::ordered()->get();
+        $petugasList = User::role('petugas')->where('status', 'aktif')->orderBy('name')->get();
+        return view('pages.admin.jenis-pekerjaan', compact('categories', 'priorities', 'petugasList'));
     }
 
     public function storeCategory(Request $request)
     {
         $validated = $request->validate([
-            'name'        => 'required|string|max:255|unique:categories,name',
-            'jenis'       => 'required|in:cctv,publik,skpd',
-            'description' => 'nullable|string',
-            'status'      => 'required|in:aktif,nonaktif',
+            'name'             => 'required|string|max:255|unique:categories,name',
+            'jenis'            => 'required|in:cctv,publik,skpd',
+            'description'      => 'nullable|string',
+            'status'           => 'required|in:aktif,nonaktif',
+            'auto_assignee_id' => 'nullable|exists:users,id',
         ]);
+
+        // Auto-assign hanya berlaku untuk kategori jenis SKPD
+        if (($validated['jenis'] ?? '') !== 'skpd') {
+            $validated['auto_assignee_id'] = null;
+        }
 
         $cat = Category::create($validated);
 
@@ -292,11 +299,17 @@ class AdminPageController extends Controller
         $cat = Category::findOrFail($id);
 
         $validated = $request->validate([
-            'name'        => "required|string|max:255|unique:categories,name,{$id}",
-            'jenis'       => 'required|in:cctv,publik,skpd',
-            'description' => 'nullable|string',
-            'status'      => 'required|in:aktif,nonaktif',
+            'name'             => "required|string|max:255|unique:categories,name,{$id}",
+            'jenis'            => 'required|in:cctv,publik,skpd',
+            'description'      => 'nullable|string',
+            'status'           => 'required|in:aktif,nonaktif',
+            'auto_assignee_id' => 'nullable|exists:users,id',
         ]);
+
+        // Auto-assign hanya berlaku untuk kategori jenis SKPD
+        if (($validated['jenis'] ?? '') !== 'skpd') {
+            $validated['auto_assignee_id'] = null;
+        }
 
         $cat->update($validated);
 

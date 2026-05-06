@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             SettingSeeder::class,
             UserSeeder::class,
             RolePermissionSeeder::class,
+            PetugasUserSeeder::class,
         ]);
     }
 }

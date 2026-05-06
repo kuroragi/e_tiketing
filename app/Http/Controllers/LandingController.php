@@ -48,7 +48,7 @@ class LandingController extends Controller
 
         // Untuk form pengaduan publik, hanya tampilkan kategori jenis publik
         $categories = $layanan === 'cctv'
-            ? collect()
+            ? $cctvCategory
             : Category::aktif()->where('jenis', 'publik')->orderBy('name')->get();
 
         // Captcha sederhana
@@ -147,7 +147,6 @@ class LandingController extends Controller
             'waktu_akhir.date_format'       => 'Format waktu tidak valid (HH:MM).',
             'keperluan.required'            => 'Keperluan permintaan harus dipilih.',
         ]);
-
         // Build title & description for CCTV from structured fields
         if ($layanan === 'cctv') {
             $tglFormatted = date('d/m/Y', strtotime($validated['tanggal_kejadian']));
