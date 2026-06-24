@@ -29,7 +29,7 @@ class CategorySeeder extends Seeder
             ['name' => 'Pengembangan Aplikasi',    'jenis' => 'skpd', 'description' => 'Permintaan pengembangan atau modifikasi aplikasi internal SKPD'],
             ['name' => 'Integrasi Data',            'jenis' => 'skpd', 'description' => 'Integrasi atau sinkronisasi data antar sistem/aplikasi SKPD'],
             ['name' => 'Perbaikan Web Portal',     'jenis' => 'skpd', 'description' => 'Perbaikan website atau portal resmi SKPD'],
-            ['name' => 'PIC',                       'jenis' => 'skpd', 'description' => 'Permasalahan terkait sistem presensi elektronik (PIC) pegawai'],
+            ['name' => 'PIC',                       'jenis' => 'pic',  'description' => 'Permintaan yang langsung diteruskan ke petugas PIC yang ditunjuk per-SKPD'],
             ['name' => 'Troubleshooting',           'jenis' => 'skpd', 'description' => 'Pemecahan masalah teknis umum (jaringan, perangkat, software)'],
             ['name' => 'Permintaan Internet Baru', 'jenis' => 'skpd', 'description' => 'Permohonan pemasangan atau penambahan akses internet baru di SKPD'],
             ['name' => 'Lainnya',                   'jenis' => 'skpd', 'description' => 'Permintaan layanan SKPD lainnya yang tidak termasuk kategori di atas'],

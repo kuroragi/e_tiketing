@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Department extends Model
@@ -14,9 +15,16 @@ class Department extends Model
         'head',
         'address',
         'status',
+        'pic_id',
     ];
 
     // ─── Relationships ─────────────────────────────────────────────────────────
+
+    /** Petugas yang menjadi PIC untuk SKPD ini (menerima tiket kategori PIC). */
+    public function pic(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pic_id');
+    }
 
     public function users(): HasMany
     {

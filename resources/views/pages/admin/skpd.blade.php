@@ -180,6 +180,24 @@
                     </div>
                 </div>
 
+                {{-- PIC Petugas --}}
+                <div class="mb-3">
+                    @if($dept->pic)
+                        <div class="alert alert-success py-2 mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-person-check-fill text-success"></i>
+                            <div>
+                                <small class="text-muted d-block" style="font-size:.7rem">PIC Tiket</small>
+                                <span class="fw-semibold small">{{ $dept->pic->name }}</span>
+                            </div>
+                        </div>
+                    @else
+                        <div class="alert alert-secondary py-2 mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-person-dash text-muted"></i>
+                            <small class="text-muted">PIC belum ditentukan</small>
+                        </div>
+                    @endif
+                </div>
+
                 {{-- Actions --}}
                 <div class="d-flex gap-2">
                     <button class="btn btn-outline-primary btn-sm flex-fill"
@@ -190,7 +208,8 @@
                             data-contact="{{ $dept->contact }}"
                             data-head="{{ $dept->head }}"
                             data-address="{{ $dept->address }}"
-                            data-status="{{ $dept->status }}">
+                            data-status="{{ $dept->status }}"
+                            data-pic-id="{{ $dept->pic_id ?? '' }}">
                         <i class="bi bi-pencil me-1"></i>Edit
                     </button>
                     <button class="btn btn-outline-danger btn-sm"
@@ -221,7 +240,9 @@
 
 {{-- Pagination --}}
 @if($departments->hasPages())
-<div class="mt-4">{{ $departments->links() }}</div>
+<div class="mt-4 d-flex justify-content-center">
+    <div class="small">{{ $departments->links() }}</div>
+</div>
 @endif
 
 {{--  MODAL TAMBAH SKPD  --}}
@@ -263,6 +284,20 @@
                                 <option value="aktif" selected>Aktif</option>
                                 <option value="nonaktif">Nonaktif</option>
                             </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-person-check me-1 text-success"></i>Petugas PIC
+                            </label>
+                            <select name="pic_id" class="form-select">
+                                <option value="">— Belum ada PIC —</option>
+                                @foreach($petugasList as $p)
+                                    <option value="{{ $p->id }}">{{ $p->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="form-text">
+                                PIC menerima tiket kategori <strong>PIC</strong> dari SKPD ini secara otomatis.
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -317,6 +352,20 @@
                                 <option value="aktif">Aktif</option>
                                 <option value="nonaktif">Nonaktif</option>
                             </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-person-check me-1 text-success"></i>Petugas PIC
+                            </label>
+                            <select name="pic_id" id="editPicId" class="form-select">
+                                <option value="">— Belum ada PIC —</option>
+                                @foreach($petugasList as $p)
+                                    <option value="{{ $p->id }}">{{ $p->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="form-text">
+                                PIC menerima tiket kategori <strong>PIC</strong> dari SKPD ini secara otomatis.
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -374,6 +423,7 @@
         document.getElementById('editContact').value = btn.dataset.contact || '';
         document.getElementById('editAddress').value = btn.dataset.address || '';
         document.getElementById('editStatus').value  = btn.dataset.status  || 'aktif';
+        document.getElementById('editPicId').value   = btn.dataset.picId   || '';
         document.getElementById('formEditSkpd').action = `/admin/skpd/${btn.dataset.id}`;
     });
 

@@ -309,10 +309,16 @@ class KominfoController extends Controller
         // Default priority: Sedang (weight=2), fallback ke yang pertama
         $defaultPriority = Priority::where('weight', 2)->first() ?? Priority::ordered()->first();
 
-        // Cek apakah kategori memiliki petugas auto-assign
-        $category       = Category::with('autoAssignee')->find($validated['category_id']);
-        $autoAssignee   = $category?->autoAssignee;
-        $ticketStatus   = $autoAssignee ? 'diproses' : 'baru';
+        // Jika kategori bertipe 'pic' → cari PIC dari department pemohon
+        $category     = Category::find($validated['category_id']);
+        $autoAssignee = null;
+
+        if ($category?->jenis === 'pic') {
+            $department   = Department::with('pic')->find($user->department_id);
+            $autoAssignee = $department?->pic; // null jika SKPD belum dikonfigurasi PIC-nya
+        }
+
+        $ticketStatus = $autoAssignee ? 'diproses' : 'baru';
 
         $ticket = Ticket::create([
             'number'        => Ticket::generateNumber(),
@@ -326,10 +332,10 @@ class KominfoController extends Controller
             'status'        => $ticketStatus,
             'assignee_id'   => $autoAssignee?->id,
             'assigned_at'   => $autoAssignee ? now() : null,
-            'started_at'    => $autoAssignee ? now() : null,
+            'started_at'    => null, // petugas harus mulai sendiri; dipantau scheduler 3-jam
         ]);
 
-        // Jika ada auto-assign, daftarkan pivot dan buat komentar otomatis
+        // Jika PIC ditemukan: daftarkan pivot, buat komentar, notifikasi admin
         if ($autoAssignee) {
             $ticket->assignees()->sync([
                 $autoAssignee->id => [
@@ -341,7 +347,7 @@ class KominfoController extends Controller
             TicketComment::create([
                 'ticket_id' => $ticket->id,
                 'user_id'   => $autoAssignee->id,
-                'body'      => "Tiket otomatis ditugaskan ke **{$autoAssignee->name}** karena kategori **{$category->name}** memiliki petugas PIC yang ditunjuk.",
+                'body'      => "Tiket diteruskan otomatis ke PIC **{$autoAssignee->name}** karena kategori **{$category->name}** menggunakan sistem penugasan PIC per-SKPD.",
                 'type'      => 'assignment',
             ]);
 
@@ -352,10 +358,16 @@ class KominfoController extends Controller
                 'entity_id'   => $ticket->id,
                 'entity_name' => $ticket->number,
                 'new_value'   => ['assignee_id' => $autoAssignee->id, 'assignee_name' => $autoAssignee->name, 'method' => 'pic_auto'],
-                'description' => "Tiket {$ticket->number} di-assign otomatis (PIC) ke {$autoAssignee->name}",
+                'description' => "Tiket {$ticket->number} diteruskan otomatis (PIC) ke {$autoAssignee->name}",
                 'ip_address'  => $request->ip(),
                 'user_agent'  => $request->userAgent(),
             ]);
+
+            // Notifikasi ke semua admin aktif
+            $admins = User::role('admin')->where('status', 'aktif')->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new PicTicketCreated($ticket->load('department'), $autoAssignee));
+            }
         }
 
         // Simpan lampiran

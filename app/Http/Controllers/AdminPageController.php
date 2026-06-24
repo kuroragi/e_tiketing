@@ -193,8 +193,9 @@ class AdminPageController extends Controller
 
     public function skpd()
     {
-        $departments = Department::withCount('users', 'tickets')->orderBy('name')->paginate(20);
-        return view('pages.admin.skpd', compact('departments'));
+        $departments = Department::with('pic')->withCount('users', 'tickets')->orderBy('name')->paginate(20);
+        $petugasList = User::role('petugas')->where('status', 'aktif')->orderBy('name')->get();
+        return view('pages.admin.skpd', compact('departments', 'petugasList'));
     }
 
     public function storeDepartment(Request $request)
@@ -206,6 +207,7 @@ class AdminPageController extends Controller
             'head'    => 'nullable|string|max:255',
             'address' => 'nullable|string',
             'status'  => 'required|in:aktif,nonaktif',
+            'pic_id'  => 'nullable|exists:users,id',
         ]);
 
         $dept = Department::create($validated);
@@ -230,6 +232,7 @@ class AdminPageController extends Controller
             'head'    => 'nullable|string|max:255',
             'address' => 'nullable|string',
             'status'  => 'required|in:aktif,nonaktif',
+            'pic_id'  => 'nullable|exists:users,id',
         ]);
 
         $dept->update($validated);
@@ -271,17 +274,11 @@ class AdminPageController extends Controller
     public function storeCategory(Request $request)
     {
         $validated = $request->validate([
-            'name'             => 'required|string|max:255|unique:categories,name',
-            'jenis'            => 'required|in:cctv,publik,skpd',
-            'description'      => 'nullable|string',
-            'status'           => 'required|in:aktif,nonaktif',
-            'auto_assignee_id' => 'nullable|exists:users,id',
+            'name'        => 'required|string|max:255|unique:categories,name',
+            'jenis'       => 'required|in:cctv,publik,skpd,pic',
+            'description' => 'nullable|string',
+            'status'      => 'required|in:aktif,nonaktif',
         ]);
-
-        // Auto-assign hanya berlaku untuk kategori jenis SKPD
-        if (($validated['jenis'] ?? '') !== 'skpd') {
-            $validated['auto_assignee_id'] = null;
-        }
 
         $cat = Category::create($validated);
 
@@ -299,17 +296,11 @@ class AdminPageController extends Controller
         $cat = Category::findOrFail($id);
 
         $validated = $request->validate([
-            'name'             => "required|string|max:255|unique:categories,name,{$id}",
-            'jenis'            => 'required|in:cctv,publik,skpd',
-            'description'      => 'nullable|string',
-            'status'           => 'required|in:aktif,nonaktif',
-            'auto_assignee_id' => 'nullable|exists:users,id',
+            'name'        => "required|string|max:255|unique:categories,name,{$id}",
+            'jenis'       => 'required|in:cctv,publik,skpd,pic',
+            'description' => 'nullable|string',
+            'status'      => 'required|in:aktif,nonaktif',
         ]);
-
-        // Auto-assign hanya berlaku untuk kategori jenis SKPD
-        if (($validated['jenis'] ?? '') !== 'skpd') {
-            $validated['auto_assignee_id'] = null;
-        }
 
         $cat->update($validated);
 

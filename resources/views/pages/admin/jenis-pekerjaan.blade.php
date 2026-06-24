@@ -83,6 +83,7 @@
                         <option value="cctv">CCTV</option>
                         <option value="publik">Pengaduan Publik</option>
                         <option value="skpd">SKPD</option>
+                        <option value="pic">PIC (Auto-assign)</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -114,7 +115,6 @@
                             <th>Nama Jenis Pekerjaan</th>
                             <th class="text-center">Jenis</th>
                             <th>Deskripsi</th>
-                            <th>PIC Petugas</th>
                             <th class="text-center">Tiket</th>
                             <th class="text-center">Status</th>
                             <th class="text-center">Aksi</th>
@@ -132,6 +132,7 @@
                                         $jenisBadge = match($jenis) {
                                             'cctv'   => ['bg-info text-dark',    'bi-camera-video',    'CCTV'],
                                             'publik' => ['bg-warning text-dark', 'bi-megaphone',       'Publik'],
+                                            'pic'    => ['bg-success',           'bi-person-check',    'PIC'],
                                             default  => ['bg-primary',           'bi-building',        'SKPD'],
                                         };
                                     @endphp
@@ -141,17 +142,6 @@
                                 </td>
                                 <td>
                                     <small class="text-muted">{{ $cat->description ? Str::limit($cat->description, 60) : '-' }}</small>
-                                </td>
-                                <td>
-                                    @if($cat->jenis === 'skpd' && $cat->autoAssignee)
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle">
-                                            <i class="bi bi-person-check me-1"></i>{{ $cat->autoAssignee->name }}
-                                        </span>
-                                    @elseif($cat->jenis === 'skpd')
-                                        <span class="text-muted small"><i class="bi bi-dash"></i> Via Admin</span>
-                                    @else
-                                        <span class="text-muted small">—</span>
-                                    @endif
                                 </td>
                                 <td class="text-center">
                                     <span class="badge bg-light text-dark">{{ $cat->tickets_count }}</span>
@@ -198,7 +188,9 @@
                     </tbody>
                 </table>
             </div>
-            <div class="mt-3">{{ $categories->links() }}</div>
+            <div class="mt-3 d-flex justify-content-center">
+                <div class="small">{{ $categories->links() }}</div>
+            </div>
         </div>
     </div>
 
@@ -229,6 +221,7 @@
                                 <option value="skpd"  {{ old('jenis', 'skpd') === 'skpd'  ? 'selected' : '' }}>SKPD — Layanan Internal SKPD</option>
                                 <option value="publik"{{ old('jenis') === 'publik' ? 'selected' : '' }}>Publik — Pengaduan Layanan Publik</option>
                                 <option value="cctv"  {{ old('jenis') === 'cctv'  ? 'selected' : '' }}>CCTV — Layanan CCTV</option>
+                                <option value="pic"   {{ old('jenis') === 'pic'   ? 'selected' : '' }}>PIC — Auto-assign ke PIC per SKPD</option>
                             </select>
                             @error('jenis') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
@@ -247,25 +240,10 @@
                             </select>
                             @error('status') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
-                        <div class="mb-3" id="tambahAutoAssigneeWrap">
-                            <label class="form-label">
-                                <i class="bi bi-person-check me-1 text-success"></i>Petugas PIC (Auto-Assign)
-                            </label>
-                            <select class="form-select @error('auto_assignee_id') is-invalid @enderror"
-                                    name="auto_assignee_id" id="tambahAutoAssignee">
-                                <option value="">— Tidak ada (melalui admin) —</option>
-                                @foreach($petugasList as $p)
-                                    <option value="{{ $p->id }}" {{ old('auto_assignee_id') == $p->id ? 'selected' : '' }}>
-                                        {{ $p->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <div class="form-text text-success">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Jika diisi, tiket kategori ini langsung ditugaskan tanpa melalui admin.
-                            </div>
-                            @error('auto_assignee_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
+                        <div class="alert alert-info mb-0 py-2" id="tambahPicInfo" style="display:none">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Tiket jenis <strong>PIC</strong> akan otomatis diteruskan ke petugas PIC yang dikonfigurasi
+                            di halaman <strong>Manajemen SKPD</strong> — satu PIC per SKPD.
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
@@ -299,6 +277,7 @@
                                 <option value="skpd">SKPD — Layanan Internal SKPD</option>
                                 <option value="publik">Publik — Pengaduan Layanan Publik</option>
                                 <option value="cctv">CCTV — Layanan CCTV</option>
+                                <option value="pic">PIC — Auto-assign ke PIC per SKPD</option>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -312,21 +291,10 @@
                                 <option value="nonaktif">Nonaktif</option>
                             </select>
                         </div>
-                        <div class="mb-3" id="editAutoAssigneeWrap">
-                            <label class="form-label">
-                                <i class="bi bi-person-check me-1 text-success"></i>Petugas PIC (Auto-Assign)
-                            </label>
-                            <select class="form-select" id="editAutoAssignee" name="auto_assignee_id">
-                                <option value="">— Tidak ada (melalui admin) —</option>
-                                @foreach($petugasList as $p)
-                                    <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                @endforeach
-                            </select>
-                            <div class="form-text text-success">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Jika diisi, tiket kategori ini langsung ditugaskan tanpa melalui admin.
-                            </div>
-                        </div>
+                        <div class="alert alert-info mb-0 py-2" id="editPicInfo" style="display:none">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Tiket jenis <strong>PIC</strong> akan otomatis diteruskan ke petugas PIC yang dikonfigurasi
+                            di halaman <strong>Manajemen SKPD</strong> — satu PIC per SKPD.
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
@@ -393,31 +361,26 @@ document.addEventListener('DOMContentLoaded', function() {
     statusFilter.addEventListener('change', filterTable);
     jenisFilter.addEventListener('change', filterTable);
 
-    // ── Toggle PIC field berdasarkan jenis (Tambah modal) ──────────────────────
-    const tambahJenis      = document.querySelector('#tambahModal select[name="jenis"]');
-    const tambahPICWrap    = document.getElementById('tambahAutoAssigneeWrap');
-    function toggleTambahPIC() {
-        tambahPICWrap.style.display = tambahJenis.value === 'skpd' ? '' : 'none';
-        if (tambahJenis.value !== 'skpd') {
-            document.getElementById('tambahAutoAssignee').value = '';
-        }
+    // ── Toggle PIC info hint (Tambah modal) ────────────────────────────────────
+    const tambahJenis   = document.querySelector('#tambahModal select[name="jenis"]');
+    const tambahPicInfo = document.getElementById('tambahPicInfo');
+    function toggleTambahPicInfo() {
+        if (tambahPicInfo) tambahPicInfo.style.display = tambahJenis.value === 'pic' ? '' : 'none';
     }
     if (tambahJenis) {
-        tambahJenis.addEventListener('change', toggleTambahPIC);
-        toggleTambahPIC();
+        tambahJenis.addEventListener('change', toggleTambahPicInfo);
+        toggleTambahPicInfo();
     }
 
     // ── Edit modal ──────────────────────────────────────────────────────────────
-    const editPICWrap = document.getElementById('editAutoAssigneeWrap');
+    const editPicInfo = document.getElementById('editPicInfo');
     const editJenis   = document.getElementById('editJenis');
 
-    function toggleEditPIC() {
-        editPICWrap.style.display = editJenis.value === 'skpd' ? '' : 'none';
-        if (editJenis.value !== 'skpd') {
-            document.getElementById('editAutoAssignee').value = '';
-        }
+    function toggleEditPicInfo() {
+        if (editPicInfo) editPicInfo.style.display = editJenis.value === 'pic' ? '' : 'none';
     }
-    editJenis.addEventListener('change', toggleEditPIC);
+    editJenis.addEventListener('change', toggleEditPicInfo);
+    toggleEditPicInfo();
 
     document.getElementById('editModal').addEventListener('show.bs.modal', function(e) {
         const btn = e.relatedTarget;
@@ -427,8 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
         editJenis.value = btn.dataset.jenis || 'skpd';
         document.getElementById('editDescription').value = btn.dataset.description || '';
         document.getElementById('editStatus').value = btn.dataset.status;
-        document.getElementById('editAutoAssignee').value = btn.dataset.autoAssignee || '';
-        toggleEditPIC();
+        toggleEditPicInfo();
     });
 
     // Hapus modal

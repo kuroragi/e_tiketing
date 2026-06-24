@@ -7,6 +7,7 @@ use App\Models\Ticket;
 use App\Policies\TicketPolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -26,6 +27,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Gunakan Bootstrap 5 untuk pagination
+        Paginator::useBootstrapFive();
+
         // Daftarkan TicketPolicy untuk model Ticket
         Gate::policy(Ticket::class, TicketPolicy::class);
 
