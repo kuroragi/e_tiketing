@@ -193,9 +193,20 @@ class AdminPageController extends Controller
 
     public function skpd()
     {
+        $department_count = Department::count();
+        $department_active_count = Department::where('status', 'aktif')->count();
+        $ticket_count = Ticket::count();
+        $operator_count = User::role('petugas')->where('status', 'aktif')->count();
         $departments = Department::with('pic')->withCount('users', 'tickets')->orderBy('name')->paginate(20);
         $petugasList = User::role('petugas')->where('status', 'aktif')->orderBy('name')->get();
-        return view('pages.admin.skpd', compact('departments', 'petugasList'));
+        return view('pages.admin.skpd', [
+            'department_count' => $department_count,
+            'department_active_count' => $department_active_count,
+            'ticket_count' => $ticket_count,
+            'operator_count' => $operator_count,
+            'departments' => $departments,
+            'petugasList' => $petugasList
+        ]);
     }
 
     public function storeDepartment(Request $request)
