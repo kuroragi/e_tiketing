@@ -209,69 +209,6 @@ class AdminPageController extends Controller
         ]);
     }
 
-    public function storeDepartment(Request $request)
-    {
-        $validated = $request->validate([
-            'name'    => 'required|string|max:255',
-            'code'    => 'required|string|max:50|unique:departments,code',
-            'contact' => 'nullable|string|max:100',
-            'head'    => 'nullable|string|max:255',
-            'address' => 'nullable|string',
-            'status'  => 'required|in:aktif,nonaktif',
-            'pic_id'  => 'nullable|exists:users,id',
-        ]);
-
-        $dept = Department::create($validated);
-
-        AuditLog::create([
-            'user_id' => Auth::id(), 'action' => 'created', 'entity_type' => 'Department',
-            'entity_id' => $dept->id, 'entity_name' => $dept->name,
-            'description' => "SKPD baru: {$dept->name}", 'ip_address' => $request->ip(),
-        ]);
-
-        return redirect()->route('admin.skpd')->with('success', "SKPD {$dept->name} berhasil ditambahkan.");
-    }
-
-    public function updateDepartment(Request $request, $id)
-    {
-        $dept = Department::findOrFail($id);
-
-        $validated = $request->validate([
-            'name'    => 'required|string|max:255',
-            'code'    => "required|string|max:50|unique:departments,code,{$id}",
-            'contact' => 'nullable|string|max:100',
-            'head'    => 'nullable|string|max:255',
-            'address' => 'nullable|string',
-            'status'  => 'required|in:aktif,nonaktif',
-            'pic_id'  => 'nullable|exists:users,id',
-        ]);
-
-        $dept->update($validated);
-
-        AuditLog::create([
-            'user_id' => Auth::id(), 'action' => 'updated', 'entity_type' => 'Department',
-            'entity_id' => $dept->id, 'entity_name' => $dept->name,
-            'description' => "SKPD diperbarui: {$dept->name}", 'ip_address' => $request->ip(),
-        ]);
-
-        return redirect()->route('admin.skpd')->with('success', "SKPD {$dept->name} berhasil diperbarui.");
-    }
-
-    public function destroyDepartment(Request $request, $id)
-    {
-        $dept = Department::findOrFail($id);
-        $name = $dept->name;
-        $dept->delete();
-
-        AuditLog::create([
-            'user_id' => Auth::id(), 'action' => 'deleted', 'entity_type' => 'Department',
-            'entity_id' => $id, 'entity_name' => $name,
-            'description' => "SKPD dihapus: {$name}", 'ip_address' => $request->ip(),
-        ]);
-
-        return redirect()->route('admin.skpd')->with('success', "SKPD {$name} berhasil dihapus.");
-    }
-
     //  Jenis Pekerjaan 
 
     public function jenisPekerjaan()
