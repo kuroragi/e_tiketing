@@ -213,7 +213,7 @@ class AdminPageController extends Controller
 
     public function jenisPekerjaan()
     {
-        $categories  = Category::with('autoAssignee')->withCount('tickets')->orderBy('name')->paginate(20);
+        $categories  = Category::withCount('tickets')->orderBy('name')->paginate(20);
         $priorities  = Priority::ordered()->get();
         $petugasList = User::role('petugas')->where('status', 'aktif')->orderBy('name')->get();
         return view('pages.admin.jenis-pekerjaan', compact('categories', 'priorities', 'petugasList'));

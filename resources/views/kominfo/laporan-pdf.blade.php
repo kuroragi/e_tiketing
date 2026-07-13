@@ -275,15 +275,15 @@
         <table>
             <tr>
                 <td>Periode Laporan</td>
-                <td>: {{ $dari->translatedFormat('d F Y') }} s/d {{ $sampai->translatedFormat('d F Y') }}</td>
+                <td>{{ $dari->translatedFormat('d F Y') }} s/d {{ $sampai->translatedFormat('d F Y') }}</td>
                 <td>Dicetak Oleh</td>
-                <td>: {{ $printedBy }}</td>
+                <td>{{ $printedBy }}</td>
             </tr>
             <tr>
-                <td>Filter Petugas</td>
-                <td>: {{ !empty($selectedPetugas) ? implode(', ', $selectedPetugas) : 'Semua Petugas' }}</td>
-                <td>Tanggal Cetak</td>
-                <td>: {{ $printedAt->translatedFormat('d F Y, H:i') }} WIB</td>
+                <td style="vertical-align: top;">Filter Petugas</td>
+                <td style="text-align: justify;">{!! !empty($selectedPetugas) ? implode('<br>', $selectedPetugas) : 'Semua Petugas' !!}</td>
+                <td style="vertical-align: top;">Tanggal Cetak</td>
+                <td style="vertical-align: top;">{{ $printedAt->translatedFormat('d F Y, H:i') }} WIB</td>
             </tr>
         </table>
     </div>

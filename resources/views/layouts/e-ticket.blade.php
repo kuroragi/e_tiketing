@@ -1037,19 +1037,8 @@
                                 @endif
                             @endif
 
-                            @if (auth()->user()->isAdmin() || auth()->user()->isPetugas())
-                                <a class="nav-link {{ request()->routeIs('ticket.management.*') ? 'active' : '' }}"
-                                    href="{{ route('ticket.management.index') }}">
-                                    <i class="bi bi-shuffle"></i><span class="link-label">Manajemen Tiket</span>
-                                </a>
-                            @endif
-
                             @if (auth()->user()->isAdmin())
                                 <div class="sidebar-section-label mt-2">Administrasi</div>
-                                <a class="nav-link {{ request()->routeIs('admin.pengguna') ? 'active' : '' }}"
-                                    href="{{ route('admin.pengguna') }}">
-                                    <i class="bi bi-people"></i><span class="link-label">Pengguna</span>
-                                </a>
                                 <a class="nav-link {{ request()->routeIs('admin.skpd') ? 'active' : '' }}"
                                     href="{{ route('admin.skpd') }}">
                                     <i class="bi bi-building"></i><span class="link-label">Data SKPD</span>
@@ -1070,6 +1059,12 @@
                                     href="{{ route('admin.log-aktivitas') }}">
                                     <i class="bi bi-clock-history"></i><span class="link-label">Log Aktivitas</span>
                                 </a>
+
+                                <div class="sidebar-section-label mt-2">Auth</div>
+                                <a class="nav-link {{ request()->routeIs('admin.pengguna') ? 'active' : '' }}"
+                                    href="{{ route('admin.pengguna') }}">
+                                    <i class="bi bi-people"></i><span class="link-label">Pengguna</span>
+                                </a>
                                 <a class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}"
                                     href="{{ route('admin.roles.index') }}">
                                     <i class="bi bi-shield-lock"></i><span class="link-label">Manajemen Role</span>
@@ -1077,6 +1072,13 @@
                                 <a class="nav-link {{ request()->routeIs('admin.permissions.*') ? 'active' : '' }}"
                                     href="{{ route('admin.permissions.index') }}">
                                     <i class="bi bi-key"></i><span class="link-label">Permission</span>
+                                </a>
+                            @endif
+
+                            @if (auth()->user()->isAdmin() || auth()->user()->isPetugas())
+                                <a class="nav-link {{ request()->routeIs('ticket.management.*') ? 'active' : '' }}"
+                                    href="{{ route('ticket.management.index') }}">
+                                    <i class="bi bi-shuffle"></i><span class="link-label">Manajemen Tiket</span>
                                 </a>
                             @endif
 
@@ -1094,6 +1096,7 @@
                                 <i class="bi bi-headset"></i><span class="link-label">Hubungi Kami</span>
                             </a>
                         </nav>
+
 
                         <!-- Logout shortcut -->
                         <div class="mt-3 pt-3" style="border-top:1px solid rgba(255,255,255,.07);">
@@ -1251,8 +1254,8 @@
 
     <script>
         /* ═══════════════════════════════════
-               DARK MODE SYSTEM
-            ═══════════════════════════════════ */
+                               DARK MODE SYSTEM
+                            ═══════════════════════════════════ */
         (function() {
             const html = document.documentElement;
             const toggle = document.getElementById('themeToggle');

@@ -1205,7 +1205,7 @@ class KominfoController extends Controller
             'selectedPetugas' => $selectedPetugas,
             'printedAt'       => now(),
             'printedBy'       => $user->name,
-        ])->setPaper('a4', 'portrait');
+        ])->setPaper('a4', 'landscape');
 
         return $pdf->download('laporan-tiket-' . $dari->format('Y-m-d') . '_sd_' . $sampai->format('Y-m-d') . '.pdf');
     }
